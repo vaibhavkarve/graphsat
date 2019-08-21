@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import pytest
-from ..morphism import *
+from morphism import *
 
 
 def test_vertexmap():

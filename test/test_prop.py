@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pytest
 
-from ..prop import *
+from prop import *
 
 pytestmark = pytest.mark.skip('\n  All tests still WIP')
 

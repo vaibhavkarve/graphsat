@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import pytest
-from ..sat import *
+from sat import *
 
 def test_generate_assignments():
     TRUE = cnf.TRUE

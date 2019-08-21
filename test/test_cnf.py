@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import pytest
-from ..cnf import *
+from cnf import *
 
 def test_Bool():
     assert TRUE == TRUE

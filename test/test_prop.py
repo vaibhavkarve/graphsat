@@ -3,6 +3,7 @@ import pytest
 
 from ..prop import *
 
+pytestmark = pytest.mark.skip('\n  All tests still WIP')
 
 def test_literal_and_literal():
     assert literal_and_literal(1, -2) == cnf.cnf([[1], [-2]])

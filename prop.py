@@ -25,11 +25,11 @@ def clause_and_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.CNF:
 
 
 def cnf_and_literal(cnf1: cnf.CNF, literal: cnf.Literal) -> cnf.CNF:
-    return cnf.cnf(cnf1.add([literal]))
+    return cnf.cnf(cnf1 | {(literal, )})
 
 
 def cnf_and_clause(cnf1: cnf.CNF, clause: cnf.Clause) -> cnf.CNF:
-    return cnf.cnf(cnf1.add(clause))
+    return cnf.cnf(cnf1 | {clause})
 
 
 def cnf_and_cnf(cnf1: cnf.CNF, cnf2: cnf.CNF) -> cnf.CNF:
@@ -45,7 +45,7 @@ def literal_or_literal(literal1: cnf.Literal, literal2: cnf.Literal) -> cnf.Clau
 
 
 def clause_or_literal(clause: cnf.Clause, literal: cnf.Literal) -> cnf.Clause:
-    return cnf.clause(clause.add(literal))
+    return cnf.clause(clause | {literal})
 
 
 def clause_or_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.Clause:

@@ -204,9 +204,8 @@ def test_mhgraph_pysat_satcheck():
     assert satchecker(mhgraph.mhgraph([[1, 2, 3]]))
     assert not satchecker(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2, 3}): 8})))
 
-
+@pytest.mark.xfail(reason='This spawns subprocesses which eat up memory.')
 def test_mhgraph_minisat_satcheck():
-    """
     satchecker = mhgraph_minisat_satcheck
     assert mhgraph_minisat_satcheck(mhgraph.mhgraph([[1]]))
     assert not satchecker(mhgraph.mhgraph([[1], [1]]))
@@ -235,7 +234,6 @@ def test_mhgraph_minisat_satcheck():
 
     assert satchecker(mhgraph.mhgraph([[1, 2, 3]]))
     assert not satchecker(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2, 3}): 8})))
-    """
 
 
 def test_mhgraph_from_cnf():

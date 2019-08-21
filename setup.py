@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import os
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages  # type: ignore
 
 def read(fname):
+    """For reading from README file."""
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(name='graphsat',
@@ -14,7 +15,7 @@ setup(name='graphsat',
       license='GNU GPLv3',
       keywords='graph, hypergraph, multigraph, typed',
       long_description=read('README'),
-      packages=find_packages(),
+      packages=['.', 'test'],
       classifiers=[
                    'Development Status :: 4 - Beta',
                    'Intended Audience :: Science/Research',

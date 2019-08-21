@@ -96,7 +96,7 @@ def mhgraph_from_graph(graph_instance: graph.Graph) -> mhgraph.MHGraph:
 
 def vertexmap(translation: Mapping[graph.Vertex, graph.Vertex],
               hgraph1: mhgraph.HGraph,
-              hgraph2: Optional[mhgraph.HGraph]) -> VertexMap:
+              hgraph2: Optional[mhgraph.HGraph] = None) -> VertexMap:
     """Check if a Translation is a VertexMap from one HGraph to another.
 
     A Translation is a `VertexMap` if its keys are **all** the Vertices of the domain

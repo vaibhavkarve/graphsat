@@ -45,9 +45,9 @@ class Bool(Literal):
         """Ensure that ``hash(Bool(n))`` doesn't clash with ``hash(n)``."""
         return hash(str(self))
 
-    def __eq__(self, value) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Make ``Bool(n)`` unequal to ``n``."""
-        return hash(self) == hash(value)
+        return hash(self) == hash(other)
 
 
 #: ``TRUE = Bool(1)``, a final instance of Bool.

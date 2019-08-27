@@ -368,11 +368,10 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
     morphisms: Iterator[Morphism]
     morphisms = filter(None, map(injective_vertexmap_to_morphism, injective_vertexmaps))
 
-    morph: Morphism
-    for morph in morphisms:
-        if is_immediate_subgraph(graph_image(morph, mhgraph1), mhgraph2):
-            return morph
-    return False
+    subgraph_morphisms: Iterator[Morphism] \
+        = filter(lambda morph: is_immediate_subgraph(graph_image(morph, mhgraph1), mhgraph2),
+                 morphisms)
+    return next(subgraph_morphisms, False)  # Return the first one, else return False
 
 
 def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
@@ -398,7 +397,7 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
     # Heuristic checks
     if any([len(mhgraph.vertices(mhgraph1)) != len(mhgraph.vertices(mhgraph2)),
             len(mhgraph1.keys()) != len(mhgraph2.keys()),
-            sum(mhgraph1.values()) != sum(mhgraph2.values())]):
+            sorted(mhgraph1.values()) != sorted(mhgraph2.values())]):
         return False
 
     return subgraph_search(mhgraph1, mhgraph2) or subgraph_search(mhgraph2, mhgraph1)

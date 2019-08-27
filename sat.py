@@ -32,7 +32,7 @@ This module implements three different MHGraph sat-solvers:
     3. mhgraph_minisat_satcheck: slowest.
 """
 import itertools as it
-from typing import Dict, FrozenSet, Iterable, Iterator, Set, Tuple
+from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
 
 from loguru import logger  # type: ignore
 import cnf
@@ -118,7 +118,7 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
     from pysat.solvers import Minisat22  # type: ignore
 
     try:
-        return Minisat22(cnf_instance).solve()
+        return cast(bool, Minisat22(cnf_instance).solve())
     except ValueError:
         # The CNF was probably not in reduced form.
         # Reduce and try again
@@ -129,7 +129,7 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
             return True
         if cnf_reduced == cnf.FALSE_CNF:
             return False
-        return Minisat22(cnf_reduced).solve()
+        return cast(bool, Minisat22(cnf_reduced).solve())
 
 
 def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:

@@ -72,9 +72,13 @@ class PreMHGraph(Counter[AbstractSet[T]]):
         def edge_string(edge_instance: AbstractSet[T]) -> str:
             return '(' + ','.join(map(str, edge_instance)) + ')'
 
+        def superscript(edge_instance: AbstractSet[T]) -> str:
+            return unicode_superscripts.get(super(counter, self).get(edge_instance),
+                                            '^' + str(super(counter, self).get(edge_instance)))
+
         hyper_edge_strings: List[str]
-        hyper_edge_strings = [edge_string(edge_instance) + unicode_superscripts[multiplicity]
-                              for edge_instance, multiplicity in super().items()]
+        hyper_edge_strings = [edge_string(edge_instance) + superscript(edge_instance)
+                              for edge_instance in sorted(super().keys())]
         return ','.join(hyper_edge_strings)
 
 
@@ -125,7 +129,7 @@ def hgraph(hedge_collection: Collection[Collection[int]]) -> HGraph:
     This function is idempotent.
 
     Args:
-       hedge_collection (obj:`Collection[Collection[int]]`): a nonempty collection (counter,
+       hedge_collection (:obj:`Collection[Collection[int]]`): a nonempty collection (counter,
           list, tuple, set, or frozenset) of nonempty collections of Vertices.
 
     Return:

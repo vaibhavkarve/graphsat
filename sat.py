@@ -118,7 +118,8 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
     from pysat.solvers import Minisat22  # type: ignore
 
     try:
-        return cast(bool, Minisat22(cnf_instance).solve())
+        with Minisat22(cnf_instance) as m:
+            return cast(bool, m.solve())
     except ValueError:
         # The CNF was probably not in reduced form.
         # Reduce and try again
@@ -129,7 +130,8 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
             return True
         if cnf_reduced == cnf.FALSE_CNF:
             return False
-        return cast(bool, Minisat22(cnf_reduced).solve())
+        with Minisat22(cnf_reduced) as m:
+            return cast(bool, m.solve())
 
 
 def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:

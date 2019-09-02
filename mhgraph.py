@@ -70,7 +70,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
                                 9: '\u2079'}
 
         def edge_string(edge_instance: AbstractSet[T]) -> str:
-            return '(' + ','.join(map(str, edge_instance)) + ')'
+            return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
 
         def superscript(edge_instance: AbstractSet[T]) -> str:
             multiplicity: int = super(PreMHGraph, self).get(edge_instance, 0)

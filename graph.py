@@ -41,7 +41,7 @@ class PreGraph(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
     def __repr__(self) -> str:
         """Print the PreGraph in a compact way."""
         def edge_string(edge_instance: Collection[T]) -> str:
-            return '(' + ','.join(map(str, edge_instance)) + ')'
+            return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
 
         return ','.join(sorted(map(edge_string, self)))
 

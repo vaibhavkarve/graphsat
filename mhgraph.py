@@ -69,17 +69,20 @@ class PreMHGraph(Counter[AbstractSet[T]]):
                                 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078',
                                 9: '\u2079'}
 
-        def edge_string(edge_instance: AbstractSet[T]) -> str:
-            return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
+        def hedge_string(hedge_: List[T]) -> str:
+            return '(' + ','.join(map(str, hedge_)) + ')'
 
-        def superscript(edge_instance: AbstractSet[T]) -> str:
-            multiplicity: int = super(PreMHGraph, self).get(edge_instance, 0)
+        def superscript(hedge_: List[T]) -> str:
+            multiplicity: int = super(PreMHGraph, self).get(frozenset(hedge_), 0)
             return unicode_superscripts.get(multiplicity, f'^{multiplicity}')
 
-        hyper_edge_strings: List[str]
-        hyper_edge_strings = [edge_string(edge_instance) + superscript(edge_instance)
-                              for edge_instance in sorted(super().keys())]
-        return ','.join(hyper_edge_strings)
+        ordered_hedges: List[List[T]]
+        ordered_hedges = sorted(sorted([sorted(hedge) for hedge in super().keys()]), key=len)
+
+        hedge_strings: List[str]
+        hedge_strings = [hedge_string(hedge) + superscript(hedge) for hedge in ordered_hedges]
+
+        return ','.join(hedge_strings)
 
 
 # Classes and Types

@@ -32,6 +32,7 @@ This module implements three different MHGraph sat-solvers:
     3. mhgraph_minisat_satcheck: slowest.
 """
 import itertools as it
+import subprocess
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
 
 from loguru import logger  # type: ignore
@@ -58,6 +59,7 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Dict[cnf.Variable, c
     Return:
        First, tautologically reduce the CNF. Then, return an Iterator of truth-assignment
        dictionaries with keys being Variables and values being Bools.
+
     """
     cnf_reduced: cnf.CNF
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
@@ -88,6 +90,7 @@ def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
     Return:
        First, tautologically reduce the CNF. Then. if the CNF is Satisfiable return
        ``True`` else return ``False``.
+
     """
     cnf_reduced: cnf.CNF
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
@@ -114,12 +117,13 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
 
     Return:
        If the CNF is Satisfiable return ``True`` else return ``False``.
+
     """
     from pysat.solvers import Minisat22  # type: ignore
 
     try:
-        with Minisat22(cnf_instance) as m:
-            return cast(bool, m.solve())
+        with Minisat22(cnf_instance) as minisat_solver:
+            return cast(bool, minisat_solver.solve())
     except ValueError:
         # The CNF was probably not in reduced form.
         # Reduce and try again
@@ -130,8 +134,8 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
             return True
         if cnf_reduced == cnf.FALSE_CNF:
             return False
-        with Minisat22(cnf_reduced) as m:
-            return cast(bool, m.solve())
+        with Minisat22(cnf_reduced) as minisat_solver:
+            return cast(bool, minisat_solver.solve())
 
 
 def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:
@@ -147,6 +151,7 @@ def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:
 
        After tautological reduction, if the CNF reduced to TRUE or FALSE then return a
        string that will be correctly interpreted as such.
+
     """
     cnf_reduced: cnf.CNF
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
@@ -175,8 +180,8 @@ def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
 
     Return:
        If the CNF is Satisfiable return ``True`` else return ``False``.
+
     """
-    import subprocess
     cnf_dimacs: str
     cnf_dimacs = cnf_to_dimacs(cnf_instance)
 
@@ -184,7 +189,8 @@ def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
                                  input=cnf_dimacs,
                                  text=True,
                                  capture_output=True,
-                                 shell=True).stdout
+                                 shell=True,
+                                 check=False).stdout
 
     result: str = output.split()[-1]
     if result == 'SATISFIABLE':
@@ -221,6 +227,7 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> Iterator[cnf.Clause]:
     Return:
        An iterator of cnf.Clause consisting of the :math:`2^{|\texttt{hedge}|}` Clauses
        that are supported on ``hedge``.
+
     """
     literals_positive_and_negative: Iterator[Tuple[cnf.Literal, cnf.Literal]]
     literals_positive_and_negative = map(literals_from_vertex, hedge)
@@ -299,6 +306,7 @@ def mhgraph_bruteforce_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
 
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
+
     """
     return all(map(cnf_bruteforce_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
 
@@ -311,6 +319,7 @@ def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
 
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
+
     """
     return all(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
 
@@ -323,6 +332,7 @@ def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
 
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
+
     """
     return all(map(cnf_minisat_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
 
@@ -370,14 +380,14 @@ if __name__ == '__main__':
     logger.info('\n')
     logger.info('An example which is unsatisfiable:')
     logger.info(">>> cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]]))")
-    logger.info(cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])))
+    logger.success(cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])))
     logger.info('\n')
     logger.info('mhgraph_bruteforce_satcheck() finds all CNFs supported on a given MHGraph\n'
                 + ' '*61 + 'and then sat-checks them using a brute-force sat-checker.')
     logger.info('>>> mhgraph_bruteforce_satcheck()(mhgraph.mhgraph([[1, 2], [2, 3]]))')
-    logger.info(mhgraph_bruteforce_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
+    logger.success(mhgraph_bruteforce_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
     logger.info('The True output indicates that this MHGraph only supports satisfiable CNFs.')
     logger.info('\n')
     logger.info('Given a CNF we can also ask for its supporting MHGraph.')
     logger.info('>>> mhgraph_from_cnf(cnf.cnf([[1, -2], [2, 3, 4], [1, 2]]))')
-    logger.info(mhgraph_from_cnf(cnf.cnf([[1, -2], [2, 3, 4], [1, 2]])))
+    logger.success(mhgraph_from_cnf(cnf.cnf([[1, -2], [2, 3, 4], [1, 2]])))

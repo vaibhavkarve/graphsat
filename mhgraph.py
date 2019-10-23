@@ -58,7 +58,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
 
     """
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore[override]
         """Hash function that depends only on the keys of the Counter, ignoring values."""
         return hash(frozenset(self))
 

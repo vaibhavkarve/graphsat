@@ -71,6 +71,7 @@ def hgraph_from_mhgraph(mhgraph_instance: mhgraph.MHGraph) -> mhgraph.HGraph:
     Return:
        A HGraph with the same HEdges as ``mhgraph_instance``, but with multiplicities
        removed.
+
     """
     return mhgraph.hgraph(mhgraph_instance.keys())
 
@@ -86,6 +87,7 @@ def mhgraph_from_graph(graph_instance: graph.Graph) -> mhgraph.MHGraph:
     Return:
        A MHGraph whose HEdges are the Edges of ``graph_instance`` with HEdge-multiplicity
        one.
+
     """
     return mhgraph.mhgraph(graph_instance)
 
@@ -185,6 +187,7 @@ def graph_image(ivmap: InjectiveVertexMap, mhgraph_instance: mhgraph.MHGraph) \
        A MHGraph formed by mapping the Vertices of ``mhgraph_instace`` using
        ``ivmap.translation``, while keeping the adjacency of Vertices of ``mhgraph_instace``
        intact.
+
     """
     get_translation = cast(Callable[[graph.Vertex], graph.Vertex], ivmap.translation.get)
 
@@ -255,6 +258,7 @@ def generate_vertexmaps(hgraph1: mhgraph.HGraph,
 
     Return:
        An Iterator of (Injective)VertexMaps from ``hgraph1`` to ``hgraph2``.
+
     """
     if hgraph2 is None:
         hgraph2 = hgraph1
@@ -312,6 +316,7 @@ def is_immediate_subgraph(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) 
     Return:
        ``True`` if every HEdge of ``mhgraph1`` with multiplicity ``m`` is a HEdge of
        ``mhgraph2`` with multiplicity no less than ``m``, else return ``False``.
+
     """
     return all(hedge in mhgraph2 and mult <= mhgraph2[hedge]
                for hedge, mult in mhgraph1.items())
@@ -347,6 +352,7 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
        maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
 
        If ``mhgraph1`` is not a subgraph of ``mhgraph2``, then return ``False``.
+
     """
     # Heuristic checks
     if any([len(mhgraph.vertices(mhgraph1)) > len(mhgraph.vertices(mhgraph2)),
@@ -393,6 +399,7 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
        maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
 
        If ``mhgraph1`` is not isomorphic to ``mhgraph2``, then return ``False``.
+
     """
     # Heuristic checks
     if any([len(mhgraph.vertices(mhgraph1)) != len(mhgraph.vertices(mhgraph2)),
@@ -400,7 +407,8 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
             sorted(mhgraph1.values()) != sorted(mhgraph2.values())]):
         return False
 
-    return subgraph_search(mhgraph1, mhgraph2) or subgraph_search(mhgraph2, mhgraph1)
+    return subgraph_search(mhgraph1, mhgraph2) or subgraph_search(mhgraph1=mhgraph2,
+                                                                  mhgraph2=mhgraph1)
 
 
 if __name__ == '__main__':

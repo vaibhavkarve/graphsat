@@ -165,6 +165,7 @@ def vertices(graph_instance: Graph) -> FrozenSet[Vertex]:
 
     Return:
        A frozenset of all Vertices that any Edge of ``graph_instance`` is incident on.
+
     """
     return frozenset.union(*graph_instance)
 

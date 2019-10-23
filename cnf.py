@@ -103,7 +103,6 @@ def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invali
           ``FALSE``.
 
     Return:
-
        - if input is ``TRUE`` or ``FALSE``, then return input as is (since Bool is already
          a subtype of Literal.)
        - if input is a nonzero integer, then return ``int_or_Bool`` after casting to
@@ -232,6 +231,7 @@ def literals_in_cnf(cnf_instance: CNF) -> FrozenSet[Literal]:
 
     Return:
        A frozenset of all literals that appear in a CNF.
+
     """
     return frozenset.union(*cnf_instance)
 
@@ -259,6 +259,7 @@ def tautologically_reduce_clause(literal_set: AbstractSet[Literal]) -> Clause:
 
     Return:
        The Clause formed by performing all the above-mentioned tautological reductions.
+
     """
     if TRUE in literal_set:
         return TRUE_CLAUSE
@@ -291,6 +292,7 @@ def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Literal]]) -> 
     Return:
        The CNF formed by first reducing all the clauses tautologically and then performing
        all the above-mentioned tautological reductions on the CNF itself.
+
     """
     clause_set_reduced: Set[Clause]
     clause_set_reduced = set(map(tautologically_reduce_clause, clause_set))
@@ -326,6 +328,7 @@ def assign_variable_in_literal(literal_instance: Literal,  # pylint: disable=inv
     Return:
        Literal formed by assigning ``variable_instance`` to ``Boolean`` in
        ``literal_instance``.
+
     """
     if isinstance(literal_instance, Bool):
         return literal_instance
@@ -356,6 +359,7 @@ def assign_variable_in_clause(literal_set: AbstractSet[Literal],  # noqa, pylint
     Return:
        Tautologically-reduced Clause formed by assigning ``variable_instance`` to
        ``Boolean`` in ``literal_set``.
+
     """
     assign_variable: Callable[[Literal], Literal]
     assign_variable = ft.partial(assign_variable_in_literal,
@@ -387,6 +391,7 @@ def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],  # noq
     Return:
        Tautologically-reduced CNF formed by assigning ``variable_instance`` to
        ``Boolean`` in ``clause_set``.
+
     """
     assign_variable: Callable[[Clause], Clause]
     assign_variable = ft.partial(assign_variable_in_clause,
@@ -416,6 +421,7 @@ def assign(cnf_instance: CNF, assignment: Mapping[Variable, Bool]) -> CNF:
     Return:
        Tautologically-reduced CNF formed by replacing every key in the ``assignment``
        dictionary (and those keys' negations) by corresponding Bool values.
+
     """
     cnf_copy: FrozenSet[Clause] = cnf_instance.copy()
     for variable_instance, Boolean in assignment.items():  # pylint: disable=invalid-name

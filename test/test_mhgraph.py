@@ -69,3 +69,10 @@ def test_mhgraph():
 
 def test_vertices():
     assert vertices(mhgraph([[1,2,3], [4], [1, 2]])) == {1, 2, 3, 4}
+
+
+def test_degree():
+    assert degree(2, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 3
+    assert degree(1, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 2
+    assert degree(4, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 1
+    assert degree(5, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 0

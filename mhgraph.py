@@ -191,6 +191,15 @@ def vertices(mhgraph_instance: Union[HGraph, MHGraph]) -> FrozenSet[graph.Vertex
     return graph.vertices(mhgraph_instance)  # type: ignore
 
 
+def degree(vertex: graph.Vertex, mhgraph_instance: MHGraph) -> int:
+    """Return the degree of a ``vertex`` in a MHGraph.
+
+    This counts multiplicities.
+    """
+    return sum([multiplicity for hedge, multiplicity in mhgraph_instance.items()
+                if vertex in hedge])
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')
@@ -204,4 +213,8 @@ if __name__ == '__main__':
     logger.info('Given a MHGraph, we can get its vertices using the vertices() function.')
     logger.info('>>> vertices(mhgraph([[1, 2], [3, 1, 12]]))')
     logger.info(vertices(mhgraph([[1, 2], [3, 1, 12]])))
+    logger.info('\n')
+    logger.info('The degree() function returns the degree of a vertex in a MHGraph.')
+    logger.info('>>> degree(2, mhgraph([[1, 2], [3, 1, 2], [1, 2]]))')
+    logger.info(degree(graph.Vertex(2), mhgraph([[1, 2], [3, 1, 2], [1, 2]])))
     logger.info('\n')

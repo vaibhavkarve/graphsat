@@ -322,8 +322,9 @@ def is_immediate_subgraph(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) 
                for hedge, mult in mhgraph1.items())
 
 
-def subgraph_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
-        -> Union[Morphism, bool]:
+def subgraph_search(mhgraph1: mhgraph.MHGraph,
+                    mhgraph2: mhgraph.MHGraph,
+                    return_all: bool=False) -> Union[Morphism, bool, Iterator[Morphism]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhgraph1`` is a `subgraph` of ``mhgraph2`` if there is a Morphism with domain HGraph
@@ -377,7 +378,9 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
     subgraph_morphisms: Iterator[Morphism] \
         = filter(lambda morph: is_immediate_subgraph(graph_image(morph, mhgraph1), mhgraph2),
                  morphisms)
-    return next(subgraph_morphisms, False)  # Return the first one, else return False
+    if not return_all:
+        return next(subgraph_morphisms, False)  # Return the first one, else return False
+    return subgraph_morphisms
 
 
 def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \

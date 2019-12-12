@@ -12,7 +12,8 @@ Definition of a CNF
    - A CNF is the boolean expression made of the conjunction of Clauses.
 """
 import functools as ft
-from typing import AbstractSet, Callable, Collection, FrozenSet, Mapping, NewType, Set, Union
+from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, List, Mapping,
+                    NewType, Set, Union)
 from loguru import logger  # type: ignore
 
 
@@ -234,6 +235,30 @@ def literals_in_cnf(cnf_instance: CNF) -> FrozenSet[Literal]:
 
     """
     return frozenset.union(*cnf_instance)
+
+
+def pprint_cnf(cnf_instance: CNF) -> str:
+    """Pretty print a CNF.
+
+    Args:
+        cnf_instance (:obj:`CNF`)
+
+    Return:
+        A sorted string of sorted clause tuples.
+
+    """
+    sorted_clauses: Iterator[List[Literal]]
+    sorted_clauses = map(lambda clause_: sorted(clause_, key=absolute_value), cnf_instance)
+
+    sorted_cnf: List[List[Literal]]
+    sorted_cnf = sorted(sorted_clauses, key=lambda clause_:
+                        sum([literal_ < 0 for literal_ in clause_]))
+    sorted_cnf = sorted(sorted_cnf, key=len)
+
+    def pprint_clause(clause_: List[Literal]) -> str:
+        return '(' + ','.join(map(str, clause_)) + ')'
+
+    return ''.join(map(pprint_clause, sorted_cnf))
 
 
 # Functions for Simplification

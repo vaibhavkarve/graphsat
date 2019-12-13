@@ -324,7 +324,7 @@ def is_immediate_subgraph(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) 
 
 def subgraph_search(mhgraph1: mhgraph.MHGraph,
                     mhgraph2: mhgraph.MHGraph,
-                    return_all: bool=False) -> Union[Morphism, bool, Iterator[Morphism]]:
+                    return_all: bool = False) -> Union[Morphism, bool, Iterator[Morphism]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhgraph1`` is a `subgraph` of ``mhgraph2`` if there is a Morphism with domain HGraph
@@ -383,8 +383,9 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph,
     return subgraph_morphisms
 
 
-def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
-        -> Union[Morphism, bool]:
+def isomorphism_search(mhgraph1: mhgraph.MHGraph,
+                       mhgraph2: mhgraph.MHGraph,
+                       return_all: bool = False) -> Union[Morphism, bool, Iterator[Morphism]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
     Use :obj:`subgraph_search()` twice to check if ``mhgraph1`` is isomorphic to ``mhgraph2``.
@@ -410,8 +411,8 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) \
             sorted(mhgraph1.values()) != sorted(mhgraph2.values())]):
         return False
 
-    return subgraph_search(mhgraph1, mhgraph2) or subgraph_search(mhgraph1=mhgraph2,
-                                                                  mhgraph2=mhgraph1)
+    return subgraph_search(mhgraph1, mhgraph2, return_all) \
+           or subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=return_all)
 
 
 if __name__ == '__main__':

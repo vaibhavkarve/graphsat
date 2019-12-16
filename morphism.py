@@ -8,7 +8,7 @@ brute-force isomorphism search algorithm for MHGraphs.
 import itertools as it
 from typing import (AbstractSet, Callable, cast, Dict, FrozenSet, Iterable, Iterator,
                     KeysView, Mapping, NamedTuple, NewType, Optional, Tuple, Union)
-from loguru import logger  # type: ignore
+from loguru import logger  # type: ignore[import]
 
 import graph
 import mhgraph

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-from setuptools import setup, find_packages  # type: ignore
+from setuptools import setup, find_packages  # type: ignore[import]
 
-def read(fname):
+
+def read(fname: str) -> str:
     """For reading from README file."""
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 
 setup(name='graphsat',
       version='0.1',

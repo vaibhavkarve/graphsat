@@ -32,9 +32,9 @@ A *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 
 from collections import Counter as counter
-from typing import (AbstractSet, Collection, Counter, Dict, FrozenSet, List, NewType,
+from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet, List, NewType,
                     TypeVar, Union)
-from loguru import logger  # type: ignore
+from loguru import logger  # type: ignore[import]
 
 import graph
 
@@ -171,12 +171,12 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
     if not edge_collection:
         raise ValueError(f'Encountered empty input {edge_collection}')
 
-    try:
+    if hasattr(edge_collection, 'elements'):
         # edge_collection is a Counter.
-        return MHGraph(PreMHGraph(map(hedge, edge_collection.elements())))  # type: ignore
-    except AttributeError:
-        # edge_collection is not a Counter.
-        return MHGraph(PreMHGraph(map(hedge, edge_collection)))
+        edge_collection = cast(Counter[Collection[graph.Vertex]], edge_collection)
+        return MHGraph(PreMHGraph(map(hedge, edge_collection.elements())))
+    # edge_collection is not a Counter.
+    return MHGraph(PreMHGraph(map(hedge, edge_collection)))
 
 
 # Basic Functions
@@ -184,11 +184,8 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 
 
 def vertices(mhgraph_instance: Union[HGraph, MHGraph]) -> FrozenSet[graph.Vertex]:
-    """Return a `frozenset` of all vertices of a MHGraph.
-
-    The implementation is simply borrowed from the graph.py module's vertices() function.
-    """
-    return graph.vertices(mhgraph_instance)  # type: ignore
+    """Return a `frozenset` of all vertices of a MHGraph."""
+    return frozenset.union(*mhgraph_instance)
 
 
 def degree(vertex: graph.Vertex, mhgraph_instance: MHGraph) -> int:

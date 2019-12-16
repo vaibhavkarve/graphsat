@@ -35,7 +35,7 @@ import itertools as it
 import subprocess
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
 
-from loguru import logger  # type: ignore
+from loguru import logger  # type: ignore[import]
 import cnf
 import graph
 import mhgraph
@@ -119,7 +119,7 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
        If the CNF is Satisfiable return ``True`` else return ``False``.
 
     """
-    from pysat.solvers import Minisat22  # type: ignore
+    from pysat.solvers import Minisat22  # type: ignore[import]
 
     try:
         with Minisat22(cnf_instance) as minisat_solver:

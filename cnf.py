@@ -14,7 +14,7 @@ Definition of a CNF
 import functools as ft
 from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, List, Mapping,
                     NewType, Set, Union)
-from loguru import logger  # type: ignore
+from loguru import logger  # type: ignore[import]
 
 
 # Classes and Types

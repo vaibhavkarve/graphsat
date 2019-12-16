@@ -21,7 +21,7 @@ with the following properties:
 """
 import itertools as it
 from typing import Collection, FrozenSet, Iterator, NewType, Set, TypeVar
-from loguru import logger  # type: ignore
+from loguru import logger  # type: ignore[import]
 
 
 # PreGraph for Storing Graphs
@@ -142,11 +142,11 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
     double_vertex_edges: Iterator[Edge]
     double_vertex_edges = it.filterfalse(lambda edge: len(edge) == 1, edges)
 
-    vertices_in_single_vertex_edge: FrozenSet[Vertex]
-    vertices_in_single_vertex_edge = frozenset().union(*single_vertex_edges)  # type: ignore
+    vertices_in_single_vertex_edge: FrozenSet[Vertex] \
+        = frozenset([vertex for edge in single_vertex_edges for vertex in edge])
 
-    vertices_in_double_vertex_edges: FrozenSet[Vertex]
-    vertices_in_double_vertex_edges = frozenset().union(*double_vertex_edges)  # type: ignore
+    vertices_in_double_vertex_edges: FrozenSet[Vertex] \
+        = frozenset([vertex for edge in double_vertex_edges for vertex in edge])
 
     if not vertices_in_double_vertex_edges.isdisjoint(vertices_in_single_vertex_edge):
         raise ValueError('A Vertex is in both a single-vertex-edge and a vertex-pair-edge.')

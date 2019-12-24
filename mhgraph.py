@@ -70,7 +70,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
                                 9: '\u2079'}
 
         def hedge_string(hedge_: List[T]) -> str:
-            return '(' + ','.join(map(str, hedge_)) + ')'
+            return '(' + ', '.join(map(str, hedge_)) + ')'
 
         def superscript(hedge_: List[T]) -> str:
             multiplicity: int = super(PreMHGraph, self).get(frozenset(hedge_), 0)

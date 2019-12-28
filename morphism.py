@@ -33,6 +33,20 @@ Morphism = NewType('Morphism', InjectiveVertexMap)
 Morphism.__doc__ = """`Morphism` is a subtype of `InjectiveVertexMap`."""
 
 
+class NotASubgraphError(Exception):
+    """Exception raised when a MHGraph is not a subgraph of another.
+
+    Attributes:
+        message -- explanation of the error
+
+    """
+
+    def __init__(self, message: Optional[str] = None) -> None:
+        """Init method for the custom Exception."""
+        super().__init__()
+        self.message = message
+
+
 # Conversion Functions
 # ====================
 
@@ -324,7 +338,7 @@ def is_immediate_subgraph(mhgraph1: mhgraph.MHGraph, mhgraph2: mhgraph.MHGraph) 
 
 def subgraph_search(mhgraph1: mhgraph.MHGraph,
                     mhgraph2: mhgraph.MHGraph,
-                    return_all: bool = False) -> Union[Morphism, bool, Iterator[Morphism]]:
+                    return_all: bool = False) -> Union[Morphism, Iterator[Morphism]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhgraph1`` is a `subgraph` of ``mhgraph2`` if there is a Morphism with domain HGraph
@@ -340,7 +354,7 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph,
        * Find the image of ``hgraph_from_mhgraph(mhgraph1)`` under each Morphism.
        * Check that each HEdge of the image HGraph is present with higher multiplicity in
          the codomain MHGraph. If yes, then return the Morphism (as it is the subgraph
-         Morphism). If not, then return ``False``.
+         Morphism). If not, then raise a NotASubgraphError.
 
     Args:
        mhgraph1 (:obj:`mhgraph.MHGraph`): the domain MHGraph.
@@ -352,14 +366,16 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph,
        ``graph_from_mhgraph(mhgraph2)`` and translation dictionary as the Translation that
        maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
 
-       If ``mhgraph1`` is not a subgraph of ``mhgraph2``, then return ``False``.
+    Raises:
+       NotASubgraphError - If ``mhgraph1`` is not a subgraph of ``mhgraph2``.
 
     """
     # Heuristic checks
     if any([len(mhgraph.vertices(mhgraph1)) > len(mhgraph.vertices(mhgraph2)),
             len(mhgraph1.keys()) > len(mhgraph2.keys()),
             sum(mhgraph1.values()) > sum(mhgraph2.values())]):
-        return False
+        raise NotASubgraphError(f'{mhgraph1} is not a subgraph of {mhgraph2}'
+                                ' based on heuristic checks.')
 
     injective_vertexmaps = cast(Iterator[InjectiveVertexMap],
                                 generate_vertexmaps(hgraph_from_mhgraph(mhgraph1),
@@ -379,13 +395,16 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph,
         = filter(lambda morph: is_immediate_subgraph(graph_image(morph, mhgraph1), mhgraph2),
                  morphisms)
     if not return_all:
-        return next(subgraph_morphisms, False)  # Return the first one, else return False
+        try:
+            return next(subgraph_morphisms)  # Return the first one, else raise Error
+        except StopIteration:
+            raise NotASubgraphError(f'{mhgraph1} is not a subgraph of {mhgraph2}')
     return subgraph_morphisms
 
 
 def isomorphism_search(mhgraph1: mhgraph.MHGraph,
                        mhgraph2: mhgraph.MHGraph,
-                       return_all: bool = False) -> Union[Morphism, bool, Iterator[Morphism]]:
+                       return_all: bool = False) -> Union[Morphism, Iterator[Morphism]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
     Use :obj:`subgraph_search()` twice to check if ``mhgraph1`` is isomorphic to ``mhgraph2``.
@@ -402,17 +421,19 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph,
        ``graph_from_mhgraph(mhgraph2)`` and translation dictionary as the Translation that
        maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
 
-       If ``mhgraph1`` is not isomorphic to ``mhgraph2``, then return ``False``.
+    Raises:
+       NotASubgraphError - If ``mhgraph1`` is not isomorphic to ``mhgraph2``.
 
     """
     # Heuristic checks
     if any([len(mhgraph.vertices(mhgraph1)) != len(mhgraph.vertices(mhgraph2)),
             len(mhgraph1.keys()) != len(mhgraph2.keys()),
             sorted(mhgraph1.values()) != sorted(mhgraph2.values())]):
-        return False
+        raise NotASubgraphError(f'{mhgraph1} is not isomorphic to {mhgraph2}'
+                                ' based on heuristic checks.')
 
     return subgraph_search(mhgraph1, mhgraph2, return_all) \
-           or subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=return_all)
+        or subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=return_all)
 
 
 if __name__ == '__main__':

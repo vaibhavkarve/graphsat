@@ -89,8 +89,10 @@ def test_subgraph_search():
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
     assert subgraph_search(mm([[1, 2]]), mm([[11, 12], [13, 14]])).translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}, {1: 13, 2: 14}, {1: 14, 2: 13}]
-    assert subgraph_search(mm([[1]]), mm([[11, 12]])) is False
-    assert subgraph_search(mm([[1, 2]]), mm([[1, 2, 3]])) is False
+    with pytest.raises(NotASubgraphError):
+        subgraph_search(mm([[1]]), mm([[11, 12]]))
+    with pytest.raises(NotASubgraphError):
+        subgraph_search(mm([[1, 2]]), mm([[1, 2, 3]]))
 
 
 def test_isomorphism():
@@ -104,6 +106,9 @@ def test_isomorphism():
         == {1: 11, 2: 12}
     assert isomorphism_search(mm([[1, 2], [1, 2]]), mm([[11, 12], [11, 12]])).translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert isomorphism_search(mm([[1, 2]]), mm([[11, 12], [13, 14]])) is False
-    assert isomorphism_search(mm([[1, 2]]), mm([[11, 12], [11, 12]])) is False
-    assert isomorphism_search(mm([[1, 2]]), mm([[11, 12, 13]])) is False
+    with pytest.raises(NotASubgraphError):
+        isomorphism_search(mm([[1, 2]]), mm([[11, 12], [13, 14]]))
+    with pytest.raises(NotASubgraphError):
+        isomorphism_search(mm([[1, 2]]), mm([[11, 12], [11, 12]]))
+    with pytest.raises(NotASubgraphError):
+        isomorphism_search(mm([[1, 2]]), mm([[11, 12, 13]]))

@@ -33,6 +33,7 @@ This module implements three different MHGraph sat-solvers:
 """
 import itertools as it
 import subprocess
+from tqdm import tqdm
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
 
 from loguru import logger  # type: ignore[import]
@@ -321,7 +322,10 @@ def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    return all(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+    return all(tqdm(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)),
+                    desc=f'pysat()',
+                    total=4**len([edge for edge in mhgraph_instance if len(edge) == 2])\
+                          *8**len([hedge for hedge in mhgraph_instance if len(hedge) == 3])))
 
 
 def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:

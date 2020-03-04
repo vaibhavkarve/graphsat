@@ -371,9 +371,9 @@ def subgraph_search(mhgraph1: mhgraph.MHGraph,
 
     """
     # Heuristic checks
-    if any([len(mhgraph.vertices(mhgraph1)) > len(mhgraph.vertices(mhgraph2)),
+    if any((len(mhgraph.vertices(mhgraph1)) > len(mhgraph.vertices(mhgraph2)),
             len(mhgraph1.keys()) > len(mhgraph2.keys()),
-            sum(mhgraph1.values()) > sum(mhgraph2.values())]):
+            sum(mhgraph1.values()) > sum(mhgraph2.values()))):
         raise NotASubgraphError(f'{mhgraph1} is not a subgraph of {mhgraph2}'
                                 ' based on heuristic checks.')
 
@@ -426,9 +426,9 @@ def isomorphism_search(mhgraph1: mhgraph.MHGraph,
 
     """
     # Heuristic checks
-    if any([len(mhgraph.vertices(mhgraph1)) != len(mhgraph.vertices(mhgraph2)),
+    if any((len(mhgraph.vertices(mhgraph1)) != len(mhgraph.vertices(mhgraph2)),
             len(mhgraph1.keys()) != len(mhgraph2.keys()),
-            sorted(mhgraph1.values()) != sorted(mhgraph2.values())]):
+            sorted(mhgraph1.values()) != sorted(mhgraph2.values()))):
         raise NotASubgraphError(f'{mhgraph1} is not isomorphic to {mhgraph2}'
                                 ' based on heuristic checks.')
 

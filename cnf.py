@@ -12,7 +12,7 @@ Definition of a CNF
    - A CNF is the boolean expression made of the conjunction of Clauses.
 """
 import functools as ft
-from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, List, Mapping,
+from typing import (AbstractSet, Callable, FrozenSet, Iterable, Iterator, List, Mapping,
                     NewType, Set, Union)
 from loguru import logger  # type: ignore[import]
 
@@ -121,50 +121,50 @@ def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invali
     raise ValueError('Literal must be either TRUE/FALSE or a nonzero integer.')
 
 
-def clause(literal_collection: Collection[int]) -> Clause:
+def clause(literal_iterable: Iterable[int]) -> Clause:
     """Constructor-function for Clause type.
 
     By definition, a `Clause` is a nonempty frozenset of Literals.
     This function is idempotent.
 
     Args:
-       literal_collection (:obj:`Collection[int]`): a nonempty collection (list, tuple,
-          set, or frozenset of integers or Bools.
+       literal_iterable (:obj:`Iterable[int]`): a nonempty iterable (list, tuple,
+          set, frozenset, or iterator of integers or Bools.
 
     Return:
-       Check that each element in the collection satisfies axioms for being a Literal and
+       Check that each element in the iterable satisfies axioms for being a Literal and
        then cast to Clause.
 
     Raises:
-       ValueError: if ``literal_collection`` is an empty collection.
+       ValueError: if ``literal_iterable`` is an empty iterable.
 
     """
-    if not literal_collection:
-        raise ValueError(f'Encountered empty input {literal_collection}.')
-    return Clause(frozenset(map(literal, literal_collection)))
+    if not literal_iterable:
+        raise ValueError(f'Encountered empty input {list(literal_iterable)}.')
+    return Clause(frozenset(map(literal, literal_iterable)))
 
 
-def cnf(clause_collection: Collection[Collection[int]]) -> CNF:
+def cnf(clause_iterable: Iterable[Iterable[int]]) -> CNF:
     """Constructor-function for CNF type.
 
     By definition, a `CNF` is a nonempty frozenset of Clauses.
     This function is idempotent.
 
     Args:
-       clause_collection (:obj:`Collection[Collection[int]]`): a nonempty collection (list,
-       tuple, set, or frozenset) of nonempty collections of integers or Bools.
+       clause_iterable (:obj:`Iterable[Iterable[int]]`): a nonempty iterable (list,
+       tuple, set, frozenset, or iterator) of nonempty iterables of integers or Bools.
 
     Return:
-       Check that each element in the collection satisfies axioms for being a Clause and
+       Check that each element in the iterable satisfies axioms for being a Clause and
        then cast to CNF.
 
     Raises:
-       ValueError: if ``clause_collection`` is an empty collection.
+       ValueError: if ``clause_iterable`` is an empty iterable.
 
     """
-    if not clause_collection:
-        raise ValueError(f'Encountered empty input {clause_collection}.')
-    return CNF(frozenset(map(clause, clause_collection)))
+    if not clause_iterable:
+        raise ValueError(f'Encountered empty input {list(clause_iterable)}.')
+    return CNF(frozenset(map(clause, clause_iterable)))
 
 
 # Helpful Constants

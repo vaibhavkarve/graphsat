@@ -20,7 +20,7 @@ with the following properties:
    - Edges do not have a directionality.
 """
 import itertools as it
-from typing import Collection, FrozenSet, Iterator, NewType, Set, TypeVar
+from typing import Collection, FrozenSet, Iterable, Iterator, NewType, Set, TypeVar
 from loguru import logger  # type: ignore[import]
 
 
@@ -32,15 +32,15 @@ from loguru import logger  # type: ignore[import]
 T = TypeVar('T')  # pylint: disable=invalid-name
 
 
-class PreGraph(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
-    """`PreGraph[_T]` is a subclass of `Set[Collection[_T]]`.
+class PreGraph(Set[Iterable[T]]):  # pylint: disable=too-few-public-methods
+    """`PreGraph[_T]` is a subclass of `Set[Iterable[_T]]`.
 
     It overrides the ``__repr__`` method.
     """
 
     def __repr__(self) -> str:
         """Print the PreGraph in a compact way."""
-        def edge_string(edge_instance: Collection[T]) -> str:
+        def edge_string(edge_instance: Iterable[T]) -> str:
             return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
 
         return ','.join(sorted(sorted(map(edge_string, self)), key=len))
@@ -111,30 +111,30 @@ def edge(vertex_collection: Collection[int]) -> Edge:
     return Edge(frozenset(map(vertex, vertex_collection)))
 
 
-def graph(edge_collection: Collection[Collection[int]]) -> Graph:
+def graph(edge_iterable: Iterable[Collection[int]]) -> Graph:
     """Constructor-function for Graph type.
 
     For definition of a Graph, refer to :ref:`definitionofagraph`.
     This function is idempotent.
 
     Args:
-       edge_collection (obj:`Collection[Collection[int]]`): a nonempty collection (counter,
-          list, tuple, set, or frozenset) of nonempty collections (of length one or two)
-          of Vertices.
+       edge_iterable (obj:`Iterable[Iterable[int]]`): a nonempty iterable (counter,
+          list, tuple, set, frozenset, or iterator) of nonempty collections (of length
+          one or two) of Vertices.
 
     Return:
-       If each element of the collection satisfies the axioms for being an Edge, then the
+       If each element of the iterable satisfies the axioms for being an Edge, then the
        input is cast as a PreGraph and then a Graph.
 
     Raises:
-       ValueError: If ``edge_collection`` is an empty collection.
+       ValueError: If ``edge_iterable`` is an empty iterable.
        ValueError: If a vertex appear both in a single-vertex-edge and in a vertex-pair-edge.
 
     """
-    if not edge_collection:
-        raise ValueError(f'Encountered empty input {edge_collection}')
+    if not edge_iterable:
+        raise ValueError(f'Encountered empty input {list(edge_iterable)}')
 
-    edges: Set[Edge] = set(map(edge, edge_collection))
+    edges: Set[Edge] = set(map(edge, edge_iterable))
 
     single_vertex_edges: Iterator[Edge]
     single_vertex_edges = filter(lambda edge: len(edge) == 1, edges)

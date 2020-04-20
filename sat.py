@@ -33,7 +33,7 @@ This module implements three different MHGraph sat-solvers:
 """
 import itertools as it
 import subprocess
-from tqdm import tqdm
+from tqdm import tqdm  # type: ignore
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
 
 from loguru import logger  # type: ignore[import]

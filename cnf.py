@@ -12,9 +12,9 @@ Definition of a CNF
    - A CNF is the boolean expression made of the conjunction of Clauses.
 """
 import functools as ft
-from typing import (AbstractSet, Callable, FrozenSet, Iterable, Iterator, List, Mapping,
-                    NewType, Set, Union)
-from loguru import logger  # type: ignore[import]
+from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, Final,
+                    List, Mapping, NewType, Set, Union)
+from loguru import logger
 
 
 # Classes and Types
@@ -23,6 +23,7 @@ from loguru import logger  # type: ignore[import]
 
 class Literal(int):
     """`Literal` is a subclass of `int`. It has no other special methods."""
+    pass
 
 
 class Bool(Literal):
@@ -121,50 +122,50 @@ def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invali
     raise ValueError('Literal must be either TRUE/FALSE or a nonzero integer.')
 
 
-def clause(literal_iterable: Iterable[int]) -> Clause:
+def clause(literal_collection: Collection[int]) -> Clause:
     """Constructor-function for Clause type.
 
     By definition, a `Clause` is a nonempty frozenset of Literals.
     This function is idempotent.
 
     Args:
-       literal_iterable (:obj:`Iterable[int]`): a nonempty iterable (list, tuple,
+       literal_collection (:obj:`Collection[int]`): a nonempty collection (list, tuple,
           set, frozenset, or iterator of integers or Bools.
 
     Return:
-       Check that each element in the iterable satisfies axioms for being a Literal and
+       Check that each element in the collection satisfies axioms for being a Literal and
        then cast to Clause.
 
     Raises:
-       ValueError: if ``literal_iterable`` is an empty iterable.
+       ValueError: if ``literal_collection`` is an empty collection.
 
     """
-    if not literal_iterable:
-        raise ValueError(f'Encountered empty input {list(literal_iterable)}.')
-    return Clause(frozenset(map(literal, literal_iterable)))
+    if not literal_collection:
+        raise ValueError(f'Encountered empty input {list(literal_collection)}.')
+    return Clause(frozenset(map(literal, literal_collection)))
 
 
-def cnf(clause_iterable: Iterable[Iterable[int]]) -> CNF:
+def cnf(clause_collection: Collection[Collection[int]]) -> CNF:
     """Constructor-function for CNF type.
 
     By definition, a `CNF` is a nonempty frozenset of Clauses.
     This function is idempotent.
 
     Args:
-       clause_iterable (:obj:`Iterable[Iterable[int]]`): a nonempty iterable (list,
-       tuple, set, frozenset, or iterator) of nonempty iterables of integers or Bools.
+       clause_collection (:obj:`Collection[Collection[int]]`): a nonempty collection
+       (list, tuple, set, frozenset) of nonempty collections of integers or Bools.
 
     Return:
-       Check that each element in the iterable satisfies axioms for being a Clause and
+       Check that each element in the collection satisfies axioms for being a Clause and
        then cast to CNF.
 
     Raises:
-       ValueError: if ``clause_iterable`` is an empty iterable.
+       ValueError: if ``clause_collection`` is an empty collection.
 
     """
-    if not clause_iterable:
-        raise ValueError(f'Encountered empty input {list(clause_iterable)}.')
-    return CNF(frozenset(map(clause, clause_iterable)))
+    if not clause_collection:
+        raise ValueError(f'Encountered empty input {list(clause_collection)}.')
+    return CNF(frozenset(map(clause, clause_collection)))
 
 
 # Helpful Constants
@@ -191,8 +192,8 @@ def neg(literal_instance: Literal) -> Literal:
        literal_instance (:obj:`Literal`): a Literal formed from a nonzero integer.
 
     Return:
-       Check that ``literal_instance`` is not of type Bool and then return the Literal cast
-       from the negative of `literal_instance`.
+       Check that ``literal_instance`` is not of type Bool and then return the
+       Literal cast from the negative of `literal_instance`.
 
     Raises:
        ValueError: if ``literal_instance`` is ``TRUE`` or ``FALSE``.
@@ -224,7 +225,7 @@ def absolute_value(literal_instance: Literal) -> Literal:
     return literal(abs(literal_instance))
 
 
-def literals_in_cnf(cnf_instance: CNF) -> FrozenSet[Literal]:
+def literals(cnf_instance: CNF) -> FrozenSet[Literal]:
     """Return frozenset of all Literals that appear in a CNF.
 
     Args:
@@ -248,7 +249,7 @@ def pprint_cnf(cnf_instance: CNF) -> str:
 
     """
     sorted_clauses: Iterator[List[Literal]]
-    sorted_clauses = map(lambda clause_: sorted(clause_, key=absolute_value), cnf_instance)
+    sorted_clauses = map(lambda clause: sorted(clause, key=absolute_value), cnf_instance)
 
     sorted_cnf: List[List[Literal]]
     sorted_cnf = sorted(sorted_clauses, key=lambda clause_:
@@ -334,13 +335,12 @@ def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Literal]]) -> 
 # Functions for Assignment
 # ========================
 
-
-def assign_variable_in_literal(literal_instance: Literal,  # pylint: disable=invalid-name
+def assign_variable_in_literal(literal_instance: Literal,
                                variable_instance: Variable,
-                               Boolean: Bool) -> Literal:
+                               boolean: Bool) -> Literal:
     """Assign Bool value to a Variable if present in Literal.
 
-    Replace all instances of ``variable_instance`` and its negation with ``Boolean``
+    Replace all instances of ``variable_instance`` and its negation with ``boolean``
     and its negation respectively.
     Leave all else unchanged.
     This function is idempotent.
@@ -348,29 +348,29 @@ def assign_variable_in_literal(literal_instance: Literal,  # pylint: disable=inv
     Args:
        literal_instance (:obj:`Literal`)
        variable_instance (:obj:`Variable`)
-       Boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+       boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
-       Literal formed by assigning ``variable_instance`` to ``Boolean`` in
+       Literal formed by assigning ``variable_instance`` to ``boolean`` in
        ``literal_instance``.
 
     """
     if isinstance(literal_instance, Bool):
         return literal_instance
     if literal_instance == variable_instance:
-        return Boolean
+        return boolean
     if neg(literal_instance) == variable_instance:
-        return FALSE if Boolean == TRUE else TRUE
+        return FALSE if boolean == TRUE else TRUE
     return literal_instance
 
 
-def assign_variable_in_clause(literal_set: AbstractSet[Literal],  # noqa, pylint: disable=invalid-name
+def assign_variable_in_clause(literal_set: AbstractSet[Literal],
                               variable_instance: Variable,
-                              Boolean: Bool) -> Clause:
+                              boolean: Bool) -> Clause:
     """Assign Bool value to a Variable if present in Clause.
 
     Replace all instances of ``variable_instance`` and its negation in ``literal_set``
-    with ``Boolean`` and its negation respectively.
+    with ``boolean`` and its negation respectively.
     Leave all else unchanged.
     Perform tautological reductions on the Clause before returning results.
     This function is idempotent.
@@ -379,30 +379,30 @@ def assign_variable_in_clause(literal_set: AbstractSet[Literal],  # noqa, pylint
        literal_set (:obj:`AbstractSet[Literal]`): an abstract set (set or frozenset) of
           Literals.
        variable_instance (:obj:`Variable`)
-       Boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+       boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
        Tautologically-reduced Clause formed by assigning ``variable_instance`` to
-       ``Boolean`` in ``literal_set``.
+       ``boolean`` in ``literal_set``.
 
     """
     assign_variable: Callable[[Literal], Literal]
     assign_variable = ft.partial(assign_variable_in_literal,
                                  variable_instance=variable_instance,
-                                 Boolean=Boolean)
+                                 boolean=boolean)
     mapped_literals: Set[Literal]
     mapped_literals = set(map(assign_variable, literal_set))
 
     return tautologically_reduce_clause(mapped_literals)
 
 
-def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],  # noqa, pylint: disable=invalid-name
+def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],
                            variable_instance: Variable,
-                           Boolean: Bool) -> CNF:
+                           boolean: Bool) -> CNF:
     """Assign Bool value to a Variable if present in CNF.
 
     Replace all instances of ``variable_instance`` and its negation in ``clause_set``
-    with ``Boolean`` and its negation respectively.
+    with ``boolean`` and its negation respectively.
     Leave all else unchanged.
     Perform tautological reductions on the CNF before returning results.
     This function is idempotent.
@@ -411,17 +411,17 @@ def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],  # noq
        clause_set (:obj:`AbstractSet[AbstractSet[Literal]]`): an abstract set (set or
           frozenset) of abstract sets of Literals.
        variable_instance (:obj:`Variable`)
-       Boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+       boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
        Tautologically-reduced CNF formed by assigning ``variable_instance`` to
-       ``Boolean`` in ``clause_set``.
+       ``boolean`` in ``clause_set``.
 
     """
     assign_variable: Callable[[Clause], Clause]
     assign_variable = ft.partial(assign_variable_in_clause,
                                  variable_instance=variable_instance,
-                                 Boolean=Boolean)
+                                 boolean=boolean)
 
     mapped_clauses: Set[Clause]
     mapped_clauses = set(map(assign_variable, clause_set))
@@ -449,8 +449,8 @@ def assign(cnf_instance: CNF, assignment: Mapping[Variable, Bool]) -> CNF:
 
     """
     cnf_copy: FrozenSet[Clause] = cnf_instance.copy()
-    for variable_instance, Boolean in assignment.items():  # pylint: disable=invalid-name
-        cnf_copy = assign_variable_in_cnf(cnf_copy, variable_instance, Boolean)
+    for variable_instance, boolean in assignment.items():
+        cnf_copy = assign_variable_in_cnf(cnf_copy, variable_instance, boolean)
     return tautologically_reduce_cnf(cnf_copy)
 
 

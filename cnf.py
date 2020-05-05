@@ -53,10 +53,10 @@ class Bool(Literal):
 
 
 #: ``TRUE = Bool(1)``, a final instance of Bool.
-TRUE: Bool = Bool(1)
+TRUE: Final[Bool] = Bool(1)
 
 #: ``FALSE = Bool(0)``, a final instance of Bool.
-FALSE: Bool = Bool(0)
+FALSE: Final[Bool] = Bool(0)
 
 Variable = NewType('Variable', int)
 Variable.__doc__ = """`Variable` is a subtype of `int`."""
@@ -173,10 +173,10 @@ def cnf(clause_collection: Collection[Collection[int]]) -> CNF:
 # (not documented, for internal use only)
 
 
-TRUE_CLAUSE: Clause = clause([TRUE])
-FALSE_CLAUSE: Clause = clause([FALSE])
-TRUE_CNF: CNF = cnf([[TRUE]])
-FALSE_CNF: CNF = cnf([[FALSE]])
+TRUE_CLAUSE: Final[Clause] = clause([TRUE])
+FALSE_CLAUSE: Final[Clause] = clause([FALSE])
+TRUE_CNF: Final[CNF] = cnf([[TRUE]])
+FALSE_CNF: Final[CNF] = cnf([[FALSE]])
 
 
 # Basic Functions

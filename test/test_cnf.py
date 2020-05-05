@@ -105,8 +105,8 @@ def test_absolute_value():
         absolute_value(0)
 
 
-def test_literals_in_cnf():
-    assert literals_in_cnf(cnf([[1, -2],[3, TRUE], [FALSE]])) == {1, -2, 3, TRUE, FALSE}
+def test_literals():
+    assert literals(cnf([[1, -2],[3, TRUE], [FALSE]])) == {1, -2, 3, TRUE, FALSE}
 
 
 def test_tautologically_reduce_clause():

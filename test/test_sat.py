@@ -93,8 +93,7 @@ def test_cnfs_from_hedge():
     # Typical example with isolated vertex, multiplicity=2.
     assert list(cnfs_from_hedge([1], 2)) == [cnf.cnf([[1], [-1]])]
 
-    with pytest.raises(ValueError):
-        cnfs_from_hedge([1], 3) #  exceeds possible multiplicity
+    assert not list(cnfs_from_hedge([1], 3)) #  exceeds possible multiplicity
 
     # Typical example with edge of size=2, multiplicity=1.
     assert set(cnfs_from_hedge({1, 2}, 1)) == {cnf.cnf([[1, 2]]),
@@ -119,10 +118,9 @@ def test_cnfs_from_hedge():
     # Typical example with edge of size=2, multiplicity=4.
     assert list(cnfs_from_hedge({1, 2}, 4)) == [cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])]
 
-    with pytest.raises(ValueError):
-        cnfs_from_hedge({1, 2}, 0)  # zero multplicity raises error.
-    with pytest.raises(ValueError):
-        cnfs_from_hedge({1, 2}, 5)  # exceeds allowed multiplicity.
+    with pytest.raises(ValueError):  # zero multplicity. Raises ValueError when making CNFs.
+        list(cnfs_from_hedge({1, 2}, 0))
+    assert not list(cnfs_from_hedge({1, 2}, 5)) # exceeds allowed multiplicity.
 
 
 def test_cnfs_from_mhgraph():
@@ -138,10 +136,8 @@ def test_cnfs_from_mhgraph():
     assert list(cnfs_from_mhgraph(mhgraph.mhgraph([[1, 2], [1, 2], [1, 2], [1, 2]]))) \
         == [cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])]
 
-    with pytest.raises(ValueError):
-        cnfs_from_mhgraph(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2}): 5})))
-    with pytest.raises(ValueError):
-        cnfs_from_mhgraph(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2, 3}): 9})))
+    assert not list(cnfs_from_mhgraph(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2}): 5}))))
+    assert not list(cnfs_from_mhgraph(mhgraph.mhgraph(mhgraph.counter({frozenset({1, 2, 3}): 9}))))
 
 
 def test_mhgraph_bruteforce_satcheck():

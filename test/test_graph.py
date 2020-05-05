@@ -46,8 +46,7 @@ def test_graph():
     assert graph([[1, 2], [3, 4]]) == {frozenset({1, 2}), frozenset({3, 4})}
     assert graph([[1], [3]]) == {frozenset({1}), frozenset({3})}
     assert graph([[1, 2], [3]]) == {frozenset({1, 2}), frozenset({3})}
-    with pytest.raises(ValueError):
-        graph([[1, 2], [1]])
+    assert graph([[1, 2], [1]]) == {frozenset({1, 2}), frozenset({1})}
 
 
     with pytest.raises(ValueError):

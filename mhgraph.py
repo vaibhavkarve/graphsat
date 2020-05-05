@@ -11,30 +11,24 @@ with the following properties:
    - All simple graphs (as laid out on the graph.py module) are MHGraphs.
    - Hyper-edges (referred to simply as an HEdge) are allowed, meaning that an can join
      more than two vertices together.
-   - Multi-edges are allowed, meaning that each HEdge comes with a non-negative multiplicity:
+   - Multi-edges are allowed, meaning that each HEdge comes with a non-negative
+     multiplicity:
       - multiplicity one HEdges are called simple edges.
       - multiplicity zero HEdges are simply ignored.
    - Multi-hyper-edges are allowed (meaning hyper-edges can also have multiplicities).
-   - Isolated vertices are allowed.
+   - Isolated vertices are allowed (single-vertex-edge are allowed -- think of these as
+     self-loops).
    - Collapsed edges are not allowed, meaning an edge can be incident on a given vertex
      only once.
-   - This also implies that looped-edges are not allowed, i.e. each edge must be
-     incident on at least two distinct vertices.
-
-Special note:
-
-   In the graph.py module, special care was taken to prevent any vertices from appearing
-   in both single-vertex-edges as well as vertex-pair-edges. This restriction is lifted in
-   case of MHGraphs.
 
 A *HGraph* is a MHGraph without HEdge-multiplicities.
 
 """
 
 from collections import Counter as counter
-from typing import (AbstractSet, cast, Counter, Dict, FrozenSet, Iterable, List, NewType,
-                    TypeVar, Union)
-from loguru import logger  # type: ignore[import]
+from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet, List,
+                    NewType, TypeVar, Union)
+from loguru import logger
 
 import graph
 
@@ -58,7 +52,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
 
     """
 
-    def __hash__(self) -> int:  # type: ignore[override]
+    def __hash__(self) -> int:  # type: ignore
         """Hash function that depends only on the keys of the Counter, ignoring values."""
         return hash(frozenset(self))
 
@@ -77,10 +71,10 @@ class PreMHGraph(Counter[AbstractSet[T]]):
             return unicode_superscripts.get(multiplicity, f'^{multiplicity}')
 
         ordered_hedges: List[List[T]]
-        ordered_hedges = sorted(sorted([sorted(hedge) for hedge in super().keys()]), key=len)
+        ordered_hedges = sorted(sorted([sorted(h) for h in super().keys()]), key=len)
 
         hedge_strings: List[str]
-        hedge_strings = [hedge_string(hedge) + superscript(hedge) for hedge in ordered_hedges]
+        hedge_strings = [hedge_string(h) + superscript(h) for h in ordered_hedges]
 
         return ','.join(hedge_strings)
 
@@ -102,81 +96,81 @@ MHGraph.__doc__ = """`MHGraph` is a subtype of `PreMHGraph[graph.Vertex]`."""
 # =====================
 
 
-def hedge(vertex_iterable: Iterable[int]) -> HEdge:
+def hedge(vertex_collection: Collection[int]) -> HEdge:
     """Constructor-function for HEdge type.
 
     For definition of HEdge, refer to :ref:`definitionofagraph`.
     This function is idempotent.
 
     Args:
-       vertex_iterable (:obj:`Iterable[int]`): a nonempty iterable (list, tuple, set,
-          frozenset, or iterator) of Vertices.
+       vertex_collection (:obj:`Collection[int]`): a nonempty collection (list, tuple,
+          set, or frozenset) of Vertices.
 
     Return:
        Check that each element satisfies the axioms for being a graph.Vertex.
        If yes, then cast to HEdge.
 
     Raises:
-       ValueError: If ``vertex iterable`` is an empty iterable.
+       ValueError: If ``vertex_collection`` is an empty collection.
 
     """
-    if not vertex_iterable:
-        raise ValueError(f'Encountered empty input {list(vertex_iterable)}')
-    return HEdge(frozenset(map(graph.vertex, vertex_iterable)))
+    if not vertex_collection:
+        raise ValueError(f'Encountered empty input {list(vertex_collection)}')
+    return HEdge(frozenset(map(graph.vertex, vertex_collection)))
 
 
-def hgraph(hedge_iterable: Iterable[Iterable[int]]) -> HGraph:
+def hgraph(hedge_collection: Collection[Collection[int]]) -> HGraph:
     """Constructor-function for HGraph type.
 
     A HGraph, is a MHGraph without HEdge-multiplicities.
     This function is idempotent.
 
     Args:
-       hedge_iterable (:obj:`Iterable[Iterable[int]]`): a nonempty iterable (counter,
-          list, tuple, set, frozenset, or iterator) of nonempty iterables of Vertices.
+       hedge_collection (:obj:`Collection[Collection[int]]`): a nonempty collection
+          (counter, list, tuple, set, or frozenset) of nonempty collection of Vertices.
 
     Return:
-       If each element of the iterable satisfies the axioms for being a HEdge, then the
+       If each element of the collection satisfies the axioms for being a HEdge, then the
        input is cast as a graph.PreGraph and then a HGraph.
 
     Raises:
-       ValueError: If ``edge_iterable`` is an empty iterable.
+       ValueError: If ``hedge_collection`` is an empty collection.
 
     """
-    if not hedge_iterable:
-        raise ValueError(f'Encountered empty input {hedge_iterable}')
-    return HGraph(graph.PreGraph(set(map(hedge, hedge_iterable))))
+    if not hedge_collection:
+        raise ValueError(f'Encountered empty input {hedge_collection}')
+    return HGraph(graph.PreGraph(set(map(hedge, hedge_collection))))
 
 
-def mhgraph(edge_iterable: Iterable[Iterable[int]]) -> MHGraph:
+def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
     """Constructor-function for MHGraph type.
 
     For definition of a MHGraph, refer to :ref:`definitionofagraph`.
     This function is idempotent.
 
     Args:
-       edge_iterable (obj:`Iterable[Iterable[int]]`): a nonempty Iterable (counter,
-          list, tuple, set, frozenset, or iterator) of nonempty iterables of Vertices.
+       edge_collection (obj:`Collection[Collection[int]]`): a nonempty Collection
+          (counter, list, tuple, set, or frozenset) of nonempty collections of Vertices.
 
     Return:
-       If ``edge_iterable`` is a Counter, then this function takes HEdge-multiplicities
-       into account (values of the Counter). If each element of the iterable satisfies
+       If ``edge_collection`` is a Counter, then this function takes HEdge-multiplicities
+       into account (values of the Counter). If each element of the collection satisfies
        the axioms for being an HEdge, then the input is cast as a PreMHGraph and then a
        MHGraph.
 
     Raises:
-       ValueError: If ``edge_iterable`` is an empty iterable.
+       ValueError: If ``edge_collection`` is an empty collection.
 
     """
-    if not edge_iterable:
-        raise ValueError(f'Encountered empty input {list(edge_iterable)}')
+    if not edge_collection:
+        raise ValueError(f'Encountered empty input {list(edge_collection)}')
 
-    if hasattr(edge_iterable, 'elements'):
-        # edge_iterable is a Counter.
-        edge_iterable = cast(Counter[Iterable[graph.Vertex]], edge_iterable)
-        return MHGraph(PreMHGraph(map(hedge, edge_iterable.elements())))
-    # edge_iterable is not a Counter.
-    return MHGraph(PreMHGraph(map(hedge, edge_iterable)))
+    if hasattr(edge_collection, 'elements'):
+        # edge_collection is a Counter.
+        edge_collection = cast(Counter[Collection[graph.Vertex]], edge_collection)
+        return MHGraph(PreMHGraph(map(hedge, edge_collection.elements())))
+    # edge_collection is not a Counter.
+    return MHGraph(PreMHGraph(map(hedge, edge_collection)))
 
 
 # Basic Functions

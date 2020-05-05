@@ -6,8 +6,9 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
+import more_itertools as mit  # type: ignore
 from typing import (AbstractSet, Callable, cast, Dict, FrozenSet,
-                    Iterator, KeysView, Mapping, NamedTuple, NewType,
+                    Iterator, KeysView, List, Mapping, NamedTuple, NewType,
                     Optional, Tuple, Union)
 from loguru import logger
 
@@ -34,20 +35,6 @@ InjectiveVertexMap.__doc__ = """`InjectiveVertexMap` is a subtype of `VertexMap`
 
 Morphism = NewType('Morphism', InjectiveVertexMap)
 Morphism.__doc__ = """`Morphism` is a subtype of `InjectiveVertexMap`."""
-
-
-class NotASubgraphError(Exception):
-    """Exception raised when a MHGraph is not a subgraph of another.
-
-    Attributes:
-        message -- explanation of the error
-
-    """
-
-    def __init__(self, message: Optional[str] = None) -> None:
-        """Init method for the custom Exception."""
-        super().__init__()
-        self.message = message
 
 
 # Conversion Functions
@@ -114,7 +101,7 @@ def mhgraph_from_graph(graph_instance: Graph) -> MHGraph:
 
 def vertexmap(translation: Mapping[Vertex, Vertex],
               hgraph1: HGraph,
-              hgraph2: Optional[HGraph] = None) -> VertexMap:
+              hgraph2: Optional[HGraph] = None) -> Optional[VertexMap]:
     """Check if a Translation is a VertexMap from one HGraph to another.
 
     A Translation is a `VertexMap` if its keys are **all** the Vertices of the domain
@@ -134,13 +121,9 @@ def vertexmap(translation: Mapping[Vertex, Vertex],
           ``hgraph1`` to itself.
 
     Return:
-       A VertexMap named-tuple.
-
-    Raises:
-       ValueError: if not every Vertex of ``hgraph1`` is a key of ``translation``.
-       ValueError: if the values of ``translation`` are not a subset of the Vertices of
-          ``hgraph2``.
-
+       A VertexMap named-tuple. Return ``None`` if:
+       * not every Vertex of ``hgraph1`` is a key of ``translation``.
+       * the values of ``translation`` are not a subset of the Vertices of ``hgraph2``.
     """
     if hgraph2 is None:
         hgraph2 = hgraph1
@@ -152,13 +135,11 @@ def vertexmap(translation: Mapping[Vertex, Vertex],
     values_are_some_vertices = set(translation.values()) <= vertices(hgraph2)
 
     if keys_are_all_vertices and values_are_some_vertices:
-        return VertexMap(hgraph1=hgraph1,
-                         hgraph2=hgraph2,
-                         translation=dict(translation))
-    raise ValueError('The given translation map does not satisfy VertexMap axioms.')
+        return VertexMap(hgraph1, hgraph2, translation=dict(translation))
+    return None
 
 
-def injective_vertexmap(vmap: VertexMap) -> InjectiveVertexMap:
+def injective_vertexmap(vmap: VertexMap) -> Optional[InjectiveVertexMap]:
     """Check if a VertexMap is injective.
 
     A VertexMap is `injective` if its Translation dictionary is, i.e. if its translation
@@ -168,15 +149,13 @@ def injective_vertexmap(vmap: VertexMap) -> InjectiveVertexMap:
        vmap (:obj:`VertexMap`): a VertexMap named-tuple.
 
     Return:
-       ``vmap`` after casting to an InjectiveVertexMap named-tuple.
-
-    Raises:
-       ValueError: if ``vmap`` is not injective.
-
+       ``vmap`` after casting to an InjectiveVertexMap named-tuple. Return ``None`` if
+          ``vmap`` is not injective.
     """
     if len(vmap.translation.keys()) == len(frozenset(vmap.translation.values())):
         return InjectiveVertexMap(vmap)
-    raise ValueError('The given VertexMap does not satisfy InjectiveVertexMap axioms.')
+    # The given VertexMap does not satisfy InjectiveVertexMap axioms.
+    return None
 
 
 def graph_image(ivmap: InjectiveVertexMap, mhgraph_instance: MHGraph) -> MHGraph:
@@ -213,7 +192,7 @@ def graph_image(ivmap: InjectiveVertexMap, mhgraph_instance: MHGraph) -> MHGraph
     return mhgraph(list(mapped_mhgraph))
 
 
-def morphism(ivmap: InjectiveVertexMap) -> Morphism:
+def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
     """Check if an InjectiveVertexMap is a Morphism.
 
     A `Morphism` (which is short for HGraph-homomophism) is an InjectiveVertexMap
@@ -231,19 +210,17 @@ def morphism(ivmap: InjectiveVertexMap) -> Morphism:
        ivmap (:obj:`InjectiveVertexMap`): an InjectiveVertexMap named-tuple.
 
     Return:
-       ``ivmap`` cast as a Morphism named-tuple.
-
-    Raises:
-       ValueError: if a HEdge of ``ivmap.hgraph1`` gets mapped to a HEdge under
-                   ``ivmap.translation`` that is not an HEdge of ``ivmap.hgraph2``.
-
+       ``ivmap`` cast as a Morphism named-tuple. Return ``None`` if a HEdge of
+       ``ivmap.hgraph1`` gets mapped to a HEdge under ``ivmap.translation`` that is not an
+       HEdge of ``ivmap.hgraph2``.
     """
     mapped_hedges: KeysView[AbstractSet[Vertex]]
     mapped_hedges = graph_image(ivmap, mhgraph(ivmap.hgraph1)).keys()
 
     if all(hedge in ivmap.hgraph2 for hedge in mapped_hedges):
         return Morphism(ivmap)
-    raise ValueError('The given InjectiveVertexMap does not satisfy Morphism axioms.')
+    # The given InjectiveVertexMap does not satisfy Morphism axioms.
+    return None
 
 
 # Higher (MH)Graph Operations
@@ -288,8 +265,7 @@ def generate_vertexmaps(hgraph1: HGraph,
         else it.combinations_with_replacement
 
     codomain: Iterator[Tuple[Vertex, ...]]
-    codomain = combinatorial_scheme(vertices(hgraph2),
-                                    len(vertices(hgraph1)))
+    codomain = combinatorial_scheme(vertices(hgraph2), len(vertices(hgraph1)))
 
     mappings1: Iterator[Tuple[Tuple[Vertex, ...], Tuple[Vertex, ...]]]
     mappings1 = it.product(domain, codomain)
@@ -300,25 +276,18 @@ def generate_vertexmaps(hgraph1: HGraph,
     translations: Iterator[Translation]
     translations = map(dict, mappings2)
 
-    def translation_to_vertexmap(translation: Translation) -> Optional[VertexMap]:
-        try:
-            return vertexmap(hgraph1=hgraph1, hgraph2=hgraph2, translation=translation)
-        except ValueError:
-            return None
+    vertexmaps_optional: Iterator[Optional[VertexMap]]
+    vertexmaps_optional = map(lambda t: vertexmap(t, hgraph1, hgraph2), translations)
 
     vertexmaps: Iterator[VertexMap]
-    vertexmaps = filter(None, map(translation_to_vertexmap, translations))
+    vertexmaps = filter(None, vertexmaps_optional)
+
     if not injective:
         return vertexmaps
 
-    def vertexmap_to_injective(vmap: VertexMap) -> Optional[InjectiveVertexMap]:
-        try:
-            return injective_vertexmap(vmap)
-        except ValueError:
-            return None
-
     injective_vertexmaps: Iterator[InjectiveVertexMap]
-    injective_vertexmaps = filter(None, map(vertexmap_to_injective, vertexmaps))
+    injective_vertexmaps = filter(None, map(injective_vertexmap, vertexmaps))
+
     return injective_vertexmaps
 
 
@@ -342,9 +311,8 @@ def is_immediate_subgraph(mhgraph1: MHGraph, mhgraph2: MHGraph) -> bool:
                for hedge, mult in mhgraph1.items())
 
 
-def subgraph_search(mhgraph1: MHGraph,
-                    mhgraph2: MHGraph,
-                    return_all: bool = False) -> Union[Morphism, Iterator[Morphism]]:
+def subgraph_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = False) \
+        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhgraph1`` is a `subgraph` of ``mhgraph2`` if there is a Morphism with domain HGraph
@@ -359,58 +327,57 @@ def subgraph_search(mhgraph1: MHGraph,
          ``hgraph_from_mhgraph(mhgraph1)`` to ``hgraph_from_mhgraph(mhgraph2)``.
        * Find the image of ``hgraph_from_mhgraph(mhgraph1)`` under each Morphism.
        * Check that each HEdge of the image HGraph is present with higher multiplicity in
-         the codomain  If yes, then return the Morphism (as it is the subgraph
-         Morphism). If not, then raise a NotASubgraphError.
+         the codomain.
+          * If yes, and if ``return_all`` is False, then return ``(True, m)``, where ``m``
+            is the subgraph Morphism. If ``return_all`` is True, then return
+            ``(True, iterator_of_morphisms)``.
+          * If not, then always return``(False, None)``.
 
     Args:
        mhgraph1 (:obj:`MHGraph`): the domain mhgraph.
        mhgraph2 (:obj:`MHGraph`): the codomain mhgraph.
+       return_all (:obj:`bool`): if False (default) return only one witeness Morphism,
+          else return all.
 
     Return:
-       If ``mhgraph1`` is indeed the subgraph of ``mhgraph2``, then return a Morphism
-       named-tuple with domain Graph ``graph_from_mhgraph(mhgraph1)``, codomain Graph
-       ``graph_from_mhgraph(mhgraph2)`` and translation dictionary as the Translation that
-       maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
-
-    Raises:
-       NotASubgraphError - If ``mhgraph1`` is not a subgraph of ``mhgraph2``.
-
+       * If ``mhgraph1`` is a subgraph of ``mhgraph2`` then return ``(True, m)`` or
+         ``(True, iterator_of_morphisms)``, depending on the value of ``return_all``.
+       * If ``mhgraph1`` is not a subgraph of ``mhgraph2``, then always return
+         ``(False, None)``.
     """
     # Heuristic checks
     if any((len(vertices(mhgraph1)) > len(vertices(mhgraph2)),
             len(mhgraph1.keys()) > len(mhgraph2.keys()),
             sum(mhgraph1.values()) > sum(mhgraph2.values()))):
-        raise NotASubgraphError(f'{mhgraph1} is not a subgraph of {mhgraph2}'
-                                ' based on heuristic checks.')
+        # Failed heuristic checks. Not a subgraph.
+        return False, None
 
     injective_vertexmaps = cast(Iterator[InjectiveVertexMap],
                                 generate_vertexmaps(hgraph_from_mhgraph(mhgraph1),
                                                     hgraph_from_mhgraph(mhgraph2),
                                                     injective=True))
 
-    def injective_vertexmap_to_morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
-        try:
-            return morphism(ivmap)
-        except ValueError:
-            return None
-
     morphisms: Iterator[Morphism]
-    morphisms = filter(None, map(injective_vertexmap_to_morphism, injective_vertexmaps))
+    morphisms = filter(None, map(morphism, injective_vertexmaps))
 
-    subgraph_morphisms: Iterator[Morphism] \
-        = filter(lambda m: is_immediate_subgraph(graph_image(m, mhgraph1),
-                                                 mhgraph2), morphisms)
-    if not return_all:
-        try:
-            return next(subgraph_morphisms)  # Return the first one, else raise Error
-        except StopIteration:
-            raise NotASubgraphError(f'{mhgraph1} is not a subgraph of {mhgraph2}')
-    return subgraph_morphisms
+    subgraph_morphisms: Iterator[Morphism]
+    subgraph_morphisms = filter(lambda m: is_immediate_subgraph(graph_image(m, mhgraph1),
+                                                                mhgraph2), morphisms)
+
+    first_morphism: List[Morphism]
+    first_morphism, subgraph_morphisms = mit.spy(subgraph_morphisms)
+    if not first_morphism:
+        # Not a subgraph.
+        return False, None
+
+    if return_all:
+        return True, subgraph_morphisms
+    # Return the only item in first_morphism.
+    return True, mit.one(first_morphism)
 
 
-def isomorphism_search(mhgraph1: MHGraph,
-                       mhgraph2: MHGraph,
-                       return_all: bool = False) -> Union[Morphism, Iterator[Morphism]]:
+def isomorphism_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = False) \
+        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
     Use :obj:`subgraph_search()` twice to check if ``mhgraph1`` is isomorphic to
@@ -420,26 +387,26 @@ def isomorphism_search(mhgraph1: MHGraph,
     Args:
        mhgraph1 (:obj:`MHGraph`): the domain mhgraph.
        mhgraph2 (:obj:`MHGraph`): the codomain mhgraph.
+       return_all (:obj:`bool`): if False (default), then return only one witness
+          isomorphism else return all.
 
     Return:
-       If ``mhgraph1`` is indeed isomorphic to ``mhgraph2``, then return a Morphism
-       named-tuple with domain Graph ``graph_from_mhgraph(mhgraph1)``, codomain Graph
-       ``graph_from_mhgraph(mhgraph2)`` and translation dictionary as the Translation that
-       maps Vertices of ``mhgraph1`` into Vertices of ``mhgraph2``.
-
-    Raises:
-       NotASubgraphError - If ``mhgraph1`` is not isomorphic to ``mhgraph2``.
-
+       If ``mhgraph1`` is indeed isomorphic to ``mhgraph2``, and if ``return_all`` is
+       False, then return a ``(True, m)``, where ``m`` is an isomorphism.
+       If ``return_all`` is True, then return ``(True, iterator_of_morphisms)``.
+       If ``mhgraph1`` is not isomorphic to ``mhgraph2``, then return ``(False, None)``.
     """
     # Heuristic checks
     if any((len(vertices(mhgraph1)) != len(vertices(mhgraph2)),
             len(mhgraph1.keys()) != len(mhgraph2.keys()),
             sorted(mhgraph1.values()) != sorted(mhgraph2.values()))):
-        raise NotASubgraphError(f'{mhgraph1} is not isomorphic to {mhgraph2}'
-                                ' based on heuristic checks.')
+        # Not isomorphic.
+        return False, None
 
-    return subgraph_search(mhgraph1, mhgraph2, return_all) \
-        or subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=return_all)
+    if not subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=False)[0]:
+        # Not isomorphic.
+        return False, None
+    return subgraph_search(mhgraph1, mhgraph2, return_all=return_all)
 
 
 if __name__ == '__main__':
@@ -449,3 +416,8 @@ if __name__ == '__main__':
                 'mhgraph([[3, 2, 4], [2, 4]]))')
     logger.info(isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]),
                                    mhgraph([[3, 2, 4], [2, 4]])))
+    logger.info('>>> isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]), '
+                'mhgraph([[3, 2, 4], [2, 4]]),return_all=True)')
+    logger.info(isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]),
+                                   mhgraph([[3, 2, 4], [2, 4]]),
+                                   return_all=True))

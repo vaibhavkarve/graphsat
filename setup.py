@@ -17,7 +17,7 @@ setup(name='graphsat',
       license='GNU GPLv3',
       keywords='graph, hypergraph, multigraph, typed',
       long_description=read('README'),
-      packages=['.', 'test'],
+      packages=find_packages(),
       classifiers=[
                    'Development Status :: 4 - Beta',
                    'Intended Audience :: Science/Research',

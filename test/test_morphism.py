@@ -1,115 +1,95 @@
 #! /usr/bin/env python3
 
 import pytest
-from morphism import *
-
-
+import morphism
+vm = morphism.vertexmap
+mhg = morphism.mhgraph
+ivm = morphism.injective_vertexmap
+gvm = morphism.generate_vertexmaps
+gi = morphism.graph_image
+mm = morphism.morphism
+hg = morphism.hgraph
+ss = morphism.subgraph_search
+iss = morphism.isomorphism_search
 
 def test_vertexmap():
-    assert vertexmap({1: 11, 2: 12}, mhgraph([[1, 2]]), mhgraph([[11, 12, 13], [3, 2]]))
-    assert vertexmap({1: 11, 2: 12}, mhgraph([[1, 2], [1, 2]]), mhgraph([[11, 12], [4, 2]]))
-    assert vertexmap({1: 2, 2: 1}, mhgraph([[1, 2]]))
-    assert vertexmap({1: 2}, mhgraph([[1]]), mhgraph([[2]]))
-    with pytest.raises(ValueError):
-        vertexmap({1: 2, 2: 1}, mhgraph([[1, 2, 3]]))
-    with pytest.raises(ValueError):
-        vertexmap({1: 11, 2: 12}, mhgraph([[1, 2]]))
-    with pytest.raises(ValueError):
-        vertexmap({}, mhgraph([[1, 2], [3, 4]]))
+    assert vm({1: 11, 2: 12}, mhg([[1, 2]]), mhg([[11, 12, 13], [3, 2]]))
+    assert vm({1: 11, 2: 12}, mhg([[1, 2], [1, 2]]), mhg([[11, 12], [4, 2]]))
+    assert vm({1: 2, 2: 1}, mhg([[1, 2]]))
+    assert vm({1: 2}, mhg([[1]]), mhg([[2]]))
+    assert vm({1: 2, 2: 1}, mhg([[1, 2, 3]])) is None
+    assert vm({1: 11, 2: 12}, mhg([[1, 2]])) is None
+    assert vm({}, mhg([[1, 2], [3, 4]])) is None
 
 
 def test_injective_vertexmap():
-    assert injective_vertexmap(vertexmap({1: 11, 2: 12},
-                                         mhgraph([[1, 2], [1, 2]]),
-                                         mhgraph([[11, 12], [3, 2]])))
-    assert injective_vertexmap(vertexmap({1: 2, 2: 1},
-                                         mhgraph([[1, 2]])))
-    assert injective_vertexmap(vertexmap({1: 1}, mhgraph([[1]])))
-    with pytest.raises(ValueError):
-        injective_vertexmap(vertexmap({1: 3, 2: 3}, mhgraph([[1, 2]])))
-    with pytest.raises(ValueError):
-        injective_vertexmap(vertexmap({}, mhgraph([[1]])))
+    assert ivm(vm({1: 11, 2: 12}, mhg([[1, 2], [1, 2]]), mhg([[11, 12], [3, 2]])))
+    assert ivm(vm({1: 2, 2: 1}, mhg([[1, 2]])))
+    assert ivm(vm({1: 1}, mhg([[1]])))
 
 
 def test_graph_image():
-    ivmap = lambda vm, g1, g2: injective_vertexmap(vertexmap(vm, g1, g2))
-    assert graph_image(ivmap({11: 1, 12: 2}, mhgraph([[11], [11, 12]]), mhgraph([[1, 2]])),
-                       mhgraph([[11], [11, 12]])) == mhgraph([[1], [1, 2]])
+    ivmap = lambda vmap, g1, g2: ivm(vm(vmap, g1, g2))  # noqa
+    assert gi(ivmap({11: 1, 12: 2}, mhg([[11], [11, 12]]), mhg([[1, 2]])),
+              mhg([[11], [11, 12]])) == mhg([[1], [1, 2]])
 
-    assert graph_image(ivmap({11: 1, 12: 2, 13: 3},
-                             mhgraph([[13, 11, 12], [11, 13], [12]]),
-                             mhgraph([[1, 2, 3]])),
-                       mhgraph([[13, 11, 12], [11, 13], [12]])) \
-        == mhgraph([[2], [1, 3], [1, 2, 3]])
+    assert gi(ivmap({11: 1, 12: 2, 13: 3},
+                    mhg([[13, 11, 12], [11, 13], [12]]),
+                    mhg([[1, 2, 3]])),
+              mhg([[13, 11, 12], [11, 13], [12]])) == mhg([[2], [1, 3], [1, 2, 3]])
 
-    assert graph_image(ivmap({11: 1, 12: 2},
-                             mhgraph([[11, 12], [11, 12]]),
-                             mhgraph([[1, 2]])), mhgraph([[11, 12], [11, 12]])) \
-        == mhgraph([[1, 2], [1, 2]])
+    assert gi(ivmap({11: 1, 12: 2}, mhg([[11, 12], [11, 12]]),
+                    mhg([[1, 2]])), mhg([[11, 12], [11, 12]])) == mhg([[1, 2], [1, 2]])
 
 
 def test_morphism():
-    morph = lambda vm, g1, g2: morphism(injective_vertexmap(vertexmap(vm, g1, g2)))
-    mm = mhgraph
-    assert morph({11: 1, 12: 2}, mm([[11, 12]]), mm([[1, 2]]))
-    assert morph({11: 1, 12: 2}, mm([[11, 12], [11, 12]]), mm([[1, 2]]))
-    assert morph({11: 1, 12: 2, 13: 3}, mm([[11, 12], [12, 13]]), mm([[1, 2], [2, 3]]))
-    with pytest.raises(ValueError):
-        morph({11: 1, 12: 3, 13: 2}, mm([[11, 12], [12, 13]]), mm([[1, 2], [2, 3]]))
-    with pytest.raises(ValueError):
-        morph({11: 1, 12: 3}, mm([[11, 12], [12, 13]]), mm([[1, 2], [2, 3]]))
-    with pytest.raises(ValueError):
-        morph({}, mm([[11]]), mm([[11]]))
+    morph = lambda vmap, g1, g2: mm(ivm(vm(vmap, g1, g2))) # noqa
+    assert morph({11: 1, 12: 2}, mhg([[11, 12]]), mhg([[1, 2]]))
+    assert morph({11: 1, 12: 2}, mhg([[11, 12], [11, 12]]), mhg([[1, 2]]))
+    assert morph({11: 1, 12: 2, 13: 3}, mhg([[11, 12], [12, 13]]), mhg([[1, 2], [2, 3]]))
+    assert not morph({11: 1, 12: 3, 13: 2}, mhg([[11, 12], [12, 13]]),
+                     mhg([[1, 2], [2, 3]]))
 
 
 def test_generate_vertexmaps():
-    mh = hgraph
-    inj = lambda vm, g1, g2: injective_vertexmap(vertexmap(vm, g1, g2))
-
-    assert inj({1: 11, 2: 12}, mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]])) \
-        in generate_vertexmaps(mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]]), True)
-    assert inj({1: 12, 2: 11}, mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]])) \
-        in generate_vertexmaps(mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]]), True)
-    assert vertexmap({1: 11, 2: 11}, mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]])) \
-        not in generate_vertexmaps(mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]]), True)
-    assert vertexmap({1: 11, 2: 11}, mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]])) \
-        in generate_vertexmaps(mh([[1, 2], [1, 2]]), mh([[11, 12], [11, 12]]), False)
+    inj = lambda vmap, g1, g2: ivm(vm(vmap, g1, g2))  # noqa
+    assert inj({1: 11, 2: 12}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
+    assert inj({1: 12, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
+    assert vm({1: 11, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        not in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
+    assert vm({1: 11, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), False)
 
 
 def test_subgraph_search():
-    mm = mhgraph
-    assert subgraph_search(mm([[1]]), mm([[11]])).translation == {1: 11}
-    assert subgraph_search(mm([[1]]), mm([[11], [12]])).translation in [{1: 11}, {1: 12}]
-    assert subgraph_search(mm([[1, 2]]), mm([[11, 12]])).translation \
+    assert ss(mhg([[1]]), mhg([[11]]))[1].translation == {1: 11}
+    assert ss(mhg([[1]]), mhg([[11], [12]]))[1].translation in [{1: 11}, {1: 12}]
+    assert ss(mhg([[1, 2]]), mhg([[11, 12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert subgraph_search(mm([[1, 2]]), mm([[11, 12], [11]])).translation \
+    assert ss(mhg([[1, 2]]), mhg([[11, 12], [11]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert subgraph_search(mm([[1, 2]]), mm([[11, 12], [11, 12]])).translation \
+    assert ss(mhg([[1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert subgraph_search(mm([[1, 2], [1, 2]]), mm([[11, 12], [11, 12]])).translation \
+    assert ss(mhg([[1, 2], [1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert subgraph_search(mm([[1, 2]]), mm([[11, 12], [13, 14]])).translation \
+    assert ss(mhg([[1, 2]]), mhg([[11, 12], [13, 14]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}, {1: 13, 2: 14}, {1: 14, 2: 13}]
-    with pytest.raises(NotASubgraphError):
-        subgraph_search(mm([[1]]), mm([[11, 12]]))
-    with pytest.raises(NotASubgraphError):
-        subgraph_search(mm([[1, 2]]), mm([[1, 2, 3]]))
+    assert ss(mhg([[1]]), mhg([[11, 12]])) == (False, None)
+    assert ss(mhg([[1, 2]]), mhg([[1, 2, 3]])) == (False, None)
 
 
-def test_isomorphism():
-    mm = mhgraph
-    assert isomorphism_search(mm([[1]]), mm([[11]])).translation == {1: 11}
-    assert isomorphism_search(mm([[1], [2]]), mm([[11], [12]])).translation \
+def test_isomorphism_search():
+    assert iss(mhg([[1]]), mhg([[11]]))[1].translation == {1: 11}
+    assert iss(mhg([[1], [2]]), mhg([[11], [12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert isomorphism_search(mm([[1, 2]]), mm([[11, 12]])).translation \
+    assert iss(mhg([[1, 2]]), mhg([[11, 12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert isomorphism_search(mm([[1, 2], [1]]), mm([[11], [11, 12]])).translation \
+    assert iss(mhg([[1, 2], [1]]), mhg([[11], [11, 12]]))[1].translation \
         == {1: 11, 2: 12}
-    assert isomorphism_search(mm([[1, 2], [1, 2]]), mm([[11, 12], [11, 12]])).translation \
+    assert iss(mhg([[1, 2], [1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    with pytest.raises(NotASubgraphError):
-        isomorphism_search(mm([[1, 2]]), mm([[11, 12], [13, 14]]))
-    with pytest.raises(NotASubgraphError):
-        isomorphism_search(mm([[1, 2]]), mm([[11, 12], [11, 12]]))
-    with pytest.raises(NotASubgraphError):
-        isomorphism_search(mm([[1, 2]]), mm([[11, 12, 13]]))
+    assert iss(mhg([[1, 2]]), mhg([[11, 12], [13, 14]])) == (False, None)
+    assert iss(mhg([[1, 2]]), mhg([[11, 12], [11, 12]])) == (False, None)
+    assert iss(mhg([[1, 2]]), mhg([[11, 12, 13]])) == (False, None)

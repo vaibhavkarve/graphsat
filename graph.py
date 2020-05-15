@@ -17,26 +17,28 @@ with the following properties:
    - Edges do not have a directionality.
    - Edges do not have a multiplicity.
 """
+# Imports from standard library.
 from typing import Collection, FrozenSet, NewType, Set, TypeVar
+# Importing third-party modules.
 from loguru import logger
 
 
-# PreGraph for Storing Graphs
-# ===========================
+# GraphType for Storing Graphs
+# ============================
 # (for internal use only, partially documented)
 
-#: ``T = TypeVar('T')``, i.e. ``T`` is a type variable.
+#: ``T = TypeVar('T')``, i.e. ``T`` is a type varia
 T = TypeVar('T')  # pylint: disable=invalid-name
 
 
-class PreGraph(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
-    """`PreGraph[_T]` is a subclass of `Set[Iterable[_T]]`.
+class GraphType(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
+    """`GraphType[_T]` is a subclass of `Set[Collection[_T]]`.
 
     It overrides the ``__repr__`` method.
     """
 
     def __repr__(self) -> str:
-        """Print the PreGraph in a compact way."""
+        """Print the GraphType in a compact way."""
         def edge_string(edge_instance: Collection[T]) -> str:
             return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
 

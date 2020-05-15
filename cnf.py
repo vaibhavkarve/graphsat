@@ -58,14 +58,40 @@ TRUE: Final[Bool] = Bool(1)
 #: ``FALSE = Bool(0)``, a final instance of Bool.
 FALSE: Final[Bool] = Bool(0)
 
-Variable = NewType('Variable', int)
-Variable.__doc__ = """`Variable` is a subtype of `int`."""
 
-Clause = NewType('Clause', FrozenSet[Literal])
-Clause.__doc__ = """`Clause` is a subtype of `FrozenSet[Literal]`."""
+class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
+    """`Clause` is a subclass of `FrozenSet[Lit]`."""
 
-CNF = NewType('CNF', FrozenSet[Clause])
-CNF.__doc__ = """`CNF` is a subtype of `FrozenSet[Clause]`."""
+    def __str__(self) -> str:
+        """Pretty print a Clause.
+
+        Args:
+           self (:obj:`CNF`)
+        """
+        sorted_clause: List[Lit]
+        sorted_clause = sorted(self, key=absolute_value)
+        return '(' + ','.join(map(str, sorted_clause)) + ')'
+
+
+class CNF(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
+    """`CNF` is a subclass of `FrozenSet[Clause]`."""
+
+    def __str__(self) -> str:
+        """Pretty print a CNF.
+
+        Args:
+           self (:obj:`CNF`):
+
+        Return:
+           A sorted string of sorted clause tuples.
+        """
+        sorted_cnf: List[Clause]
+        sorted_cnf = sorted(self, key=lambda clause_: sum([lit < 0 for lit in clause_]))
+        sorted_cnf = sorted(sorted_cnf, key=len)
+
+        cnf_tuple: Iterator[str] = map(str, map(clause, sorted_cnf))
+        return ''.join(cnf_tuple)
+
 
 # Constructor Functions
 # =====================

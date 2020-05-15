@@ -4,10 +4,10 @@ import pytest
 from mhgraph import *
 
 
-class TestPreMHGraph(object):
+class TestMHGraphType(object):
     def test__hash__(self):
-        assert hash(PreMHGraph([(1, 2), (2, 3), (2, 3)])) \
-            == hash(PreMHGraph(counter({(1, 2): 1, (2, 3): 2})))
+        assert hash(MHGraphType([(1, 2), (2, 3), (2, 3)])) \
+            == hash(MHGraphType(counter({(1, 2): 1, (2, 3): 2})))
 
     def test__repr__(self):
         assert repr(mhgraph([[1, 2], [2, 3], [3, 2]])) in \
@@ -40,6 +40,8 @@ def test_hgraph():
     assert hgraph(hgraph([[1, 2], [2, 1], [3]])) == hgraph([[1, 2], [2, 1], [3]])
 
     with pytest.raises(ValueError):
+        hgraph([])
+    with pytest.raises(ValueError):
         hgraph([[]])
     with pytest.raises(ValueError):
         hgraph([[0]])
@@ -60,6 +62,8 @@ def test_mhgraph():
     assert mhgraph(mhgraph([[1, 2], [2, 1], [3]])) == mhgraph([[1, 2], [2, 1], [3]])
 
     with pytest.raises(ValueError):
+        mhgraph([])
+    with pytest.raises(ValueError):
         mhgraph([[]])
     with pytest.raises(ValueError):
         mhgraph([[0]])
@@ -76,3 +80,16 @@ def test_degree():
     assert degree(1, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 2
     assert degree(4, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 1
     assert degree(5, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 0
+    assert degree(1, mhgraph([[1], [2, 3]])) == 1
+
+def test_pick_max_degree_vertex():
+    assert pick_max_degree_vertex(mhgraph([[1, 2, 3], [3, 4, 5]])) == 3
+    assert pick_max_degree_vertex(mhgraph([[1, 2, 3], [2, 3, 4]])) in {2, 3}
+    assert pick_max_degree_vertex(mhgraph([[1], [2, 3], [2], [2, 4]])) == 2
+    assert pick_max_degree_vertex(mhgraph([[1]])) == 1
+
+def test_pick_min_degree_vertex():
+    assert pick_min_degree_vertex(mhgraph([[1, 2, 3], [3, 4, 5]])) in {1, 2, 4, 5}
+    assert pick_min_degree_vertex(mhgraph([[1, 2, 3], [2, 3, 4]])) in {1, 4}
+    assert pick_min_degree_vertex(mhgraph([[1], [2, 3], [2], [2, 4]])) in {1, 3, 4}
+    assert pick_min_degree_vertex(mhgraph([[1]])) == 1

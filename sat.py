@@ -35,7 +35,7 @@ This module implements three different MHGraph sat-solvers:
 # Imports from standard library
 import functools as ft
 import itertools as it
-from math import comb, prod
+from math import comb, prod  # type: ignore
 import subprocess
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, List, Set, Tuple, Union
 # Imports from third-party modules.
@@ -309,7 +309,8 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph) -> Iterator[cnf.CNF]:
 
 def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
     """Return the number of CNFs supported on a MHGraph."""
-    return prod(comb(2**len(h), m) for h, m in mhgraph_instance.items())
+    return cast(int,
+                prod(comb(2**len(h), m) for h, m in mhgraph_instance.items()))
 
 
 # Functions for Checking Satisfiability of MHGraphs

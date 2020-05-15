@@ -187,10 +187,10 @@ def graph_image(ivmap: InjectiveVertexMap, mhgraph_instance: MHGraph) -> MHGraph
     """
     get_translation = cast(Callable[[Vertex], Vertex], ivmap.translation.get)
 
-    mapped_mhgraph: Iterator[FrozenSet[Vertex]]
-    mapped_mhgraph = map(lambda hedge: frozenset(map(get_translation, hedge)),
-                         mhgraph_instance.elements())
-    return mhgraph(list(mapped_mhgraph))
+    mapped_mhgraph: List[FrozenSet[Vertex]]
+    mapped_mhgraph = list(map(lambda hedge: frozenset(map(get_translation, hedge)),
+                              mhgraph_instance.elements()))
+    return mhgraph(mapped_mhgraph)
 
 
 def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
@@ -229,14 +229,14 @@ def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
 
 
 def generate_vertexmaps(hgraph1: HGraph,
-                        hgraph2: Optional[HGraph],
+                        hgraph2: Optional[HGraph] = None,
                         injective: bool = True) -> Iterator[VertexMap]:
     """Generate all the (Injective)VertexMaps from domain HGraph to codomain HGraph.
 
     Args:
-       hgraph1 (:obj:`HGraph`): the domain H
-       hgraph2 (:obj:`HGraph`, optional): the codomain H If ``hgraph2`` is
-          not provided, then generate all (Injective)VertexMaps from ``hgraph1`` to
+       hgraph1 (:obj:`HGraph`): the domain HGraph.
+       hgraph2 (:obj:`HGraph`, optional): the codomain HGraph. If ``hgraph2`` is
+          not provided (default), then generate all (Injective)VertexMaps from ``hgraph1`` to
           itself.
        injective (:obj:`bool`, optional): if set to ``True`` (default), then generate all
           the InjectiveVertexMaps from ``hgraph1`` to ``hgraph2``. If set to ``False``,
@@ -405,14 +405,14 @@ def isomorphism_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = 
         return False, None
 
     if not subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=False)[0]:
-        # Not isomorphic.
-        return False, None
+        # Not isomorphic. Probably an unreachable line.
+        return False, None    # pragma: no cover
     return subgraph_search(mhgraph1, mhgraph2, return_all=return_all)
 
 
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as an independent script.')
-    logger.info(f'We can perform an isomophism search as follows:')
+    logger.info('We can perform an isomophism search as follows:')
     logger.info('>>> isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]), '
                 'mhgraph([[3, 2, 4], [2, 4]]))')
     logger.info(isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]),

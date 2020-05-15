@@ -54,8 +54,8 @@ Vertex.__doc__ = """`Vertex` is a subtype of `int`."""
 Edge = NewType('Edge', FrozenSet[Vertex])
 Edge.__doc__ = """`Edge` is a subtype of `FrozenSet[Vertex]`."""
 
-Graph = NewType('Graph', PreGraph[Vertex])
-Graph.__doc__ = """`Graph` is a subtype of `PreGraph[Vertex]`."""
+Graph = NewType('Graph', GraphType[Vertex])
+Graph.__doc__ = """`Graph` is a subtype of `GraphType[Vertex]`."""
 
 
 # Constructor Functions
@@ -123,7 +123,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
 
     Return:
        If each element of the collection satisfies the axioms for being an Edge, then the
-       input is cast as a PreGraph and then a Graph.
+       input is cast as a GraphType and then a Graph.
 
     Raises:
        ValueError: If ``edge_collection`` is an empty collection.
@@ -133,7 +133,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
         raise ValueError(f'Encountered empty input {list(edge_collection)}')
 
     edges: Set[Edge] = set(map(edge, edge_collection))
-    return Graph(PreGraph(edges))
+    return Graph(GraphType(edges))
 
 
 # Basic Functions

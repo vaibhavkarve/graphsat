@@ -32,8 +32,6 @@ def test_edge():
         edge([0])
     with pytest.raises(ValueError):
         edge([2, -1])
-    with pytest.raises(ValueError):
-        edge([1, 2, 3])
 
 
 def test_graph():
@@ -51,8 +49,6 @@ def test_graph():
     assert graph([[1, 2], [1]]) == {frozenset({1, 2}), frozenset({1})}
 
 
-    with pytest.raises(ValueError):
-        graph([])
     with pytest.raises(ValueError):
         graph([[]])
     with pytest.raises(ValueError):

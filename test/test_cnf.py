@@ -9,17 +9,6 @@ def test_Bool():
     assert TRUE in [1, 2, 3, TRUE]
     assert isinstance(TRUE, Bool)
     assert not isinstance(TRUE, bool)
-    with pytest.raises(ValueError):
-        print(Bool(2))
-
-
-def test_Clause_str():
-    assert str(clause([1, -3, 2])) == '(1,2,-3)'
-    assert str(clause([1])) == '(1)'
-
-
-def test_CNF_str():
-    assert str(cnf([[1], [-1, 2], [2, -1], [2, 3, -4]])) == '(1)(-1,2)(2,3,-4)'
 
 
 def test_variable():
@@ -30,18 +19,18 @@ def test_variable():
         variable(0)
 
 
-def test_lit():
-    assert lit(1) == 1
-    assert lit(-1) == -1
-    assert lit(11) ==  11
-    assert lit(TRUE) == TRUE
-    assert lit(FALSE) == FALSE
-    assert lit(lit(2)) == lit(2)  # Test for idempotence.
-    assert lit(lit(TRUE)) == lit(TRUE)  # Test for idempotence.
-    assert lit(lit(FALSE)) == lit(FALSE)  # Test for idempotence.
+def test_literal():
+    assert literal(1) == 1
+    assert literal(-1) == -1
+    assert literal(11) ==  11
+    assert literal(TRUE) == TRUE
+    assert literal(FALSE) == FALSE
+    assert literal(literal(2)) == literal(2)  # Test for idempotence.
+    assert literal(literal(TRUE)) == literal(TRUE)  # Test for idempotence.
+    assert literal(literal(FALSE)) == literal(FALSE)  # Test for idempotence.
 
     with pytest.raises(ValueError):
-        lit(0)
+        literal(0)
 
 
 def test_clause():
@@ -116,8 +105,8 @@ def test_absolute_value():
         absolute_value(0)
 
 
-def test_lits():
-    assert lits(cnf([[1, -2],[3, TRUE], [FALSE]])) == {1, -2, 3, TRUE, FALSE}
+def test_literals():
+    assert literals(cnf([[1, -2],[3, TRUE], [FALSE]])) == {1, -2, 3, TRUE, FALSE}
 
 
 def test_tautologically_reduce_clause():
@@ -162,20 +151,20 @@ def test_tautologically_reduce_cnf():
 
 
 
-def test_assign_variable_in_lit():
-    assert assign_variable_in_lit(1, 1, TRUE) == TRUE
-    assert assign_variable_in_lit(1, 1, FALSE) == FALSE
-    assert assign_variable_in_lit(-1, 1, TRUE) == FALSE
-    assert assign_variable_in_lit(-1, 1, FALSE) == TRUE
-    assert assign_variable_in_lit(1, 2, TRUE) == 1
-    assert assign_variable_in_lit(TRUE, 1, TRUE) == TRUE
-    assert assign_variable_in_lit(FALSE, 1, TRUE) == FALSE
+def test_assign_variable_in_literal():
+    assert assign_variable_in_literal(1, 1, TRUE) == TRUE
+    assert assign_variable_in_literal(1, 1, FALSE) == FALSE
+    assert assign_variable_in_literal(-1, 1, TRUE) == FALSE
+    assert assign_variable_in_literal(-1, 1, FALSE) == TRUE
+    assert assign_variable_in_literal(1, 2, TRUE) == 1
+    assert assign_variable_in_literal(TRUE, 1, TRUE) == TRUE
+    assert assign_variable_in_literal(FALSE, 1, TRUE) == FALSE
 
     # Test for idempotence
-    assert assign_variable_in_lit(assign_variable_in_lit(1, 1, TRUE), 1, TRUE) \
-        == assign_variable_in_lit(1, 1, TRUE)
-    assert assign_variable_in_lit(assign_variable_in_lit(-1, 1, TRUE), 1, TRUE) \
-        == assign_variable_in_lit(-1, 1, TRUE)
+    assert assign_variable_in_literal(assign_variable_in_literal(1, 1, TRUE), 1, TRUE) \
+        == assign_variable_in_literal(1, 1, TRUE)
+    assert assign_variable_in_literal(assign_variable_in_literal(-1, 1, TRUE), 1, TRUE) \
+        == assign_variable_in_literal(-1, 1, TRUE)
 
 
 def test_assign_variable_in_clause():

@@ -6,10 +6,11 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-import more_itertools as mit  # type: ignore
 from typing import (AbstractSet, Callable, cast, Dict, FrozenSet,
                     Iterator, KeysView, List, Mapping, NamedTuple, NewType,
                     Optional, Tuple, Union)
+
+import more_itertools as mit  # type: ignore
 from loguru import logger
 
 from graph import graph, Graph, Vertex

@@ -77,17 +77,17 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
     cnf_reduced: cnf.CNF
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
-    literal_set: FrozenSet[cnf.Literal]
-    literal_set = cnf.literals(cnf_reduced) - {cnf.TRUE, cnf.FALSE}
+    lit_set: FrozenSet[cnf.Lit]
+    lit_set = cnf.lits(cnf_reduced) - {cnf.TRUE, cnf.FALSE}
 
     variable_set: Set[cnf.Variable]
-    variable_set = set(map(cnf.variable, map(cnf.absolute_value, literal_set)))
+    variable_set = set(map(cnf.variable, map(cnf.absolute_value, lit_set)))
 
     assignment_values: Iterator[Tuple[cnf.Bool, ...]]
     assignment_values = it.product([cnf.TRUE, cnf.FALSE], repeat=len(variable_set))
 
-    for Boolean_tuple in assignment_values:  # pylint: disable=invalid-name
-        yield dict(zip(variable_set, Boolean_tuple))
+    for boolean_tuple in assignment_values:
+        yield dict(zip(variable_set, boolean_tuple))
 
 
 def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
@@ -113,10 +113,10 @@ def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
     if cnf_reduced == cnf.FALSE_CNF:
         return False
 
-    def simplifies_cnf_to_TRUE(assignment: Dict[cnf.Variable, cnf.Bool]) -> bool:  # noqa, pylint: disable=invalid-name
+    def simplifies_cnf_to_TRUE(assignment: Assignment) -> bool:  # noqa, pylint: disable=invalid-name
         return cnf.assign(cnf_reduced, assignment) == cnf.TRUE_CNF
 
-    satisfying_assignments: Iterator[Dict[cnf.Variable, cnf.Bool]]
+    satisfying_assignments: Iterator[Assignment]
     satisfying_assignments = filter(simplifies_cnf_to_TRUE,
                                     generate_assignments(cnf_reduced))
 
@@ -133,7 +133,7 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
        If the CNF is Satisfiable return ``True`` else return ``False``.
 
     """
-    from pysat.solvers import Minisat22  # type: ignore
+    from pysat.solvers import Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
 
     try:
         with Minisat22(cnf_instance) as minisat_solver:
@@ -155,13 +155,13 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
 def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:
     """Convert a CNF to DIMACS format.
 
-    The CNF is tautologically reduced first so as to not contain TRUE or FALSE literals.
+    The CNF is tautologically reduced first so as to not contain TRUE or FALSE lits.
     Args:
        cnf_instance (:obj:`cnf.CNF`)
 
     Return:
        A string which consists of lines. Each line is a Clause of the CNF ending with
-       zero. Each literal in the Clause is written with a space delimiter.
+       zero. Each lit in the Clause is written with a space delimiter.
 
        After tautological reduction, if the CNF reduced to TRUE or FALSE then return a
        string that will be correctly interpreted as such.
@@ -212,25 +212,26 @@ def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
         return True
     if result == 'UNSATISFIABLE':
         return False
-    raise RuntimeError('Unexpected output from minisat.', output)
+    # This is an unreachable.
+    raise RuntimeError('Unexpected output from minisat.', output)   # pragma: no cover
 
 
 # Functions for generating CNFs from MHGraphs
 # ===========================================
 
 
-def literals_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Literal, cnf.Literal]:
-    """Return a Literal as well as its negation from a Vertex.
+def lits_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Lit, cnf.Lit]:
+    """Return a Lit as well as its negation from a Vertex.
 
     Args:
        vertex (:obj:`graph.Vertex`)
 
     Returns:
-       ``vertex`` and ``cnf.neg(vertex)`` after casting each to cnf.Literal.
+       ``vertex`` and ``cnf.neg(vertex)`` after casting each to cnf.Lit.
 
     """
-    positive_literal: cnf.Literal = cnf.literal(vertex)
-    return positive_literal, cnf.neg(positive_literal)
+    positive_lit: cnf.Lit = cnf.lit(vertex)
+    return positive_lit, cnf.neg(positive_lit)
 
 
 def clauses_from_hedge(hedge: mhgraph.HEdge) -> Iterator[cnf.Clause]:
@@ -244,13 +245,13 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> Iterator[cnf.Clause]:
        that are supported on ``hedge``.
 
     """
-    literals_positive_and_negative: Iterator[Tuple[cnf.Literal, cnf.Literal]]
-    literals_positive_and_negative = map(literals_from_vertex, hedge)
+    lits_positive_and_negative: Iterator[Tuple[cnf.Lit, cnf.Lit]]
+    lits_positive_and_negative = map(lits_from_vertex, hedge)
 
-    literal_combinations: Iterator[Tuple[cnf.Literal, ...]]
-    literal_combinations = it.product(*literals_positive_and_negative)
+    lit_combinations: Iterator[Tuple[cnf.Lit, ...]]
+    lit_combinations = it.product(*lits_positive_and_negative)
 
-    return map(cnf.clause, literal_combinations)
+    return map(cnf.clause, lit_combinations)
 
 
 def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF]:

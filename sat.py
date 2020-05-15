@@ -24,30 +24,41 @@ negations by vertices of the same name.
 
 Satisfiability of a MHGraph
 ===========================
-A MHGraph is satisfiable if every CNF supported on the MHGraph is.
+A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF supported 
+on the MHGraph is also satisfiable.
 This module implements three different MHGraph sat-solvers:
 
     1. mhgraph_bruteforce_satcheck: easiest to understand and reason about.
     2. mhgraph_pysat_satcheck: fasted.
     3. mhgraph_minisat_satcheck: slowest.
 """
+# Imports from standard library
+import functools as ft
 import itertools as it
-from math import prod
+from math import comb, prod
 import subprocess
-from tqdm import tqdm  # type: ignore
-from typing import cast, Dict, FrozenSet, Iterable, Iterator, Set, Tuple
-
+from typing import cast, Dict, FrozenSet, Iterable, Iterator, List, Set, Tuple, Union
+# Imports from third-party modules.
 from loguru import logger
+import more_itertools as mit  # type: ignore
+from tqdm import tqdm  # type: ignore
+# Imports from local modules.
 import cnf
 import graph
 import mhgraph
+import morphism as morph
+import operations as op
+
+
+# Type alisases
+Assignment = Dict[cnf.Variable, cnf.Bool]
 
 
 # Functions for Checking Satisfiability of CNFs
 # =============================================
 
 
-def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Dict[cnf.Variable, cnf.Bool]]:
+def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
     """Generate all :math:`2^n` truth-assignments for a CNF with :math:`n` Variables.
 
     A CNF's `truth-assignment` will be represented as a dictionary with keys being
@@ -295,6 +306,11 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph) -> Iterator[cnf.CNF]:
     return map(cnf.cnf, clause_frozensets)
 
 
+def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
+    """Return the number of CNFs supported on a MHGraph."""
+    return prod(comb(2**len(h), m) for h, m in mhgraph_instance.items())
+
+
 # Functions for Checking Satisfiability of MHGraphs
 # =================================================
 
@@ -313,9 +329,12 @@ def mhgraph_bruteforce_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    return all(map(cnf_bruteforce_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+    if number_of_cnfs(mhgraph_instance):
+        return all(map(cnf_bruteforce_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+    return False
 
 
+@ft.lru_cache
 def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
     """Use the `pysat` library's Minisat22 solver to check satisfiability of a MHGraph.
 
@@ -326,10 +345,11 @@ def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    total_cnfs: int = prod([2**len(h) for h in mhgraph_instance.elements()])
-    return all(tqdm(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)),
-                    desc=f'pysat({mhgraph_instance})',
-                    total=total_cnfs))
+    if n := number_of_cnfs(mhgraph_instance):
+        return all(tqdm(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)),
+                        desc=f'pysat({mhgraph_instance})',
+                        total=n))
+    return False
 
 
 def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
@@ -342,7 +362,9 @@ def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    return all(map(cnf_minisat_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+    if number_of_cnfs(mhgraph_instance):
+        return all(map(cnf_minisat_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+    return False
 
 
 # Function for generating MHGraphs from CNFs

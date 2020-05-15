@@ -396,12 +396,62 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
     if reduced_cnf in {cnf.TRUE_CNF, cnf.FALSE_CNF}:
         raise ValueError('CNF reduced to trivial True/False & has no supporting MHGraph.')
 
-    # Iterator[FrozenSet[cnf.Literal]] <: Iterator[Collection[int]]
-    cnf_with_abs_variables: Iterator[FrozenSet[cnf.Literal]]
+    # Iterator[FrozenSet[cnf.Lit]] <: Iterator[Collection[int]]
+    cnf_with_abs_variables: Iterator[FrozenSet[cnf.Lit]]
     cnf_with_abs_variables = map(lambda c: frozenset(map(cnf.absolute_value, c)),
                                  reduced_cnf)
 
     return mhgraph.mhgraph(list(cnf_with_abs_variables))
+
+
+# Function for simplifying MHGraphs before sat-solving
+# ====================================================
+
+@ft.lru_cache
+def simplify_at_loops(mhgraph_instance: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
+    """If the graph contains a self loop, then project away from vertex.
+
+    This results in a graph that is equisatisfiable to the first.
+    """
+    double_loop_graph: mhgraph.MHGraph = mhgraph.mhgraph([[1], [1]])
+    single_loop_graph: mhgraph.MHGraph = mhgraph.mhgraph([[1]])
+
+    if morph.subgraph_search(double_loop_graph, mhgraph_instance)[0]:
+        # double loops => unsatisfiable
+        logger.success(f'{mhgraph_instance} simplified to False')
+        return False
+
+    if morph.isomorphism_search(single_loop_graph, mhgraph_instance)[0]:
+        # there is only one loop => satisfiable.
+        logger.success(f'{mhgraph_instance} simplified to True')
+        return True
+
+    subgraph_status: bool
+    subgraph_status, subgraph_morph = morph.subgraph_search(single_loop_graph,
+                                                            mhgraph_instance)
+    if not subgraph_status:
+        # No loop found. Return graph unchanged.
+        return mhgraph_instance
+
+    subgraph_morph = cast(morph.Morphism, subgraph_morph)
+    loop_in_graph: mhgraph.MHGraph = morph.graph_image(subgraph_morph, single_loop_graph)
+    looped_vertex: graph.Vertex = mit.one(mhgraph.vertices(loop_in_graph))
+    complement_of_loop: mhgraph.MHGraph
+    complement_of_loop = mhgraph.mhgraph(mhgraph_instance - loop_in_graph)
+
+    spherical_iter: Iterator[mhgraph.HEdge]
+    incident_iter: Iterator[mhgraph.HEdge]
+    spherical_iter, incident_iter = mit.partition(lambda h: looped_vertex in h,
+                                                  complement_of_loop.elements())  # pylint: disable=no-member
+
+    # Project away from looped_vertex.
+    projected_hedges: List[mhgraph.HEdge]
+    projected_hedges = [mhgraph.hedge(h - {looped_vertex}) for h in incident_iter]
+
+    reformed_graph: mhgraph.MHGraph
+    reformed_graph = op.graph_union(list(spherical_iter), projected_hedges)
+    logger.success(f'{mhgraph_instance} simplified to {reformed_graph}')
+    return simplify_at_loops(reformed_graph)
 
 
 if __name__ == '__main__':

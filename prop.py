@@ -12,11 +12,11 @@ import cnf
 # ===========
 
 
-def literal_and_literal(literal1: cnf.Literal, literal2: cnf.Literal) -> cnf.CNF:
+def literal_and_literal(literal1: cnf.Lit, literal2: cnf.Lit) -> cnf.CNF:
     return cnf.cnf([[literal1], [literal2]])
 
 
-def clause_and_literal(clause: cnf.Clause, literal: cnf.Literal) -> cnf.CNF:
+def clause_and_literal(clause: cnf.Clause, literal: cnf.Lit) -> cnf.CNF:
     return cnf.cnf([clause, [literal]])
 
 
@@ -24,7 +24,7 @@ def clause_and_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.CNF:
     return cnf.cnf([clause1, clause2])
 
 
-def cnf_and_literal(cnf1: cnf.CNF, literal: cnf.Literal) -> cnf.CNF:
+def cnf_and_literal(cnf1: cnf.CNF, literal: cnf.Lit) -> cnf.CNF:
     return cnf.cnf(cnf1 | {(literal, )})
 
 
@@ -40,11 +40,11 @@ def cnf_and_cnf(cnf1: cnf.CNF, cnf2: cnf.CNF) -> cnf.CNF:
 # ===========
 
 
-def literal_or_literal(literal1: cnf.Literal, literal2: cnf.Literal) -> cnf.Clause:
+def literal_or_literal(literal1: cnf.Lit, literal2: cnf.Lit) -> cnf.Clause:
     return cnf.clause([literal1, literal2])
 
 
-def clause_or_literal(clause: cnf.Clause, literal: cnf.Literal) -> cnf.Clause:
+def clause_or_literal(clause: cnf.Clause, literal: cnf.Lit) -> cnf.Clause:
     return cnf.clause(clause | {literal})
 
 
@@ -52,7 +52,7 @@ def clause_or_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.Clause:
     return cnf.clause(clause1 | clause2)
 
 
-def cnf_or_literal(cnf1: cnf.CNF, literal: cnf.Literal) -> cnf.CNF:
+def cnf_or_literal(cnf1: cnf.CNF, literal: cnf.Lit) -> cnf.CNF:
     return cnf.cnf([clause_or_literal(clause, literal) for clause in cnf1])
 
 

@@ -6,40 +6,44 @@ Definition of a CNF
 
    - A Variable is simply a set of symbols that can be assigned the value of True or
      False in a boolean expression.
-   - A Literal is either a Variable, the negation of a Variable, or the symbols
+   - A Lit is either a Variable, the negation of a Variable, or the symbols
      representing True and False.
-   - A Clause is a boolean expression made of the disjunction of Literals.
+   - A Clause is a boolean expression made of the disjunction of Lits.
    - A CNF is the boolean expression made of the conjunction of Clauses.
 """
+# Imports from standard library.
 import functools as ft
-from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, Final,
-                    List, Mapping, NewType, Set, Union)
+from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, Final, List,
+                    Mapping, NewType, Set, Union)
+# Imports from third-party.
 from loguru import logger
 
 
 # Classes and Types
 # =================
 
-
-class Literal(int):
-    """`Literal` is a subclass of `int`. It has no other special methods."""
-    pass
+Variable = NewType('Variable', int)
+Variable.__doc__ = """`Variable` is a subtype of `int`."""
 
 
-class Bool(Literal):
-    """`Bool` is a subclass of `Literal`.
+class Lit(int):
+    """`Lit` is a subclass of `int`. It has no other special methods."""
+
+
+class Bool(Lit):
+    """`Bool` is a subclass of `Lit`.
 
     It overrides the ``__str__``, ``__repr__``, ``__hash__`` and ``__eq__`` methods
-    inherited from :obj:`int` (and from Literal).
+    inherited from :obj:`int` (and from Lit).
     """
 
     def __str__(self) -> str:
         """Bool(0) and Bool(1) are treated as constant values labeled FALSE and TRUE."""
         if self.__int__() == 0:
-            return f'<Bool: FALSE>'
+            return '<Bool: FALSE>'
         if self.__int__() == 1:
-            return f'<Bool: TRUE>'
-        return f'<Bool: {self.__int__()}>'
+            return '<Bool: TRUE>'
+        raise ValueError('In-valid Bool value encountered.')
 
     __repr__ = __str__
 
@@ -119,10 +123,10 @@ def variable(positive_int: int) -> Variable:
     return Variable(positive_int)
 
 
-def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invalid-name
-    r"""Constructor-function for Literal type.
+def lit(int_or_Bool: Union[int, Bool]) -> Lit:  # pylint: disable=invalid-name
+    r"""Constructor-function for Lit type.
 
-    By definition, a `Literal` is in the set :math:`\mathbb{Z} \cup \{`:obj:`TRUE`,
+    By definition, a `Lit` is in the set :math:`\mathbb{Z} \cup \{`:obj:`TRUE`,
     :obj:`FALSE` :math:`\} - \{0\}`.
     This function is idempotent.
 
@@ -132,9 +136,9 @@ def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invali
 
     Return:
        - if input is ``TRUE`` or ``FALSE``, then return input as is (since Bool is already
-         a subtype of Literal.)
+         a subtype of Lit.)
        - if input is a nonzero integer, then return ``int_or_Bool`` after casting to
-         Literal.
+         Lit.
 
     Raises:
        ValueError: if ``int_or_Bool == 0``.
@@ -144,31 +148,31 @@ def literal(int_or_Bool: Union[int, Bool]) -> Literal:  # pylint: disable=invali
         # int_or_Bool is TRUE/FALSE.
         return int_or_Bool
     if int_or_Bool != 0:
-        return Literal(int_or_Bool)
-    raise ValueError('Literal must be either TRUE/FALSE or a nonzero integer.')
+        return Lit(int_or_Bool)
+    raise ValueError('Lit must be either TRUE/FALSE or a nonzero integer.')
 
 
-def clause(literal_collection: Collection[int]) -> Clause:
+def clause(lit_collection: Collection[int]) -> Clause:
     """Constructor-function for Clause type.
 
-    By definition, a `Clause` is a nonempty frozenset of Literals.
+    By definition, a `Clause` is a nonempty frozenset of Lits.
     This function is idempotent.
 
     Args:
-       literal_collection (:obj:`Collection[int]`): a nonempty collection (list, tuple,
+       lit_collection (:obj:`Collection[int]`): a nonempty collection (list, tuple,
           set, frozenset, or iterator of integers or Bools.
 
     Return:
-       Check that each element in the collection satisfies axioms for being a Literal and
+       Check that each element in the collection satisfies axioms for being a Lit and
        then cast to Clause.
 
     Raises:
-       ValueError: if ``literal_collection`` is an empty collection.
+       ValueError: if ``lit_collection`` is an empty collection.
 
     """
-    if not literal_collection:
-        raise ValueError(f'Encountered empty input {list(literal_collection)}.')
-    return Clause(frozenset(map(literal, literal_collection)))
+    if not lit_collection:
+        raise ValueError(f'Encountered empty input {list(lit_collection)}.')
+    return Clause(frozenset(map(lit, lit_collection)))
 
 
 def cnf(clause_collection: Collection[Collection[int]]) -> CNF:
@@ -209,90 +213,67 @@ FALSE_CNF: Final[CNF] = cnf([[FALSE]])
 # ===============
 
 
-def neg(literal_instance: Literal) -> Literal:
-    """Negate a Literal.
+def neg(literal: Lit) -> Lit:
+    """Negate a Lit.
 
     This function is an involution.
 
     Args:
-       literal_instance (:obj:`Literal`): a Literal formed from a nonzero integer.
+       literal (:obj:`Lit`): a Lit formed from a nonzero integer.
 
     Return:
-       Check that ``literal_instance`` is not of type Bool and then return the
-       Literal cast from the negative of `literal_instance`.
+       Check that ``literal`` is not of type Bool and then return the
+       Lit cast from the negative of `literal`.
 
     Raises:
-       ValueError: if ``literal_instance`` is ``TRUE`` or ``FALSE``.
+       ValueError: if ``literal`` is ``TRUE`` or ``FALSE``.
 
     """
-    if isinstance(literal_instance, Bool):
+    if isinstance(literal, Bool):
         raise ValueError('Negation of TRUE/FALSE is not defined.')
-    return literal(-literal_instance)
+    return lit(-literal)
 
 
-def absolute_value(literal_instance: Literal) -> Literal:
-    """Unnegated form of a Literal.
+def absolute_value(literal: Lit) -> Lit:
+    """Unnegated form of a Lit.
 
     This function is idempotent.
 
     Args:
-       literal_instance (:obj:`Literal`): a Literal formed from a nonzero integer.
+       literal (:obj:`Lit`): a Lit formed from a nonzero integer.
 
     Return:
-       Check that ``literal_instance`` is not of type Bool and then return the absolute
-       value of ``literal_instance``.
+       Check that ``literal`` is not of type Bool and then return the absolute
+       value of ``literal``.
 
     Raises:
-       ValueError: If `literal_instance` is :obj:`Bool.TRUE` or :obj:`Bool.FALSE`.
+       ValueError: If `literal` is :obj:`Bool.TRUE` or :obj:`Bool.FALSE`.
 
     """
-    if isinstance(literal_instance, Bool):
+    if isinstance(literal, Bool):
         raise ValueError('Absolute value not defined for TRUE/FALSE.')
-    return literal(abs(literal_instance))
+    return lit(abs(literal))
 
 
-def literals(cnf_instance: CNF) -> FrozenSet[Literal]:
-    """Return frozenset of all Literals that appear in a CNF.
+def lits(cnf_instance: CNF) -> FrozenSet[Lit]:
+    """Return frozenset of all Lits that appear in a CNF.
 
     Args:
        cnf_instance (:obj:`CNF`)
 
     Return:
-       A frozenset of all literals that appear in a CNF.
+       A frozenset of all lits that appear in a CNF.
 
     """
     return frozenset.union(*cnf_instance)
 
-
-def pprint_cnf(cnf_instance: CNF) -> str:
-    """Pretty print a CNF.
-
-    Args:
-        cnf_instance (:obj:`CNF`)
-
-    Return:
-        A sorted string of sorted clause tuples.
-
-    """
-    sorted_clauses: Iterator[List[Literal]]
-    sorted_clauses = map(lambda clause: sorted(clause, key=absolute_value), cnf_instance)
-
-    sorted_cnf: List[List[Literal]]
-    sorted_cnf = sorted(sorted_clauses, key=lambda clause_:
-                        sum([literal_ < 0 for literal_ in clause_]))
-    sorted_cnf = sorted(sorted_cnf, key=len)
-
-    def pprint_clause(clause_: List[Literal]) -> str:
-        return '(' + ','.join(map(str, clause_)) + ')'
-
-    return ''.join(map(pprint_clause, sorted_cnf))
 
 
 # Functions for Simplification
 # ============================
 
 
-def tautologically_reduce_clause(literal_set: AbstractSet[Literal]) -> Clause:
+def tautologically_reduce_clause(lit_set: AbstractSet[Lit]) -> Clause:
     r"""Reduce a Clause using various tautologies.
 
     The order in which these reductions are performed is important.
@@ -306,25 +287,25 @@ def tautologically_reduce_clause(literal_set: AbstractSet[Literal]) -> Clause:
        :math:`\vee` is disjunction.
 
     Args:
-       literal_set (:obj:`AbstractSet[Literal]`): an abstract set (a set or a frozenset)
-          of Literals.
+       lit_set (:obj:`AbstractSet[Lit]`): an abstract set (a set or a frozenset)
+          of Lits.
 
     Return:
        The Clause formed by performing all the above-mentioned tautological reductions.
 
     """
-    if TRUE in literal_set:
+    if TRUE in lit_set:
         return TRUE_CLAUSE
-    if literal_set == {FALSE}:
+    if lit_set == {FALSE}:
         return FALSE_CLAUSE
-    if FALSE in literal_set:
-        literal_set -= FALSE_CLAUSE
-    if not set(map(neg, literal_set)).isdisjoint(literal_set):
+    if FALSE in lit_set:
+        lit_set -= FALSE_CLAUSE
+    if not set(map(neg, lit_set)).isdisjoint(lit_set):
         return TRUE_CLAUSE
-    return clause(literal_set)
+    return clause(lit_set)
 
 
-def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Literal]]) -> CNF:
+def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Lit]]) -> CNF:
     r"""Reduce a CNF using various tautologies.
 
     The order in which these reductions are performed is important.
@@ -338,8 +319,8 @@ def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Literal]]) -> 
        :math:`\wedge` is conjunction.
 
     Args:
-       clause_set (:obj:`AbstractSet[AbstractSet[Literal]]`): an abstract set (a set or
-          frozenset) of abstract sets of Literals.
+       clause_set (:obj:`AbstractSet[AbstractSet[Lit]]`): an abstract set (a set or
+          frozenset) of abstract sets of Lits.
 
     Return:
        The CNF formed by first reducing all the clauses tautologically and then performing
@@ -361,10 +342,10 @@ def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Literal]]) -> 
 # Functions for Assignment
 # ========================
 
-def assign_variable_in_literal(literal_instance: Literal,
-                               variable_instance: Variable,
-                               boolean: Bool) -> Literal:
-    """Assign Bool value to a Variable if present in Literal.
+def assign_variable_in_lit(literal: Lit,
+                           variable_instance: Variable,
+                           boolean: Bool) -> Lit:
+    """Assign Bool value to a Variable if present in Lit.
 
     Replace all instances of ``variable_instance`` and its negation with ``boolean``
     and its negation respectively.
@@ -372,57 +353,57 @@ def assign_variable_in_literal(literal_instance: Literal,
     This function is idempotent.
 
     Args:
-       literal_instance (:obj:`Literal`)
+       literal (:obj:`Lit`)
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
-       Literal formed by assigning ``variable_instance`` to ``boolean`` in
-       ``literal_instance``.
+       Lit formed by assigning ``variable_instance`` to ``boolean`` in
+       ``literal``.
 
     """
-    if isinstance(literal_instance, Bool):
-        return literal_instance
-    if literal_instance == variable_instance:
+    if isinstance(literal, Bool):
+        return literal
+    if literal == variable_instance:
         return boolean
-    if neg(literal_instance) == variable_instance:
+    if neg(literal) == variable_instance:
         return FALSE if boolean == TRUE else TRUE
-    return literal_instance
+    return literal
 
 
-def assign_variable_in_clause(literal_set: AbstractSet[Literal],
+def assign_variable_in_clause(lit_set: AbstractSet[Lit],
                               variable_instance: Variable,
                               boolean: Bool) -> Clause:
     """Assign Bool value to a Variable if present in Clause.
 
-    Replace all instances of ``variable_instance`` and its negation in ``literal_set``
+    Replace all instances of ``variable_instance`` and its negation in ``lit_set``
     with ``boolean`` and its negation respectively.
     Leave all else unchanged.
     Perform tautological reductions on the Clause before returning results.
     This function is idempotent.
 
     Args:
-       literal_set (:obj:`AbstractSet[Literal]`): an abstract set (set or frozenset) of
-          Literals.
+       lit_set (:obj:`AbstractSet[Lit]`): an abstract set (set or frozenset) of
+          Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
        Tautologically-reduced Clause formed by assigning ``variable_instance`` to
-       ``boolean`` in ``literal_set``.
+       ``boolean`` in ``lit_set``.
 
     """
-    assign_variable: Callable[[Literal], Literal]
-    assign_variable = ft.partial(assign_variable_in_literal,
+    assign_variable: Callable[[Lit], Lit]
+    assign_variable = ft.partial(assign_variable_in_lit,
                                  variable_instance=variable_instance,
                                  boolean=boolean)
-    mapped_literals: Set[Literal]
-    mapped_literals = set(map(assign_variable, literal_set))
+    mapped_lits: Set[Lit]
+    mapped_lits = set(map(assign_variable, lit_set))
 
-    return tautologically_reduce_clause(mapped_literals)
+    return tautologically_reduce_clause(mapped_lits)
 
 
-def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],
+def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Lit]],
                            variable_instance: Variable,
                            boolean: Bool) -> CNF:
     """Assign Bool value to a Variable if present in CNF.
@@ -434,8 +415,8 @@ def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Literal]],
     This function is idempotent.
 
     Args:
-       clause_set (:obj:`AbstractSet[AbstractSet[Literal]]`): an abstract set (set or
-          frozenset) of abstract sets of Literals.
+       clause_set (:obj:`AbstractSet[AbstractSet[Lit]]`): an abstract set (set or
+          frozenset) of abstract sets of Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 

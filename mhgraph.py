@@ -22,27 +22,27 @@ with the following properties:
      only once.
 
 A *HGraph* is a MHGraph without HEdge-multiplicities.
-
 """
-
+# Imports from standard library.
 from collections import Counter as counter
 from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet, List,
                     NewType, TypeVar, Union)
+# Imports from third-party modules.
 from loguru import logger
-
+# Imports from local modules.
 import graph
 
 
-# PreMHGraph (Hashable Counter) for Storing MHGraphs
-# ==================================================
+# MHGraphType (Hashable Counter) for Storing MHGraphs
+# ===================================================
 # (for internal use only, partially documented)
 
 #: ``T = TypeVar('T')``, i.e. ``T`` is a type variable.
 T = TypeVar('T')  # pylint: disable=invalid-name
 
 
-class PreMHGraph(Counter[AbstractSet[T]]):
-    """`PreMHGraph[_T]` is a subclass of `collections.Counter[AbstractSet[_T]]`.
+class MHGraphType(Counter[AbstractSet[T]]):
+    """`MHGraphType[_T]` is a subclass of `collections.Counter[AbstractSet[_T]]`.
 
     It overrides Counter's ``__hash__`` and ``__repr__`` method, making it hashable.
 
@@ -57,7 +57,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
         return hash(frozenset(self))
 
     def __repr__(self) -> str:
-        """Print the PreMHGraph in a compact way."""
+        """Print the MHGraphType in a compact way."""
         unicode_superscripts: Dict[int, str]
         unicode_superscripts = {1: '\u00b9', 2: '\u00b2', 3: '\u00b3', 4: '\u2074',
                                 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078',
@@ -67,7 +67,7 @@ class PreMHGraph(Counter[AbstractSet[T]]):
             return '(' + ', '.join(map(str, hedge_)) + ')'
 
         def superscript(hedge_: List[T]) -> str:
-            multiplicity: int = super(PreMHGraph, self).get(frozenset(hedge_), 0)
+            multiplicity: int = super(MHGraphType, self).get(frozenset(hedge_), 0)
             return unicode_superscripts.get(multiplicity, f'^{multiplicity}')
 
         ordered_hedges: List[List[T]]
@@ -85,11 +85,11 @@ class PreMHGraph(Counter[AbstractSet[T]]):
 HEdge = NewType('HEdge', FrozenSet[graph.Vertex])
 HEdge.__doc__ = """`HEdge` is a subtype of `FrozenSet[graph.Vertex]`."""
 
-HGraph = NewType('HGraph', graph.PreGraph[graph.Vertex])
+HGraph = NewType('HGraph', graph.GraphType[graph.Vertex])
 HGraph.__doc__ = """`HGraph` is a subtype of `graph.PreGraph[graph.Vertex]`."""
 
-MHGraph = NewType('MHGraph', PreMHGraph[graph.Vertex])
-MHGraph.__doc__ = """`MHGraph` is a subtype of `PreMHGraph[graph.Vertex]`."""
+class MHGraph(MHGraphType[graph.Vertex]):  # pylint: disable=too-few-public-methods
+    """`MHGraph` is a subclass of `MHGraphType[graph.Vertex]`."""
 
 
 # Constructor Functions
@@ -139,7 +139,7 @@ def hgraph(hedge_collection: Collection[Collection[int]]) -> HGraph:
     """
     if not hedge_collection:
         raise ValueError(f'Encountered empty input {hedge_collection}')
-    return HGraph(graph.PreGraph(set(map(hedge, hedge_collection))))
+    return HGraph(graph.GraphType(set(map(hedge, hedge_collection))))
 
 
 def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
@@ -155,7 +155,7 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
     Return:
        If ``edge_collection`` is a Counter, then this function takes HEdge-multiplicities
        into account (values of the Counter). If each element of the collection satisfies
-       the axioms for being an HEdge, then the input is cast as a PreMHGraph and then a
+       the axioms for being an HEdge, then the input is cast as a MHGraphType and then a
        MHGraph.
 
     Raises:
@@ -168,9 +168,9 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
     if hasattr(edge_collection, 'elements'):
         # edge_collection is a Counter.
         edge_collection = cast(Counter[Collection[graph.Vertex]], edge_collection)
-        return MHGraph(PreMHGraph(map(hedge, edge_collection.elements())))
+        return MHGraph(MHGraphType(map(hedge, edge_collection.elements())))
     # edge_collection is not a Counter.
-    return MHGraph(PreMHGraph(map(hedge, edge_collection)))
+    return MHGraph(MHGraphType(map(hedge, edge_collection)))
 
 
 # Basic Functions

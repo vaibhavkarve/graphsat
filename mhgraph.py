@@ -191,6 +191,20 @@ def degree(vertex: graph.Vertex, mhgraph_instance: MHGraph) -> int:
                 if vertex in hedge])
 
 
+def pick_max_degree_vertex(mhgraph_instance: MHGraph) -> graph.Vertex:
+    """Pick vertex of highest degree."""
+    degree_sequence: Dict[graph.Vertex, int]
+    degree_sequence = {v: degree(v, mhgraph_instance) for v in vertices(mhgraph_instance)}
+    return max(degree_sequence, key=degree_sequence.get)
+
+
+def pick_min_degree_vertex(mhgraph_instance: MHGraph) -> graph.Vertex:
+    """Pick vertex of lowest degree."""
+    degree_sequence: Dict[graph.Vertex, int]
+    degree_sequence = {v: degree(v, mhgraph_instance) for v in vertices(mhgraph_instance)}
+    return min(degree_sequence, key=degree_sequence.get)
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')

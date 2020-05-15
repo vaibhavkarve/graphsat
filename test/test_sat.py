@@ -75,7 +75,7 @@ def test_cnf_minisat_satcheck():
 
 def test_literals_from_vertex():
     # Typical example
-    assert literals_from_vertex(1) == (1, -1)
+    assert lits_from_vertex(1) == (1, -1)
 
 
 def test_clauses_from_hedge():
@@ -174,11 +174,16 @@ def test_mhgraph_bruteforce_satcheck():
 def test_mhgraph_pysat_satcheck():
     satchecker = mhgraph_pysat_satcheck
     assert satchecker(mhgraph.mhgraph([[1]]))
-    assert not satchecker(mhgraph.mhgraph([[1], [1]]))
-    assert satchecker(mhgraph.mhgraph([[1, 2]]))
-    assert satchecker(mhgraph.mhgraph([[1, 2], [1, 2]]))
-    assert satchecker(mhgraph.mhgraph([[1, 2], [1, 2], [1, 2]]))
-    assert not satchecker(mhgraph.mhgraph([[1, 2], [1, 2], [1, 2], [1, 2]]))
+    assert not satchecker(mhgraph.mhgraph([[1]]*2))
+    assert not satchecker(mhgraph.mhgraph([[1]]*3))
+    
+    assert satchecker(mhgraph.mhgraph([[1, 2]]*1))
+    assert satchecker(mhgraph.mhgraph([[1, 2]]*2))
+    assert satchecker(mhgraph.mhgraph([[1, 2]]*3))
+    assert not satchecker(mhgraph.mhgraph([[1, 2]]*4))
+    assert not satchecker(mhgraph.mhgraph([[1, 2]]*5))
+    assert not satchecker(mhgraph.mhgraph([[1, 2]]*6))
+    
 
     # K4 is unsat.
     assert not satchecker(mhgraph.mhgraph([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]))

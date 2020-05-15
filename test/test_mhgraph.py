@@ -6,8 +6,8 @@ from mhgraph import *
 
 class TestPreMHGraph(object):
     def test__hash__(self):
-        assert hash(PreMHGraph([(1, 2), (2, 3), (2, 3)])) \
-            == hash(PreMHGraph(counter({(1, 2): 1, (2, 3): 2})))
+        assert hash(MHGraphType([(1, 2), (2, 3), (2, 3)])) \
+            == hash(MHGraphType(counter({(1, 2): 1, (2, 3): 2})))
 
     def test__repr__(self):
         assert repr(mhgraph([[1, 2], [2, 3], [3, 2]])) in \

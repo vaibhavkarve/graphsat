@@ -24,7 +24,7 @@ negations by vertices of the same name.
 
 Satisfiability of a MHGraph
 ===========================
-A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF supported 
+A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF supported
 on the MHGraph is also satisfiable.
 This module implements three different MHGraph sat-solvers:
 
@@ -35,7 +35,7 @@ This module implements three different MHGraph sat-solvers:
 # Imports from standard library
 import functools as ft
 import itertools as it
-from math import comb, prod  # type: ignore
+import math
 import subprocess
 from typing import cast, Dict, FrozenSet, Iterable, Iterator, List, Set, Tuple, Union
 # Imports from third-party modules.
@@ -282,11 +282,13 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
     return map(cnf.cnf, clause_tuples)
 
 
-def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph) -> Iterator[cnf.CNF]:
+def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph, randomize: bool = True) \
+        -> Iterator[cnf.CNF]:
     r"""Return all CNFs supported on a MHGraph.
 
     Args:
        mhgraph_instance (:obj:`mhgraph.MHGraph`)
+       randomize (:obj:`bool`): if True (default) then return all cnfs in a shuffled order.
 
     Returns:
        An iterator of cnf.CNF consisting of the
@@ -304,13 +306,15 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph) -> Iterator[cnf.CNF]:
     clause_frozensets: Iterator[FrozenSet[cnf.Clause]]
     clause_frozensets = it.starmap(frozenset.union, cnf_tuples)
 
-    return map(cnf.cnf, clause_frozensets)
+    if not randomize:
+        return map(cnf.cnf, clause_frozensets)
+
+    return map(cnf.cnf, mit.random_permutation(clause_frozensets))
 
 
 def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
     """Return the number of CNFs supported on a MHGraph."""
-    return cast(int,
-                prod(comb(2**len(h), m) for h, m in mhgraph_instance.items()))
+    return math.prod(math.comb(2**len(h), m) for h, m in mhgraph_instance.items())  # type: ignore
 
 
 # Functions for Checking Satisfiability of MHGraphs
@@ -347,10 +351,10 @@ def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    if n := number_of_cnfs(mhgraph_instance):
+    if number := number_of_cnfs(mhgraph_instance):
         return all(tqdm(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)),
                         desc=f'pysat({mhgraph_instance})',
-                        total=n))
+                        total=number))
     return False
 
 

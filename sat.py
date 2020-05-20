@@ -276,7 +276,7 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
     clause_possibilities: Iterator[cnf.Clause]
     clause_possibilities = clauses_from_hedge(hedge)
 
-    clause_tuples: Iterable[Tuple[cnf.Clause, ...]]
+    clause_tuples: Iterator[Tuple[cnf.Clause, ...]]
     clause_tuples = it.combinations(clause_possibilities, r=multiplicity)
 
     return map(cnf.cnf, clause_tuples)

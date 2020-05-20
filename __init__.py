@@ -4,4 +4,3 @@ import sys
 
 # local imports
 sys.path.insert(0, './')  # Add graphsat package to path
-print(sys.path)

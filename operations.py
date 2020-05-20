@@ -56,4 +56,3 @@ if __name__ == "__main__":
     from time import time
     with logger.catch(message="Something unexpected happened ..."):
         time0 = time()
-        print()

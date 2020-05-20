@@ -117,8 +117,7 @@ def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
         return cnf.assign(cnf_reduced, assignment) == cnf.TRUE_CNF
 
     satisfying_assignments: Iterator[Assignment]
-    satisfying_assignments = filter(simplifies_cnf_to_TRUE,
-                                    generate_assignments(cnf_reduced))
+    satisfying_assignments = filter(simplifies_cnf_to_TRUE, generate_assignments(cnf_reduced))
 
     return any(satisfying_assignments)
 

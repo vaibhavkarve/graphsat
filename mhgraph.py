@@ -25,8 +25,8 @@ A *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet, List,
-                    NewType, TypeVar, Union)
+from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet,
+                    List, NewType, TypeVar, Union)
 # Imports from third-party modules.
 from loguru import logger
 # Imports from local modules.
@@ -63,27 +63,29 @@ class MHGraphType(Counter[AbstractSet[T]]):
                                 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078',
                                 9: '\u2079'}
 
-        def hedge_string(hedge_: List[T]) -> str:
-            return '(' + ', '.join(map(str, hedge_)) + ')'
+        ordered_hedges: List[AbstractSet[T]]
+        ordered_hedges = sorted(sorted([h for h in super().keys()]), key=len)
 
-        def superscript(hedge_: List[T]) -> str:
+        def superscript(hedge_: AbstractSet[T]) -> str:
             multiplicity: int = super(MHGraphType, self).get(frozenset(hedge_), 0)
             return unicode_superscripts.get(multiplicity, f'^{multiplicity}')
 
-        ordered_hedges: List[List[T]]
-        ordered_hedges = sorted(sorted([sorted(h) for h in super().keys()]), key=len)
-
         hedge_strings: List[str]
-        hedge_strings = [hedge_string(h) + superscript(h) for h in ordered_hedges]
+        hedge_strings = [str(h) + superscript(h) for h in ordered_hedges]
 
         return ','.join(hedge_strings)
 
 
+class HEdge(FrozenSet[graph.Vertex]):
+    """`HEdge` is a subclass of `FrozenSet[graph.Vertex]`."""
+    def __repr__(self) -> str:
+        """Pretty-print the HEdge in a compact way."""
+        return '(' + ', '.join(map(str, sorted(self))) + ')'
+
+
+
 # Classes and Types
 # =================
-
-HEdge = NewType('HEdge', FrozenSet[graph.Vertex])
-HEdge.__doc__ = """`HEdge` is a subtype of `FrozenSet[graph.Vertex]`."""
 
 HGraph = NewType('HGraph', graph.GraphType[graph.Vertex])
 HGraph.__doc__ = """`HGraph` is a subtype of `graph.PreGraph[graph.Vertex]`."""

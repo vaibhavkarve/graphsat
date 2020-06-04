@@ -4,7 +4,7 @@
 Currently, this module implements Conjunction, Disjunction and Negation.
 """
 import functools as ft
-from loguru import logger  # type: ignore[import]
+from loguru import logger
 import cnf
 
 

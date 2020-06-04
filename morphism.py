@@ -13,8 +13,8 @@ from typing import (AbstractSet, Callable, cast, Dict, FrozenSet,
 import more_itertools as mit  # type: ignore
 from loguru import logger
 
-from graph import graph, Graph, Vertex
-from mhgraph import hgraph, HGraph, mhgraph, MHGraph, vertices
+from graphsat.graph import graph, Graph, Vertex
+from graphsat.mhgraph import hgraph, HGraph, mhgraph, MHGraph, vertices
 
 # Types
 # =====

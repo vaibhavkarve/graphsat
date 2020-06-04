@@ -6,9 +6,7 @@ from typing import List, Union
 # Imports from third-party modules.
 from loguru import logger
 # Imports feom local modules.
-import mhgraph
-import sat
-import sxpr
+from graphsat import mhgraph, sat, sxpr
 
 
 def graph_union(graph1: List[mhgraph.HEdge], graph2: List[mhgraph.HEdge]) -> mhgraph.MHGraph:
@@ -28,7 +26,7 @@ def satg_bool(boolean: bool) -> bool:
     return boolean
 
 
-@satg.register(mhgraph.MHGraph)
+@satg.register
 def satg_graph(graph: mhgraph.MHGraph) -> bool:
     """Sat-solve."""
     return sat.mhgraph_pysat_satcheck(graph)

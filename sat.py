@@ -43,11 +43,9 @@ from loguru import logger
 import more_itertools as mit  # type: ignore
 from tqdm import tqdm  # type: ignore
 # Imports from local modules.
-import cnf
-import graph
-import mhgraph
-import morphism as morph
-import operations as op
+from graphsat import cnf, graph, mhgraph
+import graphsat.morphism as morph
+import graphsat.operations as op
 
 
 # Type alisases

@@ -30,7 +30,7 @@ from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet,
 # Imports from third-party modules.
 from loguru import logger
 # Imports from local modules.
-import graph
+import graphsat.graph as graph
 
 
 # MHGraphType (Hashable Counter) for Storing MHGraphs

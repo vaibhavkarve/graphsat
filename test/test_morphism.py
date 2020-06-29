@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import pytest
-import morphism
+import graphsat.morphism as morphism
 vm = morphism.vertexmap
 mhg = morphism.mhgraph
 ivm = morphism.injective_vertexmap

@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import pytest
-from sat import *
+from graphsat.sat import *
 
 mm = mhgraph.mhgraph
 cc = cnf.cnf
@@ -83,7 +83,7 @@ def test_literals_from_vertex():
 
 def test_clauses_from_hedge():
     # Typical example with isolated vertex.
-    assert set(clauses_from_hedge({1})) == {cnf.clause([1]), cnf.clause([-1])}
+    assert set(clauses_from_hedge((1,))) == {cnf.clause([1]), cnf.clause([-1])}
     # Typical example with edge of size=2.
     assert set(clauses_from_hedge({1, 2})) == {cnf.clause([1, 2]), cnf.clause([1, -2]),
                                                cnf.clause([-1, 2]), cnf.clause([-1, -2])}

@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 import pytest
-from graph import *
+from graphsat.graph import *
 
 
 def test_pregraph__repr__():

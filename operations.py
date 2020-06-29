@@ -8,6 +8,9 @@ from loguru import logger
 # Imports feom local modules.
 from graphsat import mhgraph, sat, sxpr
 
+from graphsat.mhgraph import MHGraph
+from graphsat.sxpr import SatSxpr
+
 
 def graph_union(graph1: List[mhgraph.HEdge], graph2: List[mhgraph.HEdge]) -> mhgraph.MHGraph:
     """Union of the two graphs."""
@@ -15,8 +18,9 @@ def graph_union(graph1: List[mhgraph.HEdge], graph2: List[mhgraph.HEdge]) -> mhg
 
 
 @ft.singledispatch
-def satg(arg: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr]) -> bool:
+def satg(arg: Union[bool, MHGraph, SatSxpr]) -> bool:
     """Sat-solve if it is a graph. Else just return the bool."""
+    print(type(arg))
     raise TypeError
 
 
@@ -27,15 +31,15 @@ def satg_bool(boolean: bool) -> bool:
 
 
 @satg.register
-def satg_graph(graph: mhgraph.MHGraph) -> bool:
+def satg_graph(graph: MHGraph) -> bool:
     """Sat-solve."""
     return sat.mhgraph_pysat_satcheck(graph)
 
 
-@satg.register(sxpr.SatSxpr)
-def satg_sxpr(atomic: sxpr.AtomicSxpr) -> bool:
+@satg.register
+def satg_sxpr(sat_sxpr: SatSxpr) -> bool:
     """Reduce and then sat-solve."""
-    return satg(atomic.reduce())
+    return satg(sat_sxpr.reduce())
 
 
 def sat_and(graph1: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr],

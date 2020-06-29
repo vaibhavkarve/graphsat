@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
 
-from mhgraph import mhgraph as mhg
-from operations import sat_and, sat_or
 import pytest
-from sxpr import *
+from graphsat.mhgraph import mhgraph as mhg
+from graphsat.operations import sat_and, sat_or
+from graphsat.sxpr import *
 
 
 def test_Sxpr():

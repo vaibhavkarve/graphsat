@@ -7,30 +7,33 @@ A CNF is satisfiable if there exists a truth assignment for each variable in the
 such that on applying the assignment, the CNF evaluates to True.
 This module implements three different sat-solvers:
 
-   1. cnf_bruteforce_satcheck: a brute-force solver.
-      This solver is easy to understand and reason about. It does not have other external
+   1. cnf_bruteforce_satcheck: a brute-force solver.  This solver is easy to
+      understand and reason about. It does not have other external
       dependencies. However, it is quite slow.
-   2. cnf_pysat_satcheck: using the `pysat` library's Minisat22 solver.
-      This solver calls Minisat v2.2 via the pysat library. It is the fast solver in this
-      list but has many external dependencies (because pysat has many dependencies).
-   3. cnf_minisat_satcheck: using Minisat v2.2 as a subprocess.
-      This calls minisat.c directly as a subprocess. minisat.c is easy to obtain and
-      install. However, creating subprocesses is not a very fast process.
+
+   2. cnf_pysat_satcheck: using the `pysat` library's Minisat22 solver.  This solver
+      calls Minisat v2.2 via the pysat library. It is the fast solver in this list
+      but has many external dependencies (because pysat has many dependencies).
+
+   3. cnf_minisat_satcheck: using Minisat v2.2 as a subprocess.  This calls minisat.c
+      directly as a subprocess. minisat.c is easy to obtain and install. However,
+      creating subprocesses is not a very fast process.
 
 Connection between CNFs and MHGraphs
 ====================================
-For every CNF, we can construct an associated MHGraph by replacing all variables and their
-negations by vertices of the same name.
+For every CNF, we can construct an associated MHGraph by replacing all variables and
+their negations by vertices of the same name.
 
 Satisfiability of a MHGraph
 ===========================
-A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF supported
-on the MHGraph is also satisfiable.
-This module implements three different MHGraph sat-solvers:
+A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF
+supported on the MHGraph is also satisfiable.  This module implements three different
+MHGraph sat-solvers:
 
     1. mhgraph_bruteforce_satcheck: easiest to understand and reason about.
-    2. mhgraph_pysat_satcheck: fasted.
+    2. mhgraph_pysat_satcheck: faster.
     3. mhgraph_minisat_satcheck: slowest.
+
 """
 # Imports from standard library
 import functools as ft
@@ -61,15 +64,16 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
 
     A CNF's `truth-assignment` will be represented as a dictionary with keys being
     all the Variables that appear in the CNF and values being Bools.
-    ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and therefore their
-    only corresponding truth-assignment is the empty dictionary.
+    ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and therefore
+    their only corresponding truth-assignment is the empty dictionary.
 
     Args:
        cnf_instance (:obj:`cnf.CNF`)
 
     Return:
-       First, tautologically reduce the CNF. Then, return an Iterator of truth-assignment
-       dictionaries with keys being Variables and values being Bools.
+       First, tautologically reduce the CNF. Then, return an Iterator of
+       truth-assignment dictionaries with keys being Variables and values being
+       Bools.
 
     """
     cnf_reduced: cnf.CNF
@@ -248,7 +252,7 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> Iterator[cnf.Clause]:
     lit_combinations: Iterator[Tuple[cnf.Lit, ...]]
     lit_combinations = it.product(*lits_positive_and_negative)
 
-    return map(cnf.clause, lit_combinations)
+    return tuple(map(cnf.clause, lit_combinations))
 
 
 def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF]:
@@ -279,13 +283,14 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
     return map(cnf.cnf, clause_tuples)
 
 
-def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph, randomize: bool = True) \
-        -> Iterator[cnf.CNF]:
+def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
+                      randomize: bool = True) -> Iterator[cnf.CNF]:
     r"""Return all CNFs supported on a MHGraph.
 
     Args:
        mhgraph_instance (:obj:`mhgraph.MHGraph`)
-       randomize (:obj:`bool`): if True (default) then return all cnfs in a shuffled order.
+       randomize (:obj:`bool`): if True (default) then return all cnfs in a
+          shuffled order.
 
     Returns:
        An iterator of cnf.CNF consisting of the
@@ -318,41 +323,55 @@ def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
 # =================================================
 
 
-def mhgraph_bruteforce_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
+def mhgraph_bruteforce_satcheck(mhgraph_instance: mhgraph.MHGraph,
+                                randomize: bool = True) -> bool:
     """Use brute-force to check satisfiability of a MHGraph.
 
     .. note::
-       Brute-forcing is the most sub-optimal strategy possible. Do not use this function
-       on large MHGraphs. (Anything more than 6 Vertices or 6 HEdges is large.)
+       Brute-forcing is the most sub-optimal strategy
+       possible. Do not use this function on large MHGraphs. (Anything
+       more than 6 Vertices or 6 HEdges is large.)
 
     Args:
        mhgraph_instance (:obj:`mhgraph.MHGraph`)
+       randomize (:obj:`bool`): if True (default) then generate all cnfs in
+          a shuffled order.
 
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
     if number_of_cnfs(mhgraph_instance):
-        return all(map(cnf_bruteforce_satcheck, cnfs_from_mhgraph(mhgraph_instance)))
+        return all(map(cnf_bruteforce_satcheck,
+                       cnfs_from_mhgraph(mhgraph_instance, randomize=randomize)))
     return False
 
 
 @ft.lru_cache
-def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
+def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph,
+                           randomize: bool = True, log_progress: bool = True) -> bool:
     """Use the `pysat` library's Minisat22 solver to check satisfiability of a MHGraph.
 
     Args:
        mhgraph_instance (:obj:`mhgraph.MHGraph`)
+       randomize (:obj:`bool`): if True (default) then generate all cnfs in a shuffled order.
 
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
     """
-    if number := number_of_cnfs(mhgraph_instance):
-        return all(tqdm(map(cnf_pysat_satcheck, cnfs_from_mhgraph(mhgraph_instance)),
-                        desc=f'pysat({mhgraph_instance})',
-                        total=number))
-    return False
+    number: int = number_of_cnfs(mhgraph_instance)
+
+    if not number:
+        return False
+    with tqdm(cnfs_from_mhgraph(mhgraph_instance, randomize=True),
+              desc='pysat()',
+              total=number,
+              leave=log_progress) as progress_bar:
+        for cnf in progress_bar:
+            if not cnf_pysat_satcheck(cnf):
+                return False
+    return True
 
 
 def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
@@ -463,13 +482,13 @@ if __name__ == '__main__':
     logger.success(cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [-1, 2], [1, -2]])))
     logger.info('\n')
     logger.info('An example which is unsatisfiable:')
-    logger.info(">>> cnf_bruteforce_satcheck(cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]]))")
-    logger.success(cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])))
+    logger.info(">>> cnf_pysat_satcheck(cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]]))")
+    logger.success(cnf_pysat_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])))
     logger.info('\n')
-    logger.info('mhgraph_bruteforce_satcheck() finds all CNFs supported on a MHGraph\n'
-                + ' '*61 + 'and then sat-checks them using a brute-force sat-checker.')
-    logger.info('>>> mhgraph_bruteforce_satcheck()(mhgraph.mhgraph([[1, 2], [2, 3]]))')
-    logger.success(mhgraph_bruteforce_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
+    logger.info('mhgraph_pysat_satcheck() finds all CNFs supported on a MHGraph\n'
+                + ' '*61 + 'and then sat-checks them using the pysat satchecker.')
+    logger.info('>>> mhgraph_pysat_satcheck()(mhgraph.mhgraph([[1, 2], [2, 3]]))')
+    logger.success(mhgraph_pysat_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
     logger.info('True output indicates that this MHGraph only supports satisfiable CNFs.')
     logger.info('\n')
     logger.info('Given a CNF we can also ask for its supporting MHGraph.')

@@ -5,7 +5,7 @@ Currently, this module implements Conjunction, Disjunction and Negation.
 """
 import functools as ft
 from loguru import logger
-import cnf
+from graphsat import cnf
 
 
 # Conjunction

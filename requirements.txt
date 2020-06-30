@@ -1,11 +1,72 @@
-colorama>=0.4.3
-dataclasses>=0.6
-loguru>=0.5.0
-more-itertools>=8.3.0
-pytest>=5.4.3
-tqdm>=4.46.0
-mypy
-pydocstyle
-pycodestyle
-pylint
-python-sat
+astroid @ file:///home/conda/feedstock_root/build_artifacts/astroid_1588698301699/work
+attrs==19.3.0
+backcall==0.1.0
+bidict==0.18.3
+brotlipy==0.7.0
+certifi==2020.4.5.2
+cffi==1.14.0
+chardet==3.0.4
+colorama==0.4.3
+conda==4.8.3
+conda-package-handling==1.6.0
+cryptography==2.9.2
+decorator==4.4.2
+docopt==0.6.2
+epc==0.0.5
+funcy==1.14
+-e git+git@git.math.illinois.edu:hirani_group/home.git@a0319ffa8773db504d8e064bbd3803cd37f6f030#egg=graphsat&subdirectory=projects/sat
+idna==2.9
+ipython @ file:///home/conda/feedstock_root/build_artifacts/ipython_1590796906184/work
+ipython-genutils==0.2.0
+isort==4.3.21
+jedi==0.17.0
+lazy-object-proxy==1.4.3
+loguru @ file:///home/conda/feedstock_root/build_artifacts/loguru_1589766348179/work
+mamba @ file:///home/conda/feedstock_root/build_artifacts/mamba_1591100519757/work
+mccabe==0.6.1
+memory-profiler==0.57.0
+more-itertools @ file:///home/conda/feedstock_root/build_artifacts/more-itertools_1591167413021/work
+mypy @ file:///home/conda/feedstock_root/build_artifacts/mypy_1591223196973/work
+mypy-extensions==0.4.3
+numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1588605082776/work
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1589925210001/work
+parsimonious==0.8.1
+parso==0.7.0
+pexpect==4.8.0
+pickleshare==0.7.5
+pipreqs==0.4.10
+pluggy @ file:///home/conda/feedstock_root/build_artifacts/pluggy_1588623599192/work
+prompt-toolkit==3.0.5
+psutil==5.7.0
+ptyprocess==0.6.0
+py==1.8.1
+py-aiger==6.1.1
+py-aiger-cnf==5.0.0
+pycodestyle @ file:///home/conda/feedstock_root/build_artifacts/pycodestyle_1589305246696/work
+pycosat==0.6.3
+pycparser==2.20
+pydocstyle==5.0.2
+Pygments==2.6.1
+pylint @ file:///home/conda/feedstock_root/build_artifacts/pylint_1588950500625/work
+pyOpenSSL==19.1.0
+pyparsing==2.4.7
+pypblib==0.0.4
+pyrsistent==0.15.7
+PySocks==1.7.1
+pytest==5.4.3
+python-sat==0.1.5.dev14
+requests==2.23.0
+ruamel-yaml==0.15.80
+sexpdata==0.0.3
+six @ file:///home/conda/feedstock_root/build_artifacts/six_1590081179328/work
+snowballstemmer==2.0.0
+toml @ file:///home/conda/feedstock_root/build_artifacts/toml_1589469402899/work
+toposort==1.5
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1591181521996/work
+traitlets==4.3.3
+typed-ast==1.4.1
+typing-extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1588470653596/work
+urllib3==1.25.9
+wcwidth @ file:///home/conda/feedstock_root/build_artifacts/wcwidth_1591117871324/work
+wrapt==1.11.2
+yarg==0.1.9

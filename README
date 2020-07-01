@@ -1,0 +1,5 @@
+# Satisfiability
+-- A research project by Vaibhav Karve and Dr. Anil Hirani @ University of Illinois at Urbana-Champaign.
+
+This project looks at the Boolean Satisfiability problem from a geometrical and topological viewpoint. We explore both 2-SAT and 3-SAT.
+

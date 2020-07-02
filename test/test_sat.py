@@ -13,14 +13,14 @@ def test_generate_assignments():
     assert {1: FALSE} in generate_assignments(cc([[1]]))
     assert {1: TRUE} in generate_assignments(cc([[-1]]))
     assert {1: FALSE} in generate_assignments(cc([[-1]]))
-    assert {} in generate_assignments(cc([[TRUE]]))
-    assert {} in generate_assignments(cc([[FALSE]]))
+    assert list(generate_assignments(cc([[TRUE]]))) == [{}]
+    assert list(generate_assignments(cc([[FALSE]]))) == [{}]
     assert {1: TRUE, 2: TRUE} in generate_assignments(cc([[1, -2]]))
     assert {1: TRUE, 2: FALSE} in generate_assignments(cc([[1, -2]]))
     assert {1: FALSE, 2: TRUE} in generate_assignments(cc([[1, -2]]))
     assert {1: FALSE, 2: FALSE} in generate_assignments(cc([[1, -2]]))
-    assert {} in generate_assignments(cc([[1, -1]]))
-    assert {} in generate_assignments(cc([[1, -1]]))
+    assert list(generate_assignments(cc([[1, -1]]))) == [{}]
+    assert list(generate_assignments(cc([[1, -1]]))) == [{}]
     with pytest.raises(ValueError):
         generate_assignments(cc([[]]))
 

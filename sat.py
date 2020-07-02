@@ -64,8 +64,16 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
 
     A CNF's `truth-assignment` will be represented as a dictionary with keys being
     all the Variables that appear in the CNF and values being Bools.
-    ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and therefore
-    their only corresponding truth-assignment is the empty dictionary.
+
+    Corner cases:
+    
+       * ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and
+         therefore their only corresponding truth-assignment is the empty dictionary.
+         In other words, the function returns ``({})``.
+
+       * Any CNF that can be tautologically reduced to TRUE/FALSE also returns ``({})``.
+
+       * Over-saturated CNFs also return ``({})``.
 
     Args:
        cnf_instance (:obj:`cnf.CNF`)

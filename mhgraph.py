@@ -167,12 +167,12 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
     if not edge_collection:
         raise ValueError(f'Encountered empty input {list(edge_collection)}')
 
-    if hasattr(edge_collection, 'elements'):
+    try:
         # edge_collection is a Counter.
-        edge_collection = cast(Counter[Collection[graph.Vertex]], edge_collection)
         return MHGraph(MHGraphType(map(hedge, edge_collection.elements())))
-    # edge_collection is not a Counter.
-    return MHGraph(MHGraphType(map(hedge, edge_collection)))
+    except AttributeError:
+        # edge_collection is not a Counter.
+        return MHGraph(MHGraphType(map(hedge, edge_collection)))
 
 
 # Basic Functions

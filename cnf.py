@@ -123,33 +123,30 @@ def variable(positive_int: int) -> Variable:
     return Variable(positive_int)
 
 
+@ft.singledispatch
 def lit(int_or_Bool: Union[int, Bool]) -> Lit:  # pylint: disable=invalid-name
     r"""Constructor-function for Lit type.
 
     By definition, a `Lit` is in the set :math:`\mathbb{Z} \cup \{`:obj:`TRUE`,
     :obj:`FALSE` :math:`\} - \{0\}`.
     This function is idempotent.
-
-    Args:
-       int_or_Bool (:obj:`int` or :obj:`Bool`): either a nonzero integer, or ``TRUE``, or
-          ``FALSE``.
-
-    Return:
-       - if input is ``TRUE`` or ``FALSE``, then return input as is (since Bool is already
-         a subtype of Lit.)
-       - if input is a nonzero integer, then return ``int_or_Bool`` after casting to
-         Lit.
-
-    Raises:
-       ValueError: if ``int_or_Bool == 0``.
-
     """
-    if isinstance(int_or_Bool, Bool):
-        # int_or_Bool is TRUE/FALSE.
-        return int_or_Bool
-    if int_or_Bool != 0:
-        return Lit(int_or_Bool)
-    raise ValueError('Lit must be either TRUE/FALSE or a nonzero integer.')
+    raise TypeError('Lit must be either Bool or int.')
+
+
+@lit.register
+def lit_bool(arg: Bool) -> Lit:
+    """Return as is because Bool is already a subtype of Lit."""
+    return arg
+
+
+@lit.register
+def lit_int(arg: int) -> Lit:
+    """Cast to Lit."""
+    if arg != 0:
+        return Lit(arg)
+    raise ValueError('Lit must be a nonzero integer.')
+
 
 
 def clause(lit_collection: Collection[int]) -> Clause:

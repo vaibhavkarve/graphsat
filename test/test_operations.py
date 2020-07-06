@@ -6,9 +6,6 @@ from graphsat.mhgraph import mhgraph
 from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
 
-def test_graph_union():
-    assert graph_union(mhgraph([[1, 2], [3]]), mhgraph([[1, 11]])) ==  mhgraph([[1, 2], [3], [1, 11]])
-
 
 def test_satg():
     assert satg(True)

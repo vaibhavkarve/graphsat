@@ -13,7 +13,7 @@ from graphsat.sxpr import SatSxpr
 
 
 @ft.singledispatch
-def satg(arg: Union[bool, MHGraph, SatSxpr]) -> bool:
+def satg(arg: Union[bool, MHGraph, SatSxpr]) -> bool:  # type: ignore
     """Sat-solve if it is a graph. Else just return the bool."""
     print(type(arg))
     raise TypeError
@@ -32,7 +32,7 @@ def satg_graph(graph: MHGraph) -> bool:
 
 
 @satg.register
-def satg_sxpr(sat_sxpr: SatSxpr) -> bool:
+def satg_sxpr(sat_sxpr: SatSxpr) -> bool:  # type: ignore
     """Reduce and then sat-solve."""
     return satg(sat_sxpr.reduce())
 

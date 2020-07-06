@@ -470,6 +470,19 @@ def has_double_loop(mhg: mhgraph.MHGraph) -> bool:
 
     return morph.subgraph_search(double_loop_graph, mhg, return_all=False)[0]
 
+
+def supports_single_loop(mhg: mhgraph.MHGraph) -> Union[bool, graph.Vertex]:
+    """Return a vertex that supports a loop in mhg.
+
+    If no such vertex exists, return False.
+
+    """
+    loops: List[graph.Vertex]
+    loops = [vertex for vertex in mhgraph.vertices(mhg) if frozenset([vertex]) in mhg]
+    logger.trace(f'{loops = }')
+    return loops[0] if loops else False
+    
+    
 @ft.lru_cache
 def simplify_at_loops(mhgraph_instance: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a self loop, then project away from vertex.

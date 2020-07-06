@@ -441,6 +441,27 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
 # Function for simplifying MHGraphs before sat-solving
 # ====================================================
 
+def simplify_at_leaves(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
+    """If the graph contains a degree-one vertex, then remove that HEdge.
+
+    This results in a graph that is equisatisfiable to the first.
+
+    Edge cases:
+
+       * if every HEdges is a leaf edge, then return True.
+
+       * In the limit, the resulting mhgraph is guaranteed to have all vertices be
+         degree >= 2.
+
+    """
+    leaf_vertex: graph.Vertex = mhgraph.pick_min_degree_vertex(mhg)
+    if mhgraph.degree(leaf_vertex, mhg) > 1:
+        return mhg
+    logger.trace(f'{leaf_vertex = }')
+    sphr: Tuple[mhgraph.HEdge, ...] = mhgraph.sphr(mhg, leaf_vertex)
+    logger.trace(f'simplified to {sphr}')
+    return mhgraph.mhgraph(sphr) if sphr else True
+
 @ft.lru_cache
 def simplify_at_loops(mhgraph_instance: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a self loop, then project away from vertex.

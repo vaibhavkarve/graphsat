@@ -63,21 +63,23 @@ def test_generate_vertexmaps():
         in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), False)
 
 
-def test_subgraph_search():
-    assert ss(mhg([[1]]), mhg([[11]]))[1].translation == {1: 11}
-    assert ss(mhg([[1]]), mhg([[11], [12]]))[1].translation in [{1: 11}, {1: 12}]
-    assert ss(mhg([[1, 2]]), mhg([[11, 12]]))[1].translation \
-        in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert ss(mhg([[1, 2]]), mhg([[11, 12], [11]]))[1].translation \
-        in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert ss(mhg([[1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
-        in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert ss(mhg([[1, 2], [1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
-        in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert ss(mhg([[1, 2]]), mhg([[11, 12], [13, 14]]))[1].translation \
-        in [{1: 11, 2: 12}, {1: 12, 2: 11}, {1: 13, 2: 14}, {1: 14, 2: 13}]
-    assert ss(mhg([[1]]), mhg([[11, 12]])) == (False, None)
-    assert ss(mhg([[1, 2]]), mhg([[1, 2, 3]])) == (False, None)
+@pytest.mark.parametrize(
+    'mhg1,mhg2,translation',
+    [([[1]], [[11]], [{1: 11}]),
+     ([[1]], [[11], [12]], [{1: 11}, {1: 12}]),
+     ([[1, 2]], [[11, 12]], [{1: 11, 2: 12}, {1 : 12, 2: 11}]),
+     ([[1, 2]], [[11, 12], [11]], [{1: 11, 2: 12}, {1: 12, 2: 11}]),
+     ([[1, 2]], [[11, 12], [11, 12]], [{1: 11, 2: 12}, {1: 12, 2: 11}]),
+     ([[1, 2], [1, 2]], [[11, 12], [11, 12]], [{1: 11, 2: 12}, {1: 12, 2: 11}]),
+     ([[1, 2]], [[11, 12], [13, 14]],
+      [{1: 11, 2: 12}, {1: 12, 2: 11}, {1: 13, 2:14}, {1: 14, 2: 13}])])
+def test_subgraph_search(mhg1, mhg2, translation):
+    assert ss(mhg(mhg1), mhg(mhg2), return_all=False)[1].translation in translation
+
+@pytest.mark.parametrize('return_all', [(True,), (False,)])
+def test_subgraph_search2(return_all):
+    assert ss(mhg([[1]]), mhg([[11, 12]]), return_all) == (False, None)
+    assert ss(mhg([[1, 2]]), mhg([[1, 2, 3]]), return_all) == (False, None)
 
 
 def test_isomorphism_search():

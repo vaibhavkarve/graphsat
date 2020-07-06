@@ -25,8 +25,8 @@ A *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import (AbstractSet, cast, Collection, Counter, Dict, FrozenSet,
-                    List, NewType, TypeVar, Union)
+from typing import (AbstractSet, Collection, Counter, Dict, FrozenSet,
+                    List, NewType, Tuple, TypeVar, Union)
 # Imports from third-party modules.
 from loguru import logger
 # Imports from local modules.
@@ -64,7 +64,7 @@ class MHGraphType(Counter[AbstractSet[T]]):
                                 9: '\u2079'}
 
         ordered_hedges: List[AbstractSet[T]]
-        ordered_hedges = sorted(sorted([h for h in super().keys()]), key=len)
+        ordered_hedges = sorted(sorted(super().keys()), key=len)  # pylint: disable=no-member
 
         def superscript(hedge_: AbstractSet[T]) -> str:
             multiplicity: int = super(MHGraphType, self).get(frozenset(hedge_), 0)
@@ -76,7 +76,7 @@ class MHGraphType(Counter[AbstractSet[T]]):
         return ','.join(hedge_strings)
 
 
-class HEdge(FrozenSet[graph.Vertex]):
+class HEdge(FrozenSet[graph.Vertex]):  # pylint: disable=too-few-public-methods
     """`HEdge` is a subclass of `FrozenSet[graph.Vertex]`."""
     def __repr__(self) -> str:
         """Pretty-print the HEdge in a compact way."""
@@ -169,7 +169,7 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 
     try:
         # edge_collection is a Counter.
-        return MHGraph(MHGraphType(map(hedge, edge_collection.elements())))
+        return MHGraph(MHGraphType(map(hedge, edge_collection.elements())))  # type: ignore
     except AttributeError:
         # edge_collection is not a Counter.
         return MHGraph(MHGraphType(map(hedge, edge_collection)))
@@ -179,31 +179,31 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 # ===============
 
 
-def vertices(mhgraph_instance: Union[HGraph, MHGraph]) -> FrozenSet[graph.Vertex]:
+def vertices(mhg: Union[HGraph, MHGraph]) -> FrozenSet[graph.Vertex]:
     """Return a `frozenset` of all vertices of a MHGraph."""
-    return frozenset.union(*mhgraph_instance)
+    return frozenset.union(*mhg)
 
 
-def degree(vertex: graph.Vertex, mhgraph_instance: MHGraph) -> int:
+def degree(vertex: graph.Vertex, mhg: MHGraph) -> int:
     """Return the degree of a ``vertex`` in a MHGraph.
 
     This counts multiplicities.
     """
-    return sum([multiplicity for hedge, multiplicity in mhgraph_instance.items()
+    return sum([multiplicity for hedge, multiplicity in mhg.items()
                 if vertex in hedge])
 
 
-def pick_max_degree_vertex(mhgraph_instance: MHGraph) -> graph.Vertex:
+def pick_max_degree_vertex(mhg: MHGraph) -> graph.Vertex:
     """Pick vertex of highest degree."""
     degree_sequence: Dict[graph.Vertex, int]
-    degree_sequence = {v: degree(v, mhgraph_instance) for v in vertices(mhgraph_instance)}
+    degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return max(degree_sequence, key=degree_sequence.get)
 
 
-def pick_min_degree_vertex(mhgraph_instance: MHGraph) -> graph.Vertex:
+def pick_min_degree_vertex(mhg: MHGraph) -> graph.Vertex:
     """Pick vertex of lowest degree."""
     degree_sequence: Dict[graph.Vertex, int]
-    degree_sequence = {v: degree(v, mhgraph_instance) for v in vertices(mhgraph_instance)}
+    degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return min(degree_sequence, key=degree_sequence.get)
 
 

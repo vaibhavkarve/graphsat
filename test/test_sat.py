@@ -126,21 +126,20 @@ def test_cnfs_from_hedge():
     assert not list(cnfs_from_hedge({1, 2}, 5)) # exceeds allowed multiplicity.
 
 
-def test_cnfs_from_mhgraph():
-    # Typical example with edge of size=1.
-    assert set(cnfs_from_mhgraph(mm([[1]]))) == set(cnfs_from_hedge({1}, 1))
-    assert set(cnfs_from_mhgraph(mm([[1], [1]]))) == set(cnfs_from_hedge({1}, 2))
+@pytest.mark.parametrize(
+    'mhgraph,hedge,multiplicity',
+    [([[1]], {1}, 1),
+     ([[1]]*2, {1}, 2),
+     ([[1]]*3, {1}, 3),
+     ([[1, 2]], {1, 2}, 1),
+     ([[1, 2]]*2, {1, 2}, 2),
+     ([[1, 2]]*3, {1, 2}, 3),
+     ([[1, 2]]*4, {1, 2}, 4),
+     ([[1, 2]]*5, {1, 2}, 5),
+     ([[1, 2, 3]]*9, {1, 2}, 9)])
+def test_cnfs_from_mhgraph(mhgraph, hedge, multiplicity):
+    assert set(cnfs_from_mhgraph(mm(mhgraph))) == set(cnfs_from_hedge(hedge, multiplicity))
 
-    # Typical example with edge of size=2.
-    assert set(cnfs_from_mhgraph(mm([[1, 2]]))) == set(cnfs_from_hedge({1, 2}, 1))
-    assert set(cnfs_from_mhgraph(mm([[1, 2], [1, 2]]))) == set(cnfs_from_hedge({1, 2}, 2))
-    assert set(cnfs_from_mhgraph(mm([[1, 2], [1, 2], [1, 2]]))) \
-        == set(cnfs_from_hedge({1, 2}, 3))
-    assert list(cnfs_from_mhgraph(mm([[1, 2], [1, 2], [1, 2], [1, 2]]))) \
-        == [cc([[1, 2], [1, -2], [-1, 2], [-1, -2]])]
-
-    assert not list(cnfs_from_mhgraph(mm(mhgraph.counter({frozenset({1, 2}): 5}))))
-    assert not list(cnfs_from_mhgraph(mm(mhgraph.counter({frozenset({1, 2, 3}): 9}))))
 
 
 def test_mhgraph_bruteforce_satcheck():
@@ -180,25 +179,26 @@ def test_mhgraph_pysat_satcheck():
     assert not satchecker(mm([[1]]*2))
     assert not satchecker(mm([[1]]*3))
     
+    
     assert satchecker(mm([[1, 2]]*1))
     assert satchecker(mm([[1, 2]]*2))
     assert satchecker(mm([[1, 2]]*3))
     assert not satchecker(mm([[1, 2]]*4))
     assert not satchecker(mm([[1, 2]]*5))
     assert not satchecker(mm([[1, 2]]*6))
-    
 
+    # K4-e is unsat
+    assert satchecker(mm([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4]]))
     # K4 is unsat.
     assert not satchecker(mm([[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]))
-
     # Butterfly is unsat
     assert not satchecker(mm([[1, 2], [1, 3], [2, 3], [2, 4], [2, 5], [4, 5]]))
     # Bowtie is unsat
-    assert not satchecker(mm([[1, 2], [1, 3], [2, 3], [2, 4], [4, 5], [4, 6],
-                                           [5, 6]]))
+    assert not satchecker(mm([[1, 2], [1, 3], [2, 3], [2, 4], [4, 5], [4, 6], [5,
+                                                                               6]]))
     # 3-Book is unsat
-    assert not satchecker(mm([[1, 2], [1, 3], [2, 3], [1, 4], [2, 4], [1, 5],
-                                           [2, 5]]))
+    assert not satchecker(mm([[1, 2], [1, 3], [2, 3], [1, 4], [2, 4], [1, 5], [2,
+                                                                               5]]))
 
     assert not satchecker(mm([[1, 2], [1, 2], [1, 2], [1, 3], [2, 3]]))
     assert not satchecker(mm([[1, 2], [1, 2], [2, 3], [2, 3]]))

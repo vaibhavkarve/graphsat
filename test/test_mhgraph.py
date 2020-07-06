@@ -76,3 +76,7 @@ def test_degree():
     assert degree(1, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 2
     assert degree(4, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 1
     assert degree(5, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 0
+
+def test_graph_union():
+    assert graph_union(mhgraph([[1, 2], [3]]), mhgraph([[1, 11]])) ==  mhgraph([[1, 2], [3], [1, 11]])
+

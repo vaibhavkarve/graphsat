@@ -257,11 +257,10 @@ def generate_vertexmaps(hgraph1: HGraph,
     domain: Iterator[Tuple[Vertex, ...]]
     domain = it.permutations(vertices(hgraph1))
 
-    combinatorial_scheme = it.combinations if injective \
-        else it.combinations_with_replacement
+    scheme = it.combinations if injective else it.combinations_with_replacement
 
     codomain: Iterator[Tuple[Vertex, ...]]
-    codomain = combinatorial_scheme(vertices(hgraph2), len(vertices(hgraph1)))
+    codomain = scheme(vertices(hgraph2), len(vertices(hgraph1)))
 
     mappings1: Iterator[Tuple[Tuple[Vertex, ...], Tuple[Vertex, ...]]]
     mappings1 = it.product(domain, codomain)
@@ -275,16 +274,29 @@ def generate_vertexmaps(hgraph1: HGraph,
     vertexmaps_optional: Iterator[Optional[VertexMap]]
     vertexmaps_optional = map(lambda t: vertexmap(t, hgraph1, hgraph2), translations)
 
-    vertexmaps: Iterator[VertexMap]
-    vertexmaps = filter(None, vertexmaps_optional)
+    def vertexmaps_should_be_non_none() -> Iterator[VertexMap]:
+        vertexmaps: Iterator[VertexMap]
+        vertexmaps_none: Iterator[None]
+        vertexmaps_none, vertexmaps = mit.partition(lambda vm: vm is not None, vertexmaps_optional)
+        assert not list(vertexmaps_none), 'All generated vertexmaps should have been non-None.'
+        return vertexmaps
 
+    vertexmaps = vertexmaps_should_be_non_none()
     if not injective:
         return vertexmaps
 
-    injective_vertexmaps: Iterator[InjectiveVertexMap]
-    injective_vertexmaps = filter(None, map(injective_vertexmap, vertexmaps))
+    inj_vertexmaps_optional: Iterator[Optional[InjectiveVertexMap]]
+    inj_vertexmaps_optional = map(injective_vertexmap, vertexmaps)
 
-    return injective_vertexmaps
+    def inj_vertexmaps_should_be_non_none() -> Iterator[InjectiveVertexMap]:
+        inj_vertexmaps: Iterator[InjectiveVertexMap]
+        inj_vertexmaps_none: Iterator[None]
+        inj_vertexmaps_none, inj_vertexmaps = mit.partition(lambda vm: vm is not None,
+                                                            inj_vertexmaps_optional)
+        assert not list(inj_vertexmaps_none), \
+            'All generated inj-vertexmaps should have been non-None.'
+        return inj_vertexmaps
+    return inj_vertexmaps_should_be_non_none()
 
 
 def is_immediate_subgraph(mhgraph1: MHGraph, mhgraph2: MHGraph) -> bool:

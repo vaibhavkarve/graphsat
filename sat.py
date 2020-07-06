@@ -484,50 +484,43 @@ def supports_single_loop(mhg: mhgraph.MHGraph) -> Union[bool, graph.Vertex]:
     
     
 @ft.lru_cache
-def simplify_at_loops(mhgraph_instance: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
+def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a self loop, then project away from vertex.
 
     This results in a graph that is equisatisfiable to the first.
     """
-    double_loop_graph: mhgraph.MHGraph = mhgraph.mhgraph([[1], [1]])
-    single_loop_graph: mhgraph.MHGraph = mhgraph.mhgraph([[1]])
-
-    if morph.subgraph_search(double_loop_graph, mhgraph_instance)[0]:
-        # double loops => unsatisfiable
-        logger.success(f'{mhgraph_instance} simplified to False')
+    if has_double_loop(mhg):
+        logger.trace(f'{mhg} simplified to False because of double loop.')
         return False
 
-    if morph.isomorphism_search(single_loop_graph, mhgraph_instance)[0]:
-        # there is only one loop => satisfiable.
-        logger.success(f'{mhgraph_instance} simplified to True')
+    vertex = supports_single_loop(mhg)
+    if not vertex:
+        logger.trace(f'{mhg} has no loops')
+        return mhg
+
+    vertex = cast(graph.Vertex, vertex)
+    logger.trace(f'{vertex = }')
+
+    sphr: Tuple[mhgraph.HEdge, ...]
+    sphr = mhgraph.sphr(mhg, vertex)
+    logger.trace(f'{sphr = }')
+
+    link: Tuple[mhgraph.HEdge, ...]
+    link = mhgraph.link(mhg, vertex)
+    logger.trace(f'{link = }')
+
+    if not link and not sphr:
+        # iff mhg is isomorphic to a bunch of loops at the verrtex.  But since we
+        # already ruled out double loops (or higher), we can be sure that mhg has
+        # only one loop.
+        assert len(list(mhg.elements())) == 1
+        logger.trace(f'{mhg} simplified to True')
         return True
 
-    subgraph_status: bool
-    subgraph_status, subgraph_morph = morph.subgraph_search(single_loop_graph,
-                                                            mhgraph_instance)
-    if not subgraph_status:
-        # No loop found. Return graph unchanged.
-        return mhgraph_instance
+    sphr_link: mhgraph.MHGraph = mhgraph.graph_union(sphr, link)
+    logger.success(f'{mhg} simplified to {sphr_link}')
+    return sphr_link
 
-    subgraph_morph = cast(morph.Morphism, subgraph_morph)
-    loop_in_graph: mhgraph.MHGraph = morph.graph_image(subgraph_morph, single_loop_graph)
-    looped_vertex: graph.Vertex = mit.one(mhgraph.vertices(loop_in_graph))
-    complement_of_loop: mhgraph.MHGraph
-    complement_of_loop = mhgraph.mhgraph(mhgraph_instance - loop_in_graph)
-
-    spherical_iter: Iterator[mhgraph.HEdge]
-    incident_iter: Iterator[mhgraph.HEdge]
-    spherical_iter, incident_iter = mit.partition(lambda h: looped_vertex in h,
-                                                  complement_of_loop.elements())  # pylint: disable=no-member
-
-    # Project away from looped_vertex.
-    projected_hedges: List[mhgraph.HEdge]
-    projected_hedges = [mhgraph.hedge(h - {looped_vertex}) for h in incident_iter]
-
-    reformed_graph: mhgraph.MHGraph
-    reformed_graph = op.graph_union(list(spherical_iter), projected_hedges)
-    logger.success(f'{mhgraph_instance} simplified to {reformed_graph}')
-    return simplify_at_loops(reformed_graph)
 
 
 if __name__ == '__main__':

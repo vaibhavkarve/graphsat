@@ -522,6 +522,30 @@ def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     return sphr_link
 
 
+@ft.lru_cache
+def simplify_at_leaves_and_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
+    """Call both simplify_at_leaves() and simplify_at_loops().
+
+    This results in a graph that is equisatisfiable to the first.
+
+    """
+    mhg_simp = simplify_at_leaves(mhg)
+    if isinstance(mhg_simp, bool):
+        return mhg_simp
+
+    if mhg_simp != mhg:
+        return simplify_at_leaves_and_loops(mhg_simp)
+
+    mhg_simp = simplify_at_loops(mhg_simp)
+    if isinstance(mhg_simp, bool):
+        return mhg_simp
+
+    if mhg_simp != mhg:
+        return simplify_at_leaves_and_loops(mhg_simp)
+
+    # Fixed-point reached.
+    return mhg_simp
+
 
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')

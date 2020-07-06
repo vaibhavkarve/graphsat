@@ -318,21 +318,21 @@ def is_immediate_subgraph(mhg1: MHGraph, mhg2: MHGraph) -> bool:
     return all(hedge in mhg2 and mult <= mhg2[hedge] for hedge, mult in mhg1.items())
 
 
-def subgraph_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = False) \
+def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
         -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
-    ``mhgraph1`` is a `subgraph` of ``mhgraph2`` if there is a Morphism with domain HGraph
-    as ``hgraph_from_mhgraph(mhgraph1)`` and codomain HGraph as
-    ``hgraph_from_mhgraph(mhgraph2)`` such that every HEdge of ``mhgraph1`` maps to a
-    unique HEdge (also accounting for multiplicities) of ``mhgraph2`` under the
+    ``mhg1`` is a `subgraph` of ``mhg2`` if there is a Morphism with domain HGraph
+    as ``hgraph_from_mhgraph(mhg1)`` and codomain HGraph as
+    ``hgraph_from_mhgraph(mhg2)`` such that every HEdge of ``mhg1`` maps to a
+    unique HEdge (also accounting for multiplicities) of ``mhg2`` under the
     Translation dictionary.
 
     Algorithm:
        * First perform some heuristic checks
        * If the two MHGraphs pass the heuristic checks, then generate all Morphisms from
-         ``hgraph_from_mhgraph(mhgraph1)`` to ``hgraph_from_mhgraph(mhgraph2)``.
-       * Find the image of ``hgraph_from_mhgraph(mhgraph1)`` under each Morphism.
+         ``hgraph_from_mhgraph(mhg1)`` to ``hgraph_from_mhgraph(mhg2)``.
+       * Find the image of ``hgraph_from_mhgraph(mhg1)`` under each Morphism.
        * Check that each HEdge of the image HGraph is present with higher multiplicity in
          the codomain.
           * If yes, and if ``return_all`` is False, then return ``(True, m)``, where ``m``
@@ -341,79 +341,70 @@ def subgraph_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = Fal
           * If not, then always return``(False, None)``.
 
     Args:
-       mhgraph1 (:obj:`MHGraph`): the domain mhgraph.
-       mhgraph2 (:obj:`MHGraph`): the codomain mhgraph.
-       return_all (:obj:`bool`): if False (default) return only one witeness Morphism,
-          else return all.
+       mhg1 (:obj:`MHGraph`): the domain mhgraph.
+       mhg2 (:obj:`MHGraph`): the codomain mhgraph.
+       return_all (:obj:`bool`): if False return only one witeness Morphism, else
+          return all.
 
     Return:
-       * If ``mhgraph1`` is a subgraph of ``mhgraph2`` then return ``(True, m)`` or
+       * If ``mhg1`` is a subgraph of ``mhg2`` then return ``(True, m)`` or
          ``(True, iterator_of_morphisms)``, depending on the value of ``return_all``.
-       * If ``mhgraph1`` is not a subgraph of ``mhgraph2``, then always return
+       * If ``mhg1`` is not a subgraph of ``mhg2``, then always return
          ``(False, None)``.
+
     """
-    # Heuristic checks
-    if any((len(vertices(mhgraph1)) > len(vertices(mhgraph2)),
-            len(mhgraph1.keys()) > len(mhgraph2.keys()),
-            sum(mhgraph1.values()) > sum(mhgraph2.values()))):
+    if any((len(vertices(mhg1)) > len(vertices(mhg2)),
+            len(mhg1.keys()) > len(mhg2.keys()),
+            sum(mhg1.values()) > sum(mhg2.values()))):
         # Failed heuristic checks. Not a subgraph.
         return False, None
 
+    hg1: HGraph = hgraph_from_mhgraph(mhg1)
+    hg2: HGraph = hgraph_from_mhgraph(mhg2)
     injective_vertexmaps = cast(Iterator[InjectiveVertexMap],
-                                generate_vertexmaps(hgraph_from_mhgraph(mhgraph1),
-                                                    hgraph_from_mhgraph(mhgraph2),
-                                                    injective=True))
+                                generate_vertexmaps(hg1, hg2, injective=True))
 
     morphisms: Iterator[Morphism]
     morphisms = filter(None, map(morphism, injective_vertexmaps))
 
-    subgraph_morphisms: Iterator[Morphism]
-    subgraph_morphisms = filter(lambda m: is_immediate_subgraph(graph_image(m, mhgraph1),
-                                                                mhgraph2), morphisms)
+    subgraph_morphs: Iterator[Morphism]
+    subgraph_morphs = filter(lambda m: is_immediate_subgraph(graph_image(m, mhg1),
+                                                             mhg2), morphisms)
 
-    first_morphism: List[Morphism]
-    first_morphism, subgraph_morphisms = mit.spy(subgraph_morphisms)
-    if not first_morphism:
+    first_morph: List[Morphism]
+    first_morph, subgraph_morphs = mit.spy(subgraph_morphs)
+    if not first_morph:
         # Not a subgraph.
         return False, None
 
-    if return_all:
-        return True, subgraph_morphisms
-    # Return the only item in first_morphism.
-    return True, mit.one(first_morphism)
+    return True, subgraph_morphs if return_all else mit.one(first_morph)
 
 
-def isomorphism_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = False) \
+def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \
         -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
-    Use :obj:`subgraph_search()` twice to check if ``mhgraph1`` is isomorphic to
-    ``mhgraph2``. A domain MHGraph and codomain MHGraph are `isomorphic` to each other if
+    Use :obj:`subgraph_search()` twice to check if ``mhg1`` is isomorphic to
+    ``mhg2``. A domain MHGraph and codomain MHGraph are `isomorphic` to each other if
     each is a subgraph of the other.
 
     Args:
-       mhgraph1 (:obj:`MHGraph`): the domain mhgraph.
-       mhgraph2 (:obj:`MHGraph`): the codomain mhgraph.
+       mhg1 (:obj:`MHGraph`): the domain mhgraph.
+       mhg2 (:obj:`MHGraph`): the codomain mhgraph.
        return_all (:obj:`bool`): if False (default), then return only one witness
           isomorphism else return all.
 
     Return:
-       If ``mhgraph1`` is indeed isomorphic to ``mhgraph2``, and if ``return_all`` is
+       If ``mhg1`` is indeed isomorphic to ``mhg2``, and if ``return_all`` is
        False, then return a ``(True, m)``, where ``m`` is an isomorphism.
        If ``return_all`` is True, then return ``(True, iterator_of_morphisms)``.
-       If ``mhgraph1`` is not isomorphic to ``mhgraph2``, then return ``(False, None)``.
-    """
-    # Heuristic checks
-    if any((len(vertices(mhgraph1)) != len(vertices(mhgraph2)),
-            len(mhgraph1.keys()) != len(mhgraph2.keys()),
-            sorted(mhgraph1.values()) != sorted(mhgraph2.values()))):
-        # Not isomorphic.
-        return False, None
+       If ``mhg1`` is not isomorphic to ``mhg2``, then return ``(False, None)``.
 
-    if not subgraph_search(mhgraph1=mhgraph2, mhgraph2=mhgraph1, return_all=False)[0]:
-        # Not isomorphic. Probably an unreachable line.
-        return False, None    # pragma: no cover
-    return subgraph_search(mhgraph1, mhgraph2, return_all=return_all)
+    """
+    is_subgraph, _ = subgraph_search(mhg1=mhg2, mhg2=mhg1, return_all=False)
+    if not is_subgraph:
+        return False, None
+    return subgraph_search(mhg1, mhg2, return_all=return_all)
 
 
 if __name__ == '__main__':

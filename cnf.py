@@ -447,6 +447,10 @@ def assign(cnf_instance: CNF, assignment: Mapping[Variable, Bool]) -> CNF:
           to be replaced and values being Bools that the Variables are to be assigned to.
           The ``assignment`` dictionary need not be complete and can be partial.
 
+    Edge case:
+       An empty assignment dictionary results in ``cnf_instance`` simply getting
+       topologically reduced.
+
     Return:
        Tautologically-reduced CNF formed by replacing every key in the ``assignment``
        dictionary (and those keys' negations) by corresponding Bool values.

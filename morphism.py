@@ -153,43 +153,39 @@ def injective_vertexmap(vmap: VertexMap) -> Optional[InjectiveVertexMap]:
        ``vmap`` after casting to an InjectiveVertexMap named-tuple. Return ``None`` if
           ``vmap`` is not injective.
     """
-    if len(vmap.translation.keys()) == len(frozenset(vmap.translation.values())):
-        return InjectiveVertexMap(vmap)
-    # The given VertexMap does not satisfy InjectiveVertexMap axioms.
-    return None
+    if len(vmap.translation.keys()) != len(set(vmap.translation.values())):
+        return None
+    return InjectiveVertexMap(vmap)
 
 
-def graph_image(ivmap: InjectiveVertexMap, mhgraph_instance: MHGraph) -> MHGraph:
+def graph_image(ivmap: InjectiveVertexMap, mhg: MHGraph) -> MHGraph:
     """Return the image of a MHGraph under an InjectiveVertexMap.
 
     .. note::
-       In the special case of ``ivmap.hgraph1 == hgraph_from_mhgraph(mhgraph_instance)``,
        this function is guaranteed to always return a valid MHGraph because:
 
        1. the axioms of VertexMap ensure that all Vertices of the domain MHGraph are
           mapped.
        2. the axioms of InjectiveVertexMap prevent repetition of a Vertex in any single
-          HEdge of the image.
+          HEdge of the image, i.e. they prevent collapse of HEdges.
        3. the axioms of InjectiveVertexMap also imply that if the domain MHGraph has all
           HEdge-multiplicities equal to one, then so will the image mhgraph.
 
-       However, for a more general ``mhgraph_instance``, there are no such guarantees.
-
     Args:
         ivmap (:obj:`InjectiveVertexMap`): an InjectiveVertexMap named-tuple.
-        mhgraph_instance (:obj:`MHGraph`): the MHGraph to be translated/mapped.
+        mhg (:obj:`MHGraph`): the MHGraph to be translated/mapped.
 
     Return:
-       A MHGraph formed by mapping the Vertices of ``mhgraph_instance`` using
+       A MHGraph formed by mapping the Vertices of ``mhg`` using
        ``ivmap.translation``, while keeping the adjacency of Vertices of
-       ``mhgraph_instance`` intact.
+       ``mhg`` intact.
 
     """
-    get_translation = cast(Callable[[Vertex], Vertex], ivmap.translation.get)
-
-    mapped_mhgraph: List[FrozenSet[Vertex]]
-    mapped_mhgraph = list(map(lambda hedge: frozenset(map(get_translation, hedge)),
-                              mhgraph_instance.elements()))
+    assert set(ivmap.translation.keys()) <= vertices(mhg), \
+        f'InjectiveVertexMap keys should be vertices of {mhg = }'
+    mapped_mhgraph: List[List[Vertex]]
+    mapped_mhgraph = [[ivmap.translation[vertex] for vertex in hedge] for hedge in
+                      mhg.elements()]
     return mhgraph(mapped_mhgraph)
 
 
@@ -198,7 +194,7 @@ def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
 
     A `Morphism` (which is short for HGraph-homomophism) is an InjectiveVertexMap
     such that adjacent Vertices of the domain HGraph are mapped to adjacent vertices
-    in the codomain H
+    in the codomain HGraph.
 
     .. note::
        1. Injectivity ensures that HEdges do not get mapped to collapsed HEdges.
@@ -218,10 +214,9 @@ def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
     mapped_hedges: KeysView[AbstractSet[Vertex]]
     mapped_hedges = graph_image(ivmap, mhgraph(ivmap.hgraph1)).keys()
 
-    if all(hedge in ivmap.hgraph2 for hedge in mapped_hedges):
-        return Morphism(ivmap)
-    # The given InjectiveVertexMap does not satisfy Morphism axioms.
-    return None
+    if not all(hedge in ivmap.hgraph2 for hedge in mapped_hedges):
+        return None
+    return Morphism(ivmap)
 
 
 # Higher (MH)Graph Operations
@@ -230,7 +225,7 @@ def morphism(ivmap: InjectiveVertexMap) -> Optional[Morphism]:
 
 def generate_vertexmaps(hgraph1: HGraph,
                         hgraph2: Optional[HGraph] = None,
-                        injective: bool = True) -> Iterator[VertexMap]:
+                        injective: bool = True) -> Iterator[Union[VertexMap, InjectiveVertexMap]]:
     """Generate all the (Injective)VertexMaps from domain HGraph to codomain HGraph.
 
     Args:

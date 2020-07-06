@@ -2,7 +2,7 @@
 """Functions and operations."""
 # Imports from standard library.
 import functools as ft
-from typing import List, Union
+from typing import Union
 # Imports from third-party modules.
 from loguru import logger
 # Imports feom local modules.
@@ -10,11 +10,6 @@ from graphsat import mhgraph, sat, sxpr
 
 from graphsat.mhgraph import MHGraph
 from graphsat.sxpr import SatSxpr
-
-
-def graph_union(graph1: List[mhgraph.HEdge], graph2: List[mhgraph.HEdge]) -> mhgraph.MHGraph:
-    """Union of the two graphs."""
-    return mhgraph.mhgraph(graph1 + graph2)
 
 
 @ft.singledispatch

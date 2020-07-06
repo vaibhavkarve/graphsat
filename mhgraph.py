@@ -228,6 +228,12 @@ def sphr(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
     return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
 
 
+def graph_union(mhg1: Tuple[HEdge, ...], mhg2: Tuple[HEdge, ...]) -> MHGraph:
+    """Union of the two graphs."""
+    assert mhg1 or mhg2, f'Encountered empty input {mhg1 = } or {mhg2 = }'
+    return mhgraph(mhg1 + mhg2)
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')

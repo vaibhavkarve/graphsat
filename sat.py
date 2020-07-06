@@ -462,6 +462,14 @@ def simplify_at_leaves(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     logger.trace(f'simplified to {sphr}')
     return mhgraph.mhgraph(sphr) if sphr else True
 
+
+def has_double_loop(mhg: mhgraph.MHGraph) -> bool:
+    """Return True iff mhg has a double loop."""
+    double_loop_graph: mhgraph.MHGraph
+    double_loop_graph = mhgraph.mhgraph([[37], [37]])
+
+    return morph.subgraph_search(double_loop_graph, mhg, return_all=False)[0]
+
 @ft.lru_cache
 def simplify_at_loops(mhgraph_instance: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a self loop, then project away from vertex.

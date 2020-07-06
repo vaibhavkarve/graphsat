@@ -213,6 +213,16 @@ def star(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
     return tuple(hedge(h) for h in mhg.elements() if vertex in h)
 
 
+def link(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+    """Return the link of ``mhg`` at ``vertex``.
+
+    This is the star projected away from ``vertex``.
+
+    """
+    return tuple(hedge(set(h) - {vertex}) for h in star(mhg, vertex)
+                 if set(h) != {vertex})
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')

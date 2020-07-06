@@ -40,7 +40,7 @@ import functools as ft
 import itertools as it
 import math
 import subprocess
-from typing import cast, Dict, FrozenSet, Iterable, Iterator, List, Set, Tuple, Union
+from typing import cast, Dict, FrozenSet, Iterator, List, Set, Tuple, Union
 # Imports from third-party modules.
 from loguru import logger
 import more_itertools as mit  # type: ignore
@@ -48,7 +48,6 @@ from tqdm import tqdm  # type: ignore
 # Imports from local modules.
 from graphsat import cnf, graph, mhgraph
 import graphsat.morphism as morph
-import graphsat.operations as op
 
 
 # Type alisases
@@ -65,15 +64,15 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
     A CNF's `truth-assignment` will be represented as a dictionary with keys being
     all the Variables that appear in the CNF and values being Bools.
 
-    Corner cases:
-    
+    Edge cases:
+
        * ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and
          therefore their only corresponding truth-assignment is the empty dictionary.
          In other words, the function returns ``({})``.
 
        * Any CNF that can be tautologically reduced to TRUE/FALSE also returns ``({})``.
 
-       * Over-saturated CNFs also return ``({})``.
+       * This function cannot distinguish between sat/unsat CNFs.
 
     Args:
        cnf_instance (:obj:`cnf.CNF`)
@@ -123,11 +122,16 @@ def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
     if cnf_reduced == cnf.FALSE_CNF:
         return False
 
-    def simplifies_cnf_to_TRUE(assignment: Assignment) -> bool:  # noqa, pylint: disable=invalid-name
+    def assigns_cnf_to_true(assignment: Assignment) -> bool:
         return cnf.assign(cnf_reduced, assignment) == cnf.TRUE_CNF
 
+    # Note: cnf_reduced cannot be TRUE/FALSE, hence all_assignments != ({})
+    all_assignments: Iterator[Assignment] = generate_assignments(cnf_reduced)
+    head, all_assignments = mit.spy(all_assignments)
+    assert head != {}, 'Empty assignment generated.'
+
     satisfying_assignments: Iterator[Assignment]
-    satisfying_assignments = filter(simplifies_cnf_to_TRUE, generate_assignments(cnf_reduced))
+    satisfying_assignments = filter(assigns_cnf_to_true, all_assignments)
 
     return any(satisfying_assignments)
 
@@ -243,7 +247,7 @@ def lits_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Lit, cnf.Lit]:
     return positive_lit, cnf.neg(positive_lit)
 
 
-def clauses_from_hedge(hedge: mhgraph.HEdge) -> Iterator[cnf.Clause]:
+def clauses_from_hedge(hedge: mhgraph.HEdge) -> Tuple[cnf.Clause, ...]:
     r"""Return all Clauses supported on a HEdge.
 
     Args:
@@ -275,14 +279,14 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
        An iterator of cnf.CNF consisting of the :math:`\binom{2^{|hedge|}}{multiplicity}`
        CNFs supported on a HEdge ``hedge`` with multiplicity ``multiplicity``.
 
-    Note:
+    Edge case:
        Returns an empty iterator if ``multiplicity`` greater than :math:`2^{|hedge|}`.
 
     Raises:
        ValueError if ``multiplicity`` is less than 1.
 
     """
-    clause_possibilities: Iterator[cnf.Clause]
+    clause_possibilities: Tuple[cnf.Clause, ...]
     clause_possibilities = clauses_from_hedge(hedge)
 
     clause_tuples: Iterator[Tuple[cnf.Clause, ...]]
@@ -305,6 +309,9 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
        :math:`\displaystyle\prod_{hedge}\binom{2^{|hedge|}}{multiplicity}` CNFs supported
        on the MHGraph ``mhgraph_instance``.
 
+    Edge case:
+       If `mhgraph_instance` is over-saturated (i.e. if it has a HEdge with multiplicity
+       greater than :math:`2^{|hedge|}`, then this function returns an empty iterator.
     """
     cnf_iterators: Iterator[Iterator[cnf.CNF]]
     cnf_iterators = it.starmap(cnfs_from_hedge, mhgraph_instance.items())
@@ -323,7 +330,9 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
 
 
 def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
-    """Return the number of CNFs supported on a MHGraph."""
+    """Return the number of CNFs supported on a MHGraph.
+
+    Returns `0` in case of over-saturated graphs."""
     return math.prod(math.comb(2**len(h), m) for h, m in mhgraph_instance.items())  # type: ignore
 
 
@@ -356,8 +365,7 @@ def mhgraph_bruteforce_satcheck(mhgraph_instance: mhgraph.MHGraph,
 
 
 @ft.lru_cache
-def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph,
-                           randomize: bool = True, log_progress: bool = True) -> bool:
+def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph, randomize: bool = True) -> bool:
     """Use the `pysat` library's Minisat22 solver to check satisfiability of a MHGraph.
 
     Args:
@@ -367,19 +375,16 @@ def mhgraph_pysat_satcheck(mhgraph_instance: mhgraph.MHGraph,
     Return:
        ``True`` if ``mhgraph_instance`` is satisfiable, else return ``False``.
 
+    Edge case:
+       * If ``mhgraph_instance`` is over-saturated, then the number of cnfs on it is zero,
+         and this function immediately returns False.
     """
     number: int = number_of_cnfs(mhgraph_instance)
-
-    if not number:
-        return False
-    with tqdm(cnfs_from_mhgraph(mhgraph_instance, randomize=True),
-              desc='pysat()',
-              total=number,
-              leave=log_progress) as progress_bar:
-        for cnf in progress_bar:
-            if not cnf_pysat_satcheck(cnf):
-                return False
-    return True
+    progress_bar = tqdm(cnfs_from_mhgraph(mhgraph_instance, randomize=randomize),
+                        desc='pysat()',
+                        total=number,
+                        leave=False)
+    return all(cnf_pysat_satcheck(cnf) for cnf in progress_bar) if number else False
 
 
 def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:

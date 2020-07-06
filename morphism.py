@@ -299,7 +299,7 @@ def generate_vertexmaps(hgraph1: HGraph,
     return inj_vertexmaps_should_be_non_none()
 
 
-def is_immediate_subgraph(mhgraph1: MHGraph, mhgraph2: MHGraph) -> bool:
+def is_immediate_subgraph(mhg1: MHGraph, mhg2: MHGraph) -> bool:
     """Check if the domain MHGraph is an immediate-subgraph of the codomain.
 
     We say that the domain MHGraph is an `immediate subgraph` of the codomain MHGraph if
@@ -307,16 +307,15 @@ def is_immediate_subgraph(mhgraph1: MHGraph, mhgraph2: MHGraph) -> bool:
     with multiplicity no less than ``m``.
 
     Args:
-       mhgraph1 (:obj:`MHGraph`)
-       mhgraph2 (:obj:`MHGraph`)
+       mhg1 (:obj:`MHGraph`)
+       mhg2 (:obj:`MHGraph`)
 
     Return:
-       ``True`` if every HEdge of ``mhgraph1`` with multiplicity ``m`` is a HEdge of
-       ``mhgraph2`` with multiplicity no less than ``m``, else return ``False``.
+       ``True`` if every HEdge of ``mhg1`` with multiplicity ``m`` is a HEdge of
+       ``mhg2`` with multiplicity no less than ``m``, else return ``False``.
 
     """
-    return all(hedge in mhgraph2 and mult <= mhgraph2[hedge]
-               for hedge, mult in mhgraph1.items())
+    return all(hedge in mhg2 and mult <= mhg2[hedge] for hedge, mult in mhg1.items())
 
 
 def subgraph_search(mhgraph1: MHGraph, mhgraph2: MHGraph, return_all: bool = False) \

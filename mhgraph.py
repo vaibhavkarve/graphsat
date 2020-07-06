@@ -223,6 +223,11 @@ def link(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
                  if set(h) != {vertex})
 
 
+def sphr(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+    """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex``."""
+    return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')

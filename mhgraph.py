@@ -207,6 +207,12 @@ def pick_min_degree_vertex(mhg: MHGraph) -> graph.Vertex:
     return min(degree_sequence, key=degree_sequence.get)
 
 
+def star(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+    """Return the tuple of all HEdges in ``mhg`` incident at ``vertex``."""
+    assert vertex in vertices(mhg), f'{vertex} not of vertex of {mhg}'
+    return tuple(hedge(h) for h in mhg.elements() if vertex in h)
+
+
 if __name__ == '__main__':
     logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')

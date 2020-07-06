@@ -6,9 +6,8 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, Callable, cast, Dict, FrozenSet,
-                    Iterator, KeysView, List, Mapping, NamedTuple, NewType,
-                    Optional, Tuple, Union)
+from typing import (AbstractSet, cast, Dict, Iterator, KeysView, List, Mapping,
+                    NamedTuple, NewType, Optional, Tuple, Union)
 
 import more_itertools as mit  # type: ignore
 from loguru import logger
@@ -42,7 +41,7 @@ Morphism.__doc__ = """`Morphism` is a subtype of `InjectiveVertexMap`."""
 # ====================
 
 
-def graph_from_mhgraph(mhgraph_instance: MHGraph) -> Graph:
+def graph_from_mhgraph(mhg: MHGraph) -> Graph:
     """Obtain a simple Graph from a MHGraph if possible. If not, raise a ValueError.
 
     A MHGraph can be converted to a simple Graph if:
@@ -50,34 +49,34 @@ def graph_from_mhgraph(mhgraph_instance: MHGraph) -> Graph:
     - its edges have no multiplicities.
 
     Args:
-       mhgraph_instance (:obj:`MHGraph`): a MHGraph which can be coerced to a
+       mhg (:obj:`MHGraph`): a MHGraph which can be coerced to a
           simple graph.
 
     Return:
-       A simple Graph with the same Edges as ``mhgraph_instance``, but with multiplicities
+       A simple Graph with the same Edges as ``mhg``, but with multiplicities
        removed.
 
     Raises:
-       ValueError: if ``mhgraph_instance`` cannot be coerced to a simple graph.
+       AssertionError: if ``mhg`` cannot be coerced to a simple graph.
 
     """
-    if not all(multiplicity == 1 for multiplicity in mhgraph_instance.values()):
-        raise ValueError('Multi-edges cannot be coerced to simple edges.')
-    return graph(mhgraph_instance.keys())
+    assert all(multiplicity == 1 for multiplicity in mhg.values()),\
+               'Multi-edges cannot be coerced to simple edges.'
+    return graph(mhg.keys())
 
 
-def hgraph_from_mhgraph(mhgraph_instance: MHGraph) -> HGraph:
+def hgraph_from_mhgraph(mhg: MHGraph) -> HGraph:
     """Obtain a HGraph by ignoring the HEdge-multiplicities of a hgraph.
 
     Args:
-       mhgraph_instance (:obj:`MHGraph`)
+       mhg (:obj:`MHGraph`)
 
     Return:
-       A HGraph with the same HEdges as ``mhgraph_instance``, but with multiplicities
+       A HGraph with the same HEdges as ``mhg``, but with multiplicities
        removed.
 
     """
-    return hgraph(mhgraph_instance.keys())
+    return hgraph(mhg.keys())
 
 
 def mhgraph_from_graph(graph_instance: Graph) -> MHGraph:
@@ -106,7 +105,7 @@ def vertexmap(translation: Mapping[Vertex, Vertex],
     """Check if a Translation is a VertexMap from one HGraph to another.
 
     A Translation is a `VertexMap` if its keys are **all** the Vertices of the domain
-    HGraph and its values are **some** (or **all**) the Vertices of the codomain H
+    HGraph and its values are a subset of the Vertices of the codomain HGraph.
 
     .. note::
 
@@ -122,9 +121,10 @@ def vertexmap(translation: Mapping[Vertex, Vertex],
           ``hgraph1`` to itself.
 
     Return:
-       A VertexMap named-tuple. Return ``None`` if:
-       * not every Vertex of ``hgraph1`` is a key of ``translation``.
-       * the values of ``translation`` are not a subset of the Vertices of ``hgraph2``.
+       * a VertexMap named-tuple.
+       * return ``None`` if not every Vertex of ``hgraph1`` is a key of ``translation``.
+       * return ``None`` if the values of ``translation`` are not a subset of the Vertices
+         of ``hgraph2``.
     """
     if hgraph2 is None:
         hgraph2 = hgraph1
@@ -132,12 +132,12 @@ def vertexmap(translation: Mapping[Vertex, Vertex],
     keys_are_all_vertices: bool
     keys_are_all_vertices = translation.keys() == vertices(hgraph1)
 
-    values_are_some_vertices: bool
-    values_are_some_vertices = set(translation.values()) <= vertices(hgraph2)
+    values_are_subset_of_vertices: bool
+    values_are_subset_of_vertices = set(translation.values()) <= vertices(hgraph2)
 
-    if keys_are_all_vertices and values_are_some_vertices:
-        return VertexMap(hgraph1, hgraph2, translation=dict(translation))
-    return None
+    if not keys_are_all_vertices or not values_are_subset_of_vertices:
+        return None
+    return VertexMap(hgraph1, hgraph2, translation=dict(translation))
 
 
 def injective_vertexmap(vmap: VertexMap) -> Optional[InjectiveVertexMap]:

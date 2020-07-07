@@ -6,14 +6,16 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, cast, Dict, Iterator, KeysView, List, Mapping,
-                    NamedTuple, NewType, Optional, Tuple, Union)
+from typing import (AbstractSet, Callable, cast, Dict, Iterator, KeysView, List,
+                    Mapping, NamedTuple, NewType, Optional, Tuple, Union)
 
 import more_itertools as mit  # type: ignore
 from loguru import logger
 
 from graphsat.graph import graph, Graph, Vertex
-from graphsat.mhgraph import hgraph, HGraph, mhgraph, MHGraph, vertices
+from graphsat.mhgraph import (HEdge, hgraph, HGraph, hgraph_from_mhgraph, mhgraph,
+                              MHGraph, vertices)
+
 
 # Types
 # =====
@@ -295,9 +297,13 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
          ``(False, None)``.
 
     """
-    if any((len(vertices(mhg1)) > len(vertices(mhg2)),
-            len(mhg1.keys()) > len(mhg2.keys()),
-            sum(mhg1.values()) > sum(mhg2.values()))):
+    heuristics: Dict[str, Callable[[MHGraph], int]]
+    heuristics = {'# vertices': lambda mhg: len(vertices(mhg)),
+                  '# edges-no-mul': lambda mhg: len([h for h in mhg.keys() if len(h) == 2]),
+                  '# hedges-no-mul': lambda mhg: len([h for h in mhg.keys() if len(h) == 3]),
+                  '# edges': lambda mhg: len([h for h in mhg if len(h) == 2]),
+                  '# hedges': lambda mhg: len([h for h in mhg if len(h) == 3])}
+    if not all(value(mhg1) <= value(mhg2) for value in heuristics.values()):
         # Failed heuristic checks. Not a subgraph.
         return False, None
 

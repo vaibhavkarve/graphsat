@@ -37,64 +37,6 @@ Morphism = NewType('Morphism', InjectiveVertexMap)
 Morphism.__doc__ = """`Morphism` is a subtype of `InjectiveVertexMap`."""
 
 
-# Conversion Functions
-# ====================
-
-
-def graph_from_mhgraph(mhg: MHGraph) -> Graph:
-    """Obtain a simple Graph from a MHGraph if possible. If not, raise a ValueError.
-
-    A MHGraph can be converted to a simple Graph if:
-    - it has no hyper-edges,
-    - its edges have no multiplicities.
-
-    Args:
-       mhg (:obj:`MHGraph`): a MHGraph which can be coerced to a
-          simple graph.
-
-    Return:
-       A simple Graph with the same Edges as ``mhg``, but with multiplicities
-       removed.
-
-    Raises:
-       AssertionError: if ``mhg`` cannot be coerced to a simple graph.
-
-    """
-    assert all(multiplicity == 1 for multiplicity in mhg.values()),\
-               'Multi-edges cannot be coerced to simple edges.'
-    return graph(mhg.keys())
-
-
-def hgraph_from_mhgraph(mhg: MHGraph) -> HGraph:
-    """Obtain a HGraph by ignoring the HEdge-multiplicities of a hgraph.
-
-    Args:
-       mhg (:obj:`MHGraph`)
-
-    Return:
-       A HGraph with the same HEdges as ``mhg``, but with multiplicities
-       removed.
-
-    """
-    return hgraph(mhg.keys())
-
-
-def mhgraph_from_graph(graph_instance: Graph) -> MHGraph:
-    """Obtain a MHGraph from a mhgraph.
-
-    Every Graph is also a MHGraph (after some coercion).
-
-    Args:
-       graph_instance (:obj:`Graph`)
-
-    Return:
-       A MHGraph whose HEdges are the Edges of ``graph_instance`` with HEdge-multiplicity
-       one.
-
-    """
-    return mhgraph(graph_instance)
-
-
 # Constructor Functions
 # =====================
 

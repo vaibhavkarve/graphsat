@@ -259,7 +259,7 @@ def graph_from_mhgraph(mhg: MHGraph) -> graph.Graph:
     """
     assert all(multiplicity == 1 for multiplicity in mhg.values()),\
                'Multi-edges cannot be coerced to simple edges.'
-    return graph(mhg.keys())
+    return graph.graph(mhg.keys())
 
 
 def hgraph_from_mhgraph(mhg: MHGraph) -> HGraph:

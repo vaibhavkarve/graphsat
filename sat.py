@@ -548,7 +548,6 @@ def simplify_at_leaves_and_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MH
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('We have several different sat-solvers implemented here.')
     logger.info(">>> cnf_bruteforce_satcheck(cnf([[1, 2], [-1, 2], [1, -2]]))")
     logger.success(cnf_bruteforce_satcheck(cnf.cnf([[1, 2], [-1, 2], [1, -2]])))

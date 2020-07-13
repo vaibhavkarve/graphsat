@@ -154,7 +154,6 @@ def vertices(graph_instance: Graph) -> FrozenSet[Vertex]:
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('Simple graphs can be constructed using the graph() function.')
     logger.info('This function gets rid of duplicate edges.')
     logger.info('>>> graph([[1, 2], [1, 2], [2, 3], [3, 1], [3, 2]])')

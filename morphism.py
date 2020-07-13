@@ -356,7 +356,6 @@ def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as an independent script.')
     logger.info('We can perform an isomophism search as follows:')
     logger.info('>>> isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]), '
                 'mhgraph([[3, 2, 4], [2, 4]]))')

@@ -77,7 +77,6 @@ def neg_cnf(cnf1: CNF) -> CNF:
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('Conjunction between two CNFs:')
     logger.info('>>> cnf_and_cnf(cnf([[1, 2], [3, 4]]), cnf([[-1, 5], [6]]))')
     logger.info(cnf_and_cnf(cnf([[1, 2], [3, 4]]), cnf([[-1, 5], [6]])))

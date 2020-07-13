@@ -293,7 +293,6 @@ def mhgraph_from_graph(graph_instance: graph.Graph) -> MHGraph:
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('MHGraphs can be constructed using the mhgraph() function.')
     logger.info('>>> mhgraph([[1, 2, 3], [1, 2], [2, 3], [3, 1], [3, 2]])')
     logger.info(mhgraph([[1, 2, 3], [1, 2], [2, 3], [3, 1], [3, 2]]))

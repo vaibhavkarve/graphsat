@@ -463,7 +463,6 @@ def assign(cnf_instance: CNF, assignment: Mapping[Variable, Bool]) -> CNF:
 
 
 if __name__ == '__main__':
-    logger.info(f'Running {__file__} as a stand-alone script.')
     logger.info('CNFs can be constructed using the cnf() function.')
     logger.info('>>> cnf([[1, -2], [3, 500]])')
     logger.info(cnf([[1, -2], [3, 500]]))

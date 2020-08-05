@@ -2,14 +2,16 @@
 """Functions and operations."""
 # Imports from standard library.
 import functools as ft
-from typing import Union
+import itertools as it
+import more_itertools as mit
+from typing import Dict, Iterator, List, Set, Union
 # Imports from third-party modules.
 from loguru import logger
 # Imports feom local modules.
-from graphsat import mhgraph, sat, sxpr
+from graphsat import cnf, prop, sat
 
-from graphsat.mhgraph import MHGraph
-from graphsat.sxpr import SatSxpr
+from graphsat.mhgraph import mhgraph, MHGraph
+from graphsat.sxpr import AtomicSxpr, SatSxpr
 
 
 @ft.singledispatch
@@ -75,6 +77,45 @@ def gand(graph1: Union[MHGraph, Set[cnf.CNF]],
     conjunction = it.starmap(prop.cnf_and_cnf, product)
     conjunction_reduced = map(cnf.tautologically_reduce_cnf, conjunction)
     return set(conjunction_reduced)
+
+
+def graphs_equisat_a_bot(graph1: Set[cnf.CNF], graph2: Set[cnf.CNF]) -> bool:
+    """Check ∀ x₁ ∈ G₁, ∃ x₂ ∈ G₂, ∀ a ∈ A, x₁[a] ~ ⊥ → x₂[a] ~ ⊥."""
+    particular_x1: cnf.CNF = graph1.pop()
+    graph1.add(particular_x1)  # add it back in.
+
+    assignments: List[sat.Assignment]
+    assignments = list(sat.generate_assignments(particular_x1))
+
+    def cnf1_falsified(cnf1: cnf.CNF, assignment: sat.Assignment) -> bool:
+        cnf1_assigned: cnf.CNF = cnf.assign(cnf1, assignment)
+        assert all(map(lambda l: isinstance(l, cnf.Bool), cnf.lits(cnf1_assigned)))
+        return not sat.cnf_pysat_satcheck(cnf1_assigned)
+
+    def cnf2_falsified(cnf2: cnf.CNF, assignment: sat.Assignment) -> bool:
+        return not sat.cnf_pysat_satcheck(cnf.assign(cnf2, assignment))
+
+    return all(any(all(cnf2_falsified(cnf2, a)
+                       for a in assignments if cnf1_falsified(cnf1, a))
+                   for cnf2 in graph2) for cnf1 in graph1)
+
+
+def graph_equisat_mod_sphr(graph1: Union[MHGraph, Set[cnf.CNF]],
+                           graph2: Union[MHGraph, Set[cnf.CNF]]) -> bool:
+    """Check graphs are quisat by the A⊥ criterion.
+
+    This helps us conclude that Sphr∧G₁ is equisat to Sphr∧G₂ by the ⊥
+    criterion.
+    """
+    if not isinstance(graph1, set):
+        graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
+    if not isinstance(graph2, set):
+        graph2 = set(sat.cnfs_from_mhgraph(mhgraph(graph2)))
+
+    assert graph1 and graph2
+    return graphs_equisat_a_bot(graph1, graph2) \
+        and graphs_equisat_a_bot(graph1=graph2, graph2=graph1)
+
 
 if __name__ == "__main__":
     from time import time

@@ -125,11 +125,11 @@ def graph_image(ivmap: InjectiveVertexMap, mhg: MHGraph) -> MHGraph:
        ``mhg`` intact.
 
     """
-    assert set(ivmap.translation.keys()) <= vertices(mhg), \
-        f'InjectiveVertexMap keys should be vertices of {mhg = }'
+    #assert set(ivmap.translation.keys()) <= vertices(mhg), \
+    #    f'InjectiveVertexMap keys should be vertices of {mhg = }'
     mapped_mhgraph: List[List[Vertex]]
-    mapped_mhgraph = [[ivmap.translation[vertex] for vertex in hedge] for hedge in
-                      mhg.elements()]
+    mapped_mhgraph = [[ivmap.translation[vertex] for vertex in hedge]
+                      for hedge in mhg.elements()]
     return mhgraph(mapped_mhgraph)
 
 

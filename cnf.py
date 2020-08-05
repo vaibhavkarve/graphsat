@@ -252,7 +252,7 @@ def absolute_value(literal: Lit) -> Lit:
 
     """
     if isinstance(literal, Bool):
-        raise ValueError('Absolute value not defined for TRUE/FALSE.')
+        raise ValueError(f'Absolute value not defined for {literal}.')
     return lit(abs(literal))
 
 

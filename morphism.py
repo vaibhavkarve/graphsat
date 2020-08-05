@@ -6,15 +6,16 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, Callable, cast, Dict, Iterator, KeysView, List,
-                    Mapping, NamedTuple, NewType, Optional, Tuple, Union)
+from typing import (AbstractSet, Callable, cast, Dict, Iterable, Iterator, KeysView,
+                    List, Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
+                    Union)
 
 import more_itertools as mit  # type: ignore
 from loguru import logger
 
-from graphsat.graph import graph, Graph, Vertex
-from graphsat.mhgraph import (HEdge, hgraph, HGraph, hgraph_from_mhgraph, mhgraph,
-                              MHGraph, vertices)
+from graphsat.graph import Vertex
+from graphsat.mhgraph import (HGraph, hgraph_from_mhgraph, mhgraph, MHGraph,
+                              vertices)
 
 
 # Types
@@ -353,6 +354,51 @@ def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \
     if not is_subgraph:
         return False, None
     return subgraph_search(mhg1, mhg2, return_all=return_all)
+
+
+Elem = TypeVar('Elem')
+
+
+def unique_upto_equiv(iterable: Iterable[Elem], equiv: Callable[[Elem, Elem], bool]) \
+        -> Iterator[Elem]:
+    """Remove elements of iterable that are equivalent to previous elements.
+
+    Args:
+       iterable (:obj:`Iterable[Elem]`): a iterable of any type (we call this type
+          Elem).
+       equiv (:obj:Callable[[Elem, Elem], Any]): an equivalence relation on type Elem.
+
+    Return:
+       An iterator without duplicates (under the equivalence relation).
+
+    Complexity:
+       The outer loop traverses at most `n` elements. The inner loop traverses:
+       0 + 1 + 2 + ... + (n-1) = n(n-1)/2 element at most. Hence, total traversed
+       elements = n + n(n-1)/2 = n(n+1)/2 ~ O(n^2).
+
+    Usage:
+       This can be called on a iterable of MHGraphs with `equiv=isomorphism_search`.
+
+    Note:
+       * This function might behave unpreductably if `equiv` is not an equivalence relation.
+       * This function calls more_itertools.unique_everseen on iterable before processing
+         it.  This removes any duplicates that can be itentified by reflexivity.
+
+    """
+    seen: List[Elem] = []
+    for element in mit.unique_everseen(iterable):
+        equiv_to_seen: Iterator[bool]
+        equiv_to_seen = (equiv(element, seen_element) for seen_element in seen)
+        if not any(equiv_to_seen):
+            seen.append(element)
+            yield element
+
+
+def unique_upto_isom(mhgraph_iterable: Iterable[MHGraph]) -> Iterator[MHGraph]:
+    """Remove isomorphic duplicates of MHGraphs from the iterable."""
+    def is_isomorphic(mhg1: MHGraph, mhg2: MHGraph) -> bool:
+        return isomorphism_search(mhg1, mhg2, return_all=False)[0]
+    return unique_upto_equiv(mhgraph_iterable, is_isomorphic)
 
 
 if __name__ == '__main__':

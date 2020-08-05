@@ -77,7 +77,7 @@ class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
             sorted_clause = sorted(self, key=absolute_value)
         except ValueError:
             # clause probably contains TRUE/FALSE.
-            sorted_clause = self
+            sorted_clause = list(self)
         return '(' + ','.join(map(str, sorted_clause)) + ')'
 
 

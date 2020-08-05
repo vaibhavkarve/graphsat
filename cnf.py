@@ -73,7 +73,11 @@ class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
            self (:obj:`CNF`)
         """
         sorted_clause: List[Lit]
-        sorted_clause = sorted(self, key=absolute_value)
+        try:
+            sorted_clause = sorted(self, key=absolute_value)
+        except ValueError:
+            # clause probably contains TRUE/FALSE.
+            sorted_clause = self
         return '(' + ','.join(map(str, sorted_clause)) + ')'
 
 

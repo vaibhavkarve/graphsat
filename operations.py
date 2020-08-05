@@ -37,14 +37,14 @@ def satg_sxpr(sat_sxpr: SatSxpr) -> bool:  # type: ignore
     return satg(sat_sxpr.reduce())
 
 
-def sat_and(graph1: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr],
-            graph2: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr]) -> bool:
+def sat_and(graph1: Union[bool, MHGraph, AtomicSxpr],
+            graph2: Union[bool, MHGraph, AtomicSxpr]) -> bool:
     """Return the conjunction of the sat-status of each graph."""
     return satg(graph1) and satg(graph2)
 
 
-def sat_or(graph1: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr],
-           graph2: Union[bool, mhgraph.MHGraph, sxpr.AtomicSxpr]) -> bool:
+def sat_or(graph1: Union[bool, MHGraph, AtomicSxpr],
+           graph2: Union[bool, MHGraph, AtomicSxpr]) -> bool:
     """Return the disjunction of the sat-status of each graph."""
     return satg(graph1) or satg(graph2)
 

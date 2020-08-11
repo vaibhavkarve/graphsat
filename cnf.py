@@ -128,7 +128,7 @@ def variable(positive_int: int) -> Variable:
 
 
 @ft.singledispatch
-def lit(int_or_Bool: Union[int, Bool]) -> Lit:  # pylint: disable=invalid-name
+def lit(int_or_bool: Union[int, Bool]) -> Lit:
     r"""Constructor-function for Lit type.
 
     By definition, a `Lit` is in the set :math:`\mathbb{Z} \cup \{`:obj:`TRUE`,

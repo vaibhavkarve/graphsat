@@ -1,13 +1,15 @@
 #!/usr/bin/env python3.8
-"""Functions and operations."""
+"""Functions and operations for working with Graph-Satisfiability."""
+
 # Imports from standard library.
 import functools as ft
 import itertools as it
-import more_itertools as mit
-from typing import Dict, Iterator, List, Set, Union
+from typing import List, Set, Union
+
 # Imports from third-party modules.
 from loguru import logger
-# Imports feom local modules.
+
+# Imports from local modules.
 from graphsat import cnf, prop, sat
 
 from graphsat.mhgraph import mhgraph, MHGraph
@@ -51,8 +53,8 @@ def sat_or(graph1: Union[bool, MHGraph, AtomicSxpr],
     return satg(graph1) or satg(graph2)
 
 
-def gor(graph1: Union[MHGraph, Set[cnf.CNF]],
-        graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
+def graph_or(graph1: Union[MHGraph, Set[cnf.CNF]],
+             graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
     """Disjunct the corresponding CNFs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
@@ -65,8 +67,8 @@ def gor(graph1: Union[MHGraph, Set[cnf.CNF]],
     return set(disjunction_reduced)
 
 
-def gand(graph1: Union[MHGraph, Set[cnf.CNF]],
-        graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
+def graph_and(graph1: Union[MHGraph, Set[cnf.CNF]],
+              graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
     """Conjunct the corresponding CNFs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))

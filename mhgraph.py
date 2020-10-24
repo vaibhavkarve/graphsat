@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """Constructors and functions for Loopless-Multi-Hyper-Graphs.
 
 .. _definitionofagraph:
@@ -25,12 +25,11 @@ A *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import (AbstractSet, Collection, Counter, Dict, FrozenSet,
-                    List, NewType, Tuple, TypeVar, Union)
+from typing import AbstractSet, Collection, Counter, NewType, TypeVar, Union
 # Imports from third-party modules.
 from loguru import logger
 # Imports from local modules.
-from graphsat import graph
+import graph
 
 
 # MHGraphType (Hashable Counter) for Storing MHGraphs
@@ -58,25 +57,25 @@ class MHGraphType(Counter[AbstractSet[T]]):
 
     def __repr__(self) -> str:
         """Print the MHGraphType in a compact way."""
-        unicode_superscripts: Dict[int, str]
+        unicode_superscripts: dict[int, str]
         unicode_superscripts = {1: '\u00b9', 2: '\u00b2', 3: '\u00b3', 4: '\u2074',
                                 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078',
                                 9: '\u2079'}
 
-        ordered_hedges: List[AbstractSet[T]]
+        ordered_hedges: list[AbstractSet[T]]
         ordered_hedges = sorted(sorted(super().keys()), key=len)  # pylint: disable=no-member
 
         def superscript(hedge_: AbstractSet[T]) -> str:
             multiplicity: int = super(MHGraphType, self).get(frozenset(hedge_), 0)
             return unicode_superscripts.get(multiplicity, f'^{multiplicity}')
 
-        hedge_strings: List[str]
+        hedge_strings: list[str]
         hedge_strings = [str(h) + superscript(h) for h in ordered_hedges]
 
         return ','.join(hedge_strings)
 
 
-class HEdge(FrozenSet[graph.Vertex]):  # pylint: disable=too-few-public-methods
+class HEdge(frozenset[graph.Vertex]):  # pylint: disable=too-few-public-methods
     """`HEdge` is a subclass of `FrozenSet[graph.Vertex]`."""
     def __repr__(self) -> str:
         """Pretty-print the HEdge in a compact way."""
@@ -179,7 +178,7 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 # ===============
 
 
-def vertices(mhg: Union[HGraph, MHGraph]) -> FrozenSet[graph.Vertex]:
+def vertices(mhg: Union[HGraph, MHGraph]) -> frozenset[graph.Vertex]:
     """Return a `frozenset` of all vertices of a MHGraph."""
     return frozenset.union(*mhg)
 
@@ -195,25 +194,25 @@ def degree(vertex: graph.Vertex, mhg: MHGraph) -> int:
 
 def pick_max_degree_vertex(mhg: MHGraph) -> graph.Vertex:
     """Pick vertex of highest degree."""
-    degree_sequence: Dict[graph.Vertex, int]
+    degree_sequence: dict[graph.Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return max(degree_sequence, key=degree_sequence.get)
 
 
 def pick_min_degree_vertex(mhg: MHGraph) -> graph.Vertex:
     """Pick vertex of lowest degree."""
-    degree_sequence: Dict[graph.Vertex, int]
+    degree_sequence: dict[graph.Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return min(degree_sequence, key=degree_sequence.get)
 
 
-def star(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+def star(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
     """Return the tuple of all HEdges in ``mhg`` incident at ``vertex``."""
     assert vertex in vertices(mhg), f'{vertex} not of vertex of {mhg}'
     return tuple(hedge(h) for h in mhg.elements() if vertex in h)
 
 
-def link(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+def link(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
     """Return the link of ``mhg`` at ``vertex``.
 
     This is the star projected away from ``vertex``.
@@ -223,12 +222,12 @@ def link(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
                  if set(h) != {vertex})
 
 
-def sphr(mhg: MHGraph, vertex: graph.Vertex) -> Tuple[HEdge, ...]:
+def sphr(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
     """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex``."""
     return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
 
 
-def graph_union(mhg1: Tuple[HEdge, ...], mhg2: Tuple[HEdge, ...]) -> MHGraph:
+def graph_union(mhg1: tuple[HEdge, ...], mhg2: tuple[HEdge, ...]) -> MHGraph:
     """Union of the two graphs."""
     assert mhg1 or mhg2, f'Encountered empty input {mhg1 = } or {mhg2 = }'
     return mhgraph(mhg1 + mhg2)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """Constructors and methods for sentences in conjunctive normal form (CNF).
 
 Definition of a CNF
@@ -13,8 +13,8 @@ Definition of a CNF
 """
 # Imports from standard library.
 import functools as ft
-from typing import (AbstractSet, Callable, Collection, FrozenSet, Iterator, Final, List,
-                    Mapping, NewType, Set, Union)
+from typing import (AbstractSet, Callable, Collection, Iterator, Final, Mapping,
+                    NewType, Union)
 # Imports from third-party.
 from loguru import logger
 
@@ -57,13 +57,13 @@ class Bool(Lit):
 
 
 #: ``TRUE = Bool(1)``, a final instance of Bool.
-TRUE: Final[Bool] = Bool(1)
+TRUE: Final = Bool(1)
 
 #: ``FALSE = Bool(0)``, a final instance of Bool.
-FALSE: Final[Bool] = Bool(0)
+FALSE: Final = Bool(0)
 
 
-class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
+class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
     """`Clause` is a subclass of `FrozenSet[Lit]`."""
 
     def __str__(self) -> str:
@@ -72,7 +72,7 @@ class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
         Args:
            self (:obj:`CNF`)
         """
-        sorted_clause: List[Lit]
+        sorted_clause: list[Lit]
         try:
             sorted_clause = sorted(self, key=absolute_value)
         except ValueError:
@@ -81,7 +81,7 @@ class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
         return '(' + ','.join(map(str, sorted_clause)) + ')'
 
 
-class CNF(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
+class CNF(frozenset[Clause]):  # pylint: disable=too-few-public-methods
     """`CNF` is a subclass of `FrozenSet[Clause]`."""
 
     def __str__(self) -> str:
@@ -93,7 +93,7 @@ class CNF(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
         Return:
            A sorted string of sorted clause tuples.
         """
-        sorted_cnf: List[Clause]
+        sorted_cnf: list[Clause]
         sorted_cnf = sorted(self, key=lambda clause_: sum([lit < 0 for lit in clause_]))
         sorted_cnf = sorted(sorted_cnf, key=len)
 
@@ -150,7 +150,6 @@ def lit_int(arg: int) -> Lit:
     if arg != 0:
         return Lit(arg)
     raise ValueError('Lit must be a nonzero integer.')
-
 
 
 def clause(lit_collection: Collection[int]) -> Clause:
@@ -256,7 +255,7 @@ def absolute_value(literal: Lit) -> Lit:
     return lit(abs(literal))
 
 
-def lits(cnf_instance: CNF) -> FrozenSet[Lit]:
+def lits(cnf_instance: CNF) -> frozenset[Lit]:
     """Return frozenset of all Lits that appear in a CNF.
 
     Args:
@@ -267,7 +266,6 @@ def lits(cnf_instance: CNF) -> FrozenSet[Lit]:
 
     """
     return frozenset.union(*cnf_instance)
-
 
 
 # Functions for Simplification
@@ -328,7 +326,7 @@ def tautologically_reduce_cnf(clause_set: AbstractSet[AbstractSet[Lit]]) -> CNF:
        all the above-mentioned tautological reductions on the CNF itself.
 
     """
-    clause_set_reduced: Set[Clause]
+    clause_set_reduced: set[Clause]
     clause_set_reduced = set(map(tautologically_reduce_clause, clause_set))
 
     if FALSE_CLAUSE in clause_set_reduced:
@@ -398,7 +396,7 @@ def assign_variable_in_clause(lit_set: AbstractSet[Lit],
     assign_variable = ft.partial(assign_variable_in_lit,
                                  variable_instance=variable_instance,
                                  boolean=boolean)
-    mapped_lits: Set[Lit]
+    mapped_lits: set[Lit]
     mapped_lits = set(map(assign_variable, lit_set))
 
     return tautologically_reduce_clause(mapped_lits)
@@ -431,7 +429,7 @@ def assign_variable_in_cnf(clause_set: AbstractSet[AbstractSet[Lit]],
                                  variable_instance=variable_instance,
                                  boolean=boolean)
 
-    mapped_clauses: Set[Clause]
+    mapped_clauses: set[Clause]
     mapped_clauses = set(map(assign_variable, clause_set))
 
     return tautologically_reduce_cnf(mapped_clauses)
@@ -460,7 +458,7 @@ def assign(cnf_instance: CNF, assignment: Mapping[Variable, Bool]) -> CNF:
        dictionary (and those keys' negations) by corresponding Bool values.
 
     """
-    cnf_copy: FrozenSet[Clause] = cnf_instance.copy()
+    cnf_copy: frozenset[Clause] = cnf_instance.copy()
     for variable_instance, boolean in assignment.items():
         cnf_copy = assign_variable_in_cnf(cnf_copy, variable_instance, boolean)
     return tautologically_reduce_cnf(cnf_copy)

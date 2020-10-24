@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """All functions that work on Graphs, HGraphs and MHGraphs live here.
 
 This includes an implementation of the brute-force subgraph search algorithm and a
@@ -6,23 +6,21 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, Callable, cast, Dict, Iterable, Iterator, KeysView,
-                    List, Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
-                    Union)
+from typing import (AbstractSet, Callable, cast, Iterable, Iterator, KeysView,
+                    Mapping, NamedTuple, NewType, Optional, TypeVar, Union)
 
 import more_itertools as mit  # type: ignore
 from loguru import logger
 
-from graphsat.graph import Vertex
-from graphsat.mhgraph import (HGraph, hgraph_from_mhgraph, mhgraph, MHGraph,
-                              vertices)
+from graph import Vertex
+from mhgraph import HGraph, hgraph_from_mhgraph, mhgraph, MHGraph, vertices
 
 
 # Types
 # =====
 
-#: `Translation` is an alias for ``Dict[Vertex, Vertex]``.
-Translation = Dict[Vertex, Vertex]
+#: `Translation` is an alias for ``dict[Vertex, Vertex]``.
+Translation = dict[Vertex, Vertex]
 
 #: `VertexMap` is a `collections.NamedTuple` with three named entries --- a `domain`
 #: HGraph  (called ``hgraph1``), a `codomain` HGraph (called ``hgraph2``), and a
@@ -128,7 +126,7 @@ def graph_image(ivmap: InjectiveVertexMap, mhg: MHGraph) -> MHGraph:
     """
     #assert set(ivmap.translation.keys()) <= vertices(mhg), \
     #    f'InjectiveVertexMap keys should be vertices of {mhg = }'
-    mapped_mhgraph: List[List[Vertex]]
+    mapped_mhgraph: list[list[Vertex]]
     mapped_mhgraph = [[ivmap.translation[vertex] for vertex in hedge]
                       for hedge in mhg.elements()]
     return mhgraph(mapped_mhgraph)
@@ -199,18 +197,18 @@ def generate_vertexmaps(hgraph1: HGraph,
     if hgraph2 is None:
         hgraph2 = hgraph1
 
-    domain: Iterator[Tuple[Vertex, ...]]
+    domain: Iterator[tuple[Vertex, ...]]
     domain = it.permutations(vertices(hgraph1))
 
     scheme = it.combinations if injective else it.combinations_with_replacement
 
-    codomain: Iterator[Tuple[Vertex, ...]]
+    codomain: Iterator[tuple[Vertex, ...]]
     codomain = scheme(vertices(hgraph2), len(vertices(hgraph1)))
 
-    mappings1: Iterator[Tuple[Tuple[Vertex, ...], Tuple[Vertex, ...]]]
+    mappings1: Iterator[tuple[tuple[Vertex, ...], tuple[Vertex, ...]]]
     mappings1 = it.product(domain, codomain)
 
-    mappings2: Iterator[Iterator[Tuple[Vertex, Vertex]]]
+    mappings2: Iterator[Iterator[tuple[Vertex, Vertex]]]
     mappings2 = (zip(*pair) for pair in mappings1)
 
     translations: Iterator[Translation]
@@ -264,7 +262,7 @@ def is_immediate_subgraph(mhg1: MHGraph, mhg2: MHGraph) -> bool:
 
 
 def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
-        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
+        -> tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhg1`` is a `subgraph` of ``mhg2`` if there is a Morphism with domain HGraph
@@ -298,7 +296,7 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
          ``(False, None)``.
 
     """
-    heuristics: Dict[str, Callable[[MHGraph], int]]
+    heuristics: dict[str, Callable[[MHGraph], int]]
     heuristics = {'# vertices': lambda mhg: len(vertices(mhg)),
                   '# edges-no-mul': lambda mhg: len([h for h in mhg.keys() if len(h) == 2]),
                   '# hedges-no-mul': lambda mhg: len([h for h in mhg.keys() if len(h) == 3]),
@@ -320,7 +318,7 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
     subgraph_morphs = filter(lambda m: is_immediate_subgraph(graph_image(m, mhg1),
                                                              mhg2), morphisms)
 
-    first_morph: List[Morphism]
+    first_morph: list[Morphism]
     first_morph, subgraph_morphs = mit.spy(subgraph_morphs)
     if not first_morph:
         # Not a subgraph.
@@ -330,7 +328,7 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
 
 
 def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \
-        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
+        -> tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
     Use :obj:`subgraph_search()` twice to check if ``mhg1`` is isomorphic to
@@ -382,10 +380,10 @@ def unique_upto_equiv(iterable: Iterable[Elem], equiv: Callable[[Elem, Elem], bo
     Note:
        * This function might behave unpreductably if `equiv` is not an equivalence relation.
        * This function calls more_itertools.unique_everseen on iterable before processing
-         it.  This removes any duplicates that can be itentified by reflexivity.
+         it.  This removes any duplicates that can be identified by reflexivity.
 
     """
-    seen: List[Elem] = []
+    seen: list[Elem] = []
     for element in mit.unique_everseen(iterable):
         equiv_to_seen: Iterator[bool]
         equiv_to_seen = (equiv(element, seen_element) for seen_element in seen)

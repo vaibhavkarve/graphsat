@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """Constructors and functions for simple graphs.
 
 .. _definitionofagraph:
@@ -18,7 +18,7 @@ with the following properties:
    - Edges do not have a multiplicity.
 """
 # Imports from standard library.
-from typing import Collection, FrozenSet, NewType, Set, TypeVar
+from typing import Collection, NewType, TypeVar
 # Importing third-party modules.
 from loguru import logger
 
@@ -31,7 +31,7 @@ from loguru import logger
 T = TypeVar('T')  # pylint: disable=invalid-name
 
 
-class GraphType(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
+class GraphType(set[Collection[T]]):  # pylint: disable=too-few-public-methods
     """`GraphType[_T]` is a subclass of `Set[Collection[_T]]`.
 
     It overrides the ``__repr__`` method.
@@ -51,7 +51,7 @@ class GraphType(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
 Vertex = NewType('Vertex', int)
 Vertex.__doc__ = """`Vertex` is a subtype of `int`."""
 
-Edge = NewType('Edge', FrozenSet[Vertex])
+Edge = NewType('Edge', frozenset[Vertex])
 Edge.__doc__ = """`Edge` is a subtype of `FrozenSet[Vertex]`."""
 
 Graph = NewType('Graph', GraphType[Vertex])
@@ -132,7 +132,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
     if not edge_collection:
         raise ValueError(f'Encountered empty input {list(edge_collection)}')
 
-    edges: Set[Edge] = set(map(edge, edge_collection))
+    edges: set[Edge] = set(map(edge, edge_collection))
     return Graph(GraphType(edges))
 
 
@@ -140,7 +140,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
 # ===============
 
 
-def vertices(graph_instance: Graph) -> FrozenSet[Vertex]:
+def vertices(graph_instance: Graph) -> frozenset[Vertex]:
     """Return a `frozenset` of all vertices of a Graph.
 
     Args:

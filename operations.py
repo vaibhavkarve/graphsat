@@ -1,19 +1,20 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.9
 """Functions and operations for working with Graph-Satisfiability."""
 
 # Imports from standard library.
 import functools as ft
 import itertools as it
-from typing import List, Set, Union
+from typing import Union
 
 # Imports from third-party modules.
 from loguru import logger
 
 # Imports from local modules.
-from graphsat import cnf, prop, sat
-
-from graphsat.mhgraph import mhgraph, MHGraph
-from graphsat.sxpr import AtomicSxpr, SatSxpr
+import cnf
+import prop
+import sat
+from mhgraph import MHGraph, mhgraph
+from sxpr import AtomicSxpr, SatSxpr
 
 
 @ft.singledispatch
@@ -53,8 +54,8 @@ def sat_or(graph1: Union[bool, MHGraph, AtomicSxpr],
     return satg(graph1) or satg(graph2)
 
 
-def graph_or(graph1: Union[MHGraph, Set[cnf.CNF]],
-             graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
+def graph_or(graph1: Union[MHGraph, set[cnf.CNF]],
+             graph2: Union[MHGraph, set[cnf.CNF]]) -> set[cnf.CNF]:
     """Disjunct the corresponding CNFs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
@@ -67,8 +68,8 @@ def graph_or(graph1: Union[MHGraph, Set[cnf.CNF]],
     return set(disjunction_reduced)
 
 
-def graph_and(graph1: Union[MHGraph, Set[cnf.CNF]],
-              graph2: Union[MHGraph, Set[cnf.CNF]]) -> Set[cnf.CNF]:
+def graph_and(graph1: Union[MHGraph, set[cnf.CNF]],
+              graph2: Union[MHGraph, set[cnf.CNF]]) -> set[cnf.CNF]:
     """Conjunct the corresponding CNFs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
@@ -81,12 +82,12 @@ def graph_and(graph1: Union[MHGraph, Set[cnf.CNF]],
     return set(conjunction_reduced)
 
 
-def graphs_equisat_a_bot(graph1: Set[cnf.CNF], graph2: Set[cnf.CNF]) -> bool:
+def graphs_equisat_a_bot(graph1: set[cnf.CNF], graph2: set[cnf.CNF]) -> bool:
     """Check ∀ x₁ ∈ G₁, ∃ x₂ ∈ G₂, ∀ a ∈ A, x₁[a] ~ ⊥ → x₂[a] ~ ⊥."""
     particular_x1: cnf.CNF = graph1.pop()
     graph1.add(particular_x1)  # add it back in.
 
-    assignments: List[sat.Assignment]
+    assignments: list[sat.Assignment]
     assignments = list(sat.generate_assignments(particular_x1))
 
     def cnf1_falsified(cnf1: cnf.CNF, assignment: sat.Assignment) -> bool:
@@ -102,8 +103,8 @@ def graphs_equisat_a_bot(graph1: Set[cnf.CNF], graph2: Set[cnf.CNF]) -> bool:
                    for cnf2 in graph2) for cnf1 in graph1)
 
 
-def graph_equisat_mod_sphr(graph1: Union[MHGraph, Set[cnf.CNF]],
-                           graph2: Union[MHGraph, Set[cnf.CNF]]) -> bool:
+def graph_equisat_mod_sphr(graph1: Union[MHGraph, set[cnf.CNF]],
+                           graph2: Union[MHGraph, set[cnf.CNF]]) -> bool:
     """Check graphs are quisat by the A⊥ criterion.
 
     This helps us conclude that Sphr∧G₁ is equisat to Sphr∧G₂ by the ⊥

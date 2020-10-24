@@ -2,13 +2,14 @@
 
 import pytest
 import graphsat.morphism as morphism
+from graphsat.mhgraph import mhgraph, hgraph
 vm = morphism.vertexmap
-mhg = morphism.mhgraph
+mhg = mhgraph
 ivm = morphism.injective_vertexmap
 gvm = morphism.generate_vertexmaps
 gi = morphism.graph_image
 mm = morphism.morphism
-hg = morphism.hgraph
+hg = hgraph
 ss = morphism.subgraph_search
 iss = morphism.isomorphism_search
 

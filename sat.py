@@ -40,18 +40,20 @@ import functools as ft
 import itertools as it
 import math
 import subprocess
-from typing import cast, Dict, FrozenSet, Iterator, List, Set, Tuple, Union
+from typing import cast, Iterator, Union
 # Imports from third-party modules.
 from loguru import logger
 import more_itertools as mit  # type: ignore
 from tqdm import tqdm  # type: ignore
 # Imports from local modules.
-from graphsat import cnf, graph, mhgraph
-import graphsat.morphism as morph
+import cnf
+import graph
+import mhgraph
+import morphism as morph
 
 
 # Type alisases
-Assignment = Dict[cnf.Variable, cnf.Bool]
+Assignment = dict[cnf.Variable, cnf.Bool]
 
 
 # Functions for Checking Satisfiability of CNFs
@@ -86,13 +88,13 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
     cnf_reduced: cnf.CNF
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
-    lit_set: FrozenSet[cnf.Lit]
+    lit_set: frozenset[cnf.Lit]
     lit_set = cnf.lits(cnf_reduced) - {cnf.TRUE, cnf.FALSE}
 
-    variable_set: Set[cnf.Variable]
+    variable_set: set[cnf.Variable]
     variable_set = set(map(cnf.variable, map(cnf.absolute_value, lit_set)))
 
-    assignment_values: Iterator[Tuple[cnf.Bool, ...]]
+    assignment_values: Iterator[tuple[cnf.Bool, ...]]
     assignment_values = it.product([cnf.TRUE, cnf.FALSE], repeat=len(variable_set))
 
     for boolean_tuple in assignment_values:
@@ -233,7 +235,7 @@ def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
 # ===========================================
 
 
-def lits_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Lit, cnf.Lit]:
+def lits_from_vertex(vertex: graph.Vertex) -> tuple[cnf.Lit, cnf.Lit]:
     """Return a Lit as well as its negation from a Vertex.
 
     Args:
@@ -247,7 +249,7 @@ def lits_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Lit, cnf.Lit]:
     return positive_lit, cnf.neg(positive_lit)
 
 
-def clauses_from_hedge(hedge: mhgraph.HEdge) -> Tuple[cnf.Clause, ...]:
+def clauses_from_hedge(hedge: mhgraph.HEdge) -> tuple[cnf.Clause, ...]:
     r"""Return all Clauses supported on a HEdge.
 
     Args:
@@ -258,10 +260,10 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> Tuple[cnf.Clause, ...]:
        that are supported on ``hedge``.
 
     """
-    lits_positive_and_negative: Iterator[Tuple[cnf.Lit, cnf.Lit]]
+    lits_positive_and_negative: Iterator[tuple[cnf.Lit, cnf.Lit]]
     lits_positive_and_negative = map(lits_from_vertex, hedge)
 
-    lit_combinations: Iterator[Tuple[cnf.Lit, ...]]
+    lit_combinations: Iterator[tuple[cnf.Lit, ...]]
     lit_combinations = it.product(*lits_positive_and_negative)
 
     return tuple(map(cnf.clause, lit_combinations))
@@ -286,10 +288,10 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
        ValueError if ``multiplicity`` is less than 1.
 
     """
-    clause_possibilities: Tuple[cnf.Clause, ...]
+    clause_possibilities: tuple[cnf.Clause, ...]
     clause_possibilities = clauses_from_hedge(hedge)
 
-    clause_tuples: Iterator[Tuple[cnf.Clause, ...]]
+    clause_tuples: Iterator[tuple[cnf.Clause, ...]]
     clause_tuples = it.combinations(clause_possibilities, r=multiplicity)
 
     return map(cnf.cnf, clause_tuples)
@@ -316,11 +318,11 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
     cnf_iterators: Iterator[Iterator[cnf.CNF]]
     cnf_iterators = it.starmap(cnfs_from_hedge, mhgraph_instance.items())
 
-    # Iterator[Tuple[cnf.CNF, ...]] <: Iterator[Tuple[FrozenSet[cnf.Clause], ...]]
-    cnf_tuples: Iterator[Tuple[cnf.CNF, ...]]
+    # Iterator[tuple[cnf.CNF, ...]] <: Iterator[tuple[frozenset[cnf.Clause], ...]]
+    cnf_tuples: Iterator[tuple[cnf.CNF, ...]]
     cnf_tuples = it.product(*cnf_iterators)
 
-    clause_frozensets: Iterator[FrozenSet[cnf.Clause]]
+    clause_frozensets: Iterator[frozenset[cnf.Clause]]
     clause_frozensets = it.starmap(frozenset.union, cnf_tuples)
 
     if not randomize:
@@ -421,8 +423,8 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
        The MHGraph that supports ``cnf_instance``.
 
     Raises:
-       ValueError: If ``cnf_instance`` is trivially `True` or trivially `False` after
-          performing tautological reductions.
+       ValueError: If ``cnf_instance`` is trivially `True` or trivially `False`
+          after performing tautological reductions.
 
     """
     reduced_cnf: cnf.CNF = cnf.tautologically_reduce_cnf(cnf_instance)
@@ -430,8 +432,8 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
     if reduced_cnf in {cnf.TRUE_CNF, cnf.FALSE_CNF}:
         raise ValueError('CNF reduced to trivial True/False & has no supporting MHGraph.')
 
-    # Iterator[FrozenSet[cnf.Lit]] <: Iterator[Collection[int]]
-    cnf_with_abs_variables: Iterator[FrozenSet[cnf.Lit]]
+    # Iterator[frozenset[cnf.Lit]] <: Iterator[Collection[int]]
+    cnf_with_abs_variables: Iterator[frozenset[cnf.Lit]]
     cnf_with_abs_variables = map(lambda c: frozenset(map(cnf.absolute_value, c)),
                                  reduced_cnf)
 
@@ -458,7 +460,7 @@ def simplify_at_leaves(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     if mhgraph.degree(leaf_vertex, mhg) > 1:
         return mhg
     logger.trace(f'{leaf_vertex = }')
-    sphr: Tuple[mhgraph.HEdge, ...] = mhgraph.sphr(mhg, leaf_vertex)
+    sphr: tuple[mhgraph.HEdge, ...] = mhgraph.sphr(mhg, leaf_vertex)
     logger.trace(f'simplified to {sphr}')
     return mhgraph.mhgraph(sphr) if sphr else True
 
@@ -477,12 +479,12 @@ def supports_single_loop(mhg: mhgraph.MHGraph) -> Union[bool, graph.Vertex]:
     If no such vertex exists, return False.
 
     """
-    loops: List[graph.Vertex]
+    loops: list[graph.Vertex]
     loops = [vertex for vertex in mhgraph.vertices(mhg) if frozenset([vertex]) in mhg]
     logger.trace(f'{loops = }')
     return loops[0] if loops else False
-    
-    
+
+
 @ft.lru_cache
 def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a self loop, then project away from vertex.
@@ -501,11 +503,11 @@ def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     vertex = cast(graph.Vertex, vertex)
     logger.trace(f'{vertex = }')
 
-    sphr: Tuple[mhgraph.HEdge, ...]
+    sphr: tuple[mhgraph.HEdge, ...]
     sphr = mhgraph.sphr(mhg, vertex)
     logger.trace(f'{sphr = }')
 
-    link: Tuple[mhgraph.HEdge, ...]
+    link: tuple[mhgraph.HEdge, ...]
     link = mhgraph.link(mhg, vertex)
     logger.trace(f'{link = }')
 

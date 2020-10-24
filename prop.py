@@ -5,7 +5,7 @@ Currently, this module implements Conjunction, Disjunction and Negation.
 """
 import functools as ft
 from loguru import logger
-from graphsat.cnf import cnf, CNF, clause, Clause, Lit, neg, tautologically_reduce_cnf
+from cnf import cnf, CNF, clause, Clause, Lit, neg, tautologically_reduce_cnf
 
 
 # Conjunction

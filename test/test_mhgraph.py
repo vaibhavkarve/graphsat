@@ -79,4 +79,3 @@ def test_degree():
 
 def test_graph_union():
     assert graph_union(mhgraph([[1, 2], [3]]), mhgraph([[1, 11]])) ==  mhgraph([[1, 2], [3], [1, 11]])
-

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """Simple functions for propositional calculus.
 
 Currently, this module implements Conjunction, Disjunction and Negation.

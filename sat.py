@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.9
 """Functions for Satchecking CNFs, Graphs etc.
 
 Satisfiability of CNFs

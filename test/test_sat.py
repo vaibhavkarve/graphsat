@@ -260,3 +260,17 @@ def test_mhgraph_from_cnf():
     assert mhgraph_from_cnf(cc([[-1, -2]])) == mm([[1, 2]])
     assert mhgraph_from_cnf(cc([[1], [1, -2]])) == mm([[1], [1, 2]])
     assert mhgraph_from_cnf(cc([[1, 2], [1, -2]])) == mm([[1, 2], [1, 2]])
+
+
+def test_is_oversaturated():
+    assert not is_oversaturated(mm([[1]]))
+    assert not is_oversaturated(mm([[1]]*2))
+    assert is_oversaturated(mm([[1]]*3))
+
+    assert not is_oversaturated(mm([[1, 2]]*3))
+    assert not is_oversaturated(mm([[1, 2]]*4))
+    assert is_oversaturated(mm([[1, 2]]*5))
+
+    assert not is_oversaturated(mm([[1, 2, 3]]*7))
+    assert not is_oversaturated(mm([[1, 2, 3]]*8))
+    assert is_oversaturated(mm([[1, 2, 3]]*9))

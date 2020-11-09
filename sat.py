@@ -443,6 +443,12 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
 # Function for simplifying MHGraphs before sat-solving
 # ====================================================
 
+
+def is_oversaturated(mhg: mhgraph.MHGraph) -> bool:
+    """Return True if any edge of mhg of size n has multiplicity more than 2^n."""
+    return any(mult > 2**len(hedge) for hedge, mult in mhg.items())
+
+
 def simplify_at_leaves(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """If the graph contains a degree-one vertex, then remove that HEdge.
 

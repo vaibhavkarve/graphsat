@@ -29,7 +29,7 @@ from typing import AbstractSet, Collection, Counter, NewType, TypeVar, Union
 # Imports from third-party modules.
 from loguru import logger
 # Imports from local modules.
-import graph
+from graph import Graph, GraphType, vertex, Vertex
 
 
 # MHGraphType (Hashable Counter) for Storing MHGraphs
@@ -75,8 +75,8 @@ class MHGraphType(Counter[AbstractSet[T]]):
         return ','.join(hedge_strings)
 
 
-class HEdge(frozenset[graph.Vertex]):  # pylint: disable=too-few-public-methods
-    """`HEdge` is a subclass of `FrozenSet[graph.Vertex]`."""
+class HEdge(frozenset[Vertex]):  # pylint: disable=too-few-public-methods
+    """`HEdge` is a subclass of `FrozenSet[Vertex]`."""
     def __repr__(self) -> str:
         """Pretty-print the HEdge in a compact way."""
         return '(' + ', '.join(map(str, sorted(self))) + ')'
@@ -86,11 +86,11 @@ class HEdge(frozenset[graph.Vertex]):  # pylint: disable=too-few-public-methods
 # Classes and Types
 # =================
 
-HGraph = NewType('HGraph', graph.GraphType[graph.Vertex])
-HGraph.__doc__ = """`HGraph` is a subtype of `graph.PreGraph[graph.Vertex]`."""
+HGraph = NewType('HGraph', GraphType[Vertex])
+HGraph.__doc__ = """`HGraph` is a subtype of `PreGraph[Vertex]`."""
 
-class MHGraph(MHGraphType[graph.Vertex]):  # pylint: disable=too-few-public-methods
-    """`MHGraph` is a subclass of `MHGraphType[graph.Vertex]`."""
+class MHGraph(MHGraphType[Vertex]):  # pylint: disable=too-few-public-methods
+    """`MHGraph` is a subclass of `MHGraphType[Vertex]`."""
 
 
 # Constructor Functions
@@ -108,7 +108,7 @@ def hedge(vertex_collection: Collection[int]) -> HEdge:
           set, or frozenset) of Vertices.
 
     Return:
-       Check that each element satisfies the axioms for being a graph.Vertex.
+       Check that each element satisfies the axioms for being a Vertex.
        If yes, then cast to HEdge.
 
     Raises:
@@ -117,7 +117,7 @@ def hedge(vertex_collection: Collection[int]) -> HEdge:
     """
     if not vertex_collection:
         raise ValueError(f'Encountered empty input {list(vertex_collection)}')
-    return HEdge(frozenset(map(graph.vertex, vertex_collection)))
+    return HEdge(frozenset(map(vertex, vertex_collection)))
 
 
 def hgraph(hedge_collection: Collection[Collection[int]]) -> HGraph:
@@ -140,7 +140,7 @@ def hgraph(hedge_collection: Collection[Collection[int]]) -> HGraph:
     """
     if not hedge_collection:
         raise ValueError(f'Encountered empty input {hedge_collection}')
-    return HGraph(graph.GraphType(set(map(hedge, hedge_collection))))
+    return HGraph(GraphType(set(map(hedge, hedge_collection))))
 
 
 def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
@@ -178,12 +178,12 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 # ===============
 
 
-def vertices(mhg: Union[HGraph, MHGraph]) -> frozenset[graph.Vertex]:
+def vertices(mhg: Union[HGraph, MHGraph]) -> frozenset[Vertex]:
     """Return a `frozenset` of all vertices of a MHGraph."""
     return frozenset.union(*mhg)
 
 
-def degree(vertex: graph.Vertex, mhg: MHGraph) -> int:
+def degree(vertex: Vertex, mhg: MHGraph) -> int:
     """Return the degree of a ``vertex`` in a MHGraph.
 
     This counts multiplicities.
@@ -192,27 +192,27 @@ def degree(vertex: graph.Vertex, mhg: MHGraph) -> int:
                 if vertex in hedge])
 
 
-def pick_max_degree_vertex(mhg: MHGraph) -> graph.Vertex:
+def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:
     """Pick vertex of highest degree."""
-    degree_sequence: dict[graph.Vertex, int]
+    degree_sequence: dict[Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return max(degree_sequence, key=degree_sequence.get)
 
 
-def pick_min_degree_vertex(mhg: MHGraph) -> graph.Vertex:
+def pick_min_degree_vertex(mhg: MHGraph) -> Vertex:
     """Pick vertex of lowest degree."""
-    degree_sequence: dict[graph.Vertex, int]
+    degree_sequence: dict[Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     return min(degree_sequence, key=degree_sequence.get)
 
 
-def star(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
+def star(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
     """Return the tuple of all HEdges in ``mhg`` incident at ``vertex``."""
     assert vertex in vertices(mhg), f'{vertex} not of vertex of {mhg}'
     return tuple(hedge(h) for h in mhg.elements() if vertex in h)
 
 
-def link(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
+def link(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
     """Return the link of ``mhg`` at ``vertex``.
 
     This is the star projected away from ``vertex``.
@@ -222,7 +222,7 @@ def link(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
                  if set(h) != {vertex})
 
 
-def sphr(mhg: MHGraph, vertex: graph.Vertex) -> tuple[HEdge, ...]:
+def sphr(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
     """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex``."""
     return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
 
@@ -237,7 +237,7 @@ def graph_union(mhg1: tuple[HEdge, ...], mhg2: tuple[HEdge, ...]) -> MHGraph:
 # ====================
 
 
-def graph_from_mhgraph(mhg: MHGraph) -> graph.Graph:
+def graph_from_mhgraph(mhg: MHGraph) -> Graph:
     """Obtain a simple Graph from a MHGraph if possible. If not, raise a ValueError.
 
     A MHGraph can be converted to a simple Graph if:
@@ -258,7 +258,7 @@ def graph_from_mhgraph(mhg: MHGraph) -> graph.Graph:
     """
     assert all(multiplicity == 1 for multiplicity in mhg.values()),\
                'Multi-edges cannot be coerced to simple edges.'
-    return graph.graph(mhg.keys())
+    return graph(mhg.keys())
 
 
 def hgraph_from_mhgraph(mhg: MHGraph) -> HGraph:
@@ -275,7 +275,7 @@ def hgraph_from_mhgraph(mhg: MHGraph) -> HGraph:
     return hgraph(mhg.keys())
 
 
-def mhgraph_from_graph(graph_instance: graph.Graph) -> MHGraph:
+def mhgraph_from_graph(graph_instance: Graph) -> MHGraph:
     """Obtain a MHGraph from a mhgraph.
 
     Every Graph is also a MHGraph (after some coercion).
@@ -306,5 +306,5 @@ if __name__ == '__main__':
     logger.info('\n')
     logger.info('The degree() function returns the degree of a vertex in a MHGraph.')
     logger.info('>>> degree(2, mhgraph([[1, 2], [3, 1, 2], [1, 2]]))')
-    logger.info(degree(graph.Vertex(2), mhgraph([[1, 2], [3, 1, 2], [1, 2]])))
+    logger.info(degree(Vertex(2), mhgraph([[1, 2], [3, 1, 2], [1, 2]])))
     logger.info('\n')

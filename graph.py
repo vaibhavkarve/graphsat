@@ -18,7 +18,7 @@ with the following properties:
    - Edges do not have a multiplicity.
 """
 # Imports from standard library.
-from typing import Collection, NewType, TypeVar
+from typing import Any, Collection, NewType, Protocol, TypeVar
 # Importing third-party modules.
 from loguru import logger
 
@@ -27,8 +27,12 @@ from loguru import logger
 # ============================
 # (for internal use only, partially documented)
 
-#: ``T = TypeVar('T')``, i.e. ``T`` is a type varia
-T = TypeVar('T')  # pylint: disable=invalid-name
+# This was taken from: github.com/python/mypy/issues/9582#issuecomment-710363793
+# TODO: Can be removed once this is resolved: github.com/python/typing/issues/760
+#: ``T = TypeVar('T')``, i.e. ``T`` is a type variable
+class _SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods
+    def __lt__(self, __other: Any) -> bool: ...
+T = TypeVar("T", bound=_SupportsLessThan)  # pylint: disable=invalid-name
 
 
 class GraphType(set[Collection[T]]):  # pylint: disable=too-few-public-methods

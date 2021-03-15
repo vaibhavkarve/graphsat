@@ -1,10 +1,10 @@
 #!/usr/bin/env python3.9
-"""Functions for Satchecking CNFs, Graphs etc.
+"""Functions for Satchecking Cnfs, Graphs etc.
 
-Satisfiability of CNFs
+Satisfiability of Cnfs
 ======================
-A CNF is satisfiable if there exists a truth assignment for each variable in the CNF
-such that on applying the assignment, the CNF evaluates to True.
+A Cnf is satisfiable if there exists a truth assignment for each variable in the Cnf
+such that on applying the assignment, the Cnf evaluates to True.
 This module implements three different sat-solvers:
 
    1. cnf_bruteforce_satcheck: a brute-force solver.  This solver is easy to
@@ -19,14 +19,14 @@ This module implements three different sat-solvers:
       directly as a subprocess. minisat.c is easy to obtain and install. However,
       creating subprocesses is not a very fast process.
 
-Connection between CNFs and MHGraphs
+Connection between Cnfs and MHGraphs
 ====================================
-For every CNF, we can construct an associated MHGraph by replacing all variables and
+For every Cnf, we can construct an associated MHGraph by replacing all variables and
 their negations by vertices of the same name.
 
 Satisfiability of a MHGraph
 ===========================
-A MHGraph is satisfiable if it has atleast one CNF supported on it and every CNF
+A MHGraph is satisfiable if it has atleast one Cnf supported on it and every Cnf
 supported on the MHGraph is also satisfiable.  This module implements three different
 MHGraph sat-solvers:
 
@@ -56,36 +56,36 @@ import morphism as morph
 Assignment = dict[cnf.Variable, cnf.Bool]
 
 
-# Functions for Checking Satisfiability of CNFs
+# Functions for Checking Satisfiability of Cnfs
 # =============================================
 
 
-def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
-    """Generate all :math:`2^n` truth-assignments for a CNF with :math:`n` Variables.
+def generate_assignments(cnf_instance: cnf.Cnf) -> Iterator[Assignment]:
+    """Generate all :math:`2^n` truth-assignments for a Cnf with :math:`n` Variables.
 
-    A CNF's `truth-assignment` will be represented as a dictionary with keys being
-    all the Variables that appear in the CNF and values being Bools.
+    A Cnf's `truth-assignment` will be represented as a dictionary with keys being
+    all the Variables that appear in the Cnf and values being Bools.
 
     Edge cases:
 
-       * ``TRUE``/``FALSE`` CNFs are treated as having :math:`0` Variables and
+       * ``TRUE``/``FALSE`` Cnfs are treated as having :math:`0` Variables and
          therefore their only corresponding truth-assignment is the empty dictionary.
          In other words, the function returns ``({})``.
 
-       * Any CNF that can be tautologically reduced to TRUE/FALSE also returns ``({})``.
+       * Any Cnf that can be tautologically reduced to TRUE/FALSE also returns ``({})``.
 
-       * This function cannot distinguish between sat/unsat CNFs.
+       * This function cannot distinguish between sat/unsat Cnfs.
 
     Args:
-       cnf_instance (:obj:`cnf.CNF`)
+       cnf_instance (:obj:`cnf.Cnf`)
 
     Return:
-       First, tautologically reduce the CNF. Then, return an Iterator of
+       First, tautologically reduce the Cnf. Then, return an Iterator of
        truth-assignment dictionaries with keys being Variables and values being
        Bools.
 
     """
-    cnf_reduced: cnf.CNF
+    cnf_reduced: cnf.Cnf
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
     lit_set: frozenset[cnf.Lit]
@@ -101,31 +101,31 @@ def generate_assignments(cnf_instance: cnf.CNF) -> Iterator[Assignment]:
         yield dict(zip(variable_set, boolean_tuple))
 
 
-def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
-    """Use brute force to check satisfiability of CNF.
+def cnf_bruteforce_satcheck(cnf_instance: cnf.Cnf) -> bool:
+    """Use brute force to check satisfiability of Cnf.
 
     .. note::
        Brute-forcing is the most sub-optimal strategy possible. Do not use this function
-       on large CNFs. (Anything more than 6 Variables or 6 Clauses is large.)
+       on large Cnfs. (Anything more than 6 Variables or 6 Clauses is large.)
 
     Args:
-       cnf_instance (:obj:`cnf.CNF`)
+       cnf_instance (:obj:`cnf.Cnf`)
 
     Return:
-       First, tautologically reduce the CNF. Then. if the CNF is Satisfiable return
+       First, tautologically reduce the Cnf. Then. if the Cnf is Satisfiable return
        ``True`` else return ``False``.
 
     """
-    cnf_reduced: cnf.CNF
+    cnf_reduced: cnf.Cnf
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
-    if cnf_reduced == cnf.TRUE_CNF:
+    if cnf_reduced == cnf._TRUE_CNF:
         return True
-    if cnf_reduced == cnf.FALSE_CNF:
+    if cnf_reduced == cnf._FALSE_CNF:
         return False
 
     def assigns_cnf_to_true(assignment: Assignment) -> bool:
-        return cnf.assign(cnf_reduced, assignment) == cnf.TRUE_CNF
+        return cnf.assign(cnf_reduced, assignment) == cnf._TRUE_CNF
 
     # Note: cnf_reduced cannot be TRUE/FALSE, hence all_assignments != ({})
     all_assignments: Iterator[Assignment] = generate_assignments(cnf_reduced)
@@ -138,14 +138,14 @@ def cnf_bruteforce_satcheck(cnf_instance: cnf.CNF) -> bool:
     return any(satisfying_assignments)
 
 
-def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
-    """Use the `pysat` library's Minisat22 solver to sat-check a CNF.
+def cnf_pysat_satcheck(cnf_instance: cnf.Cnf) -> bool:
+    """Use the `pysat` library's Minisat22 solver to sat-check a Cnf.
 
     Args:
-       cnf_instance (:obj:`cnf.CNF`)
+       cnf_instance (:obj:`cnf.Cnf`)
 
     Return:
-       If the CNF is Satisfiable return ``True`` else return ``False``.
+       If the Cnf is Satisfiable return ``True`` else return ``False``.
 
     """
     from pysat.solvers import Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
@@ -154,40 +154,40 @@ def cnf_pysat_satcheck(cnf_instance: cnf.CNF) -> bool:
         with Minisat22(cnf_instance) as minisat_solver:
             return cast(bool, minisat_solver.solve())
     except ValueError:
-        # The CNF was probably not in reduced form.
+        # The Cnf was probably not in reduced form.
         # Reduce and try again
-        cnf_reduced: cnf.CNF
+        cnf_reduced: cnf.Cnf
         cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
-        if cnf_reduced == cnf.TRUE_CNF:
+        if cnf_reduced == cnf._TRUE_CNF:
             return True
-        if cnf_reduced == cnf.FALSE_CNF:
+        if cnf_reduced == cnf._FALSE_CNF:
             return False
         with Minisat22(cnf_reduced) as minisat_solver:
             return cast(bool, minisat_solver.solve())
 
 
-def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:
-    """Convert a CNF to DIMACS format.
+def cnf_to_dimacs(cnf_instance: cnf.Cnf) -> str:
+    """Convert a Cnf to DIMACS format.
 
-    The CNF is tautologically reduced first so as to not contain TRUE or FALSE lits.
+    The Cnf is tautologically reduced first so as to not contain TRUE or FALSE lits.
     Args:
-       cnf_instance (:obj:`cnf.CNF`)
+       cnf_instance (:obj:`cnf.Cnf`)
 
     Return:
-       A string which consists of lines. Each line is a Clause of the CNF ending with
+       A string which consists of lines. Each line is a Clause of the Cnf ending with
        zero. Each lit in the Clause is written with a space delimiter.
 
-       After tautological reduction, if the CNF reduced to TRUE or FALSE then return a
+       After tautological reduction, if the Cnf reduced to TRUE or FALSE then return a
        string that will be correctly interpreted as such.
 
     """
-    cnf_reduced: cnf.CNF
+    cnf_reduced: cnf.Cnf
     cnf_reduced = cnf.tautologically_reduce_cnf(cnf_instance)
 
-    if cnf_reduced == cnf.TRUE_CNF:
+    if cnf_reduced == cnf._TRUE_CNF:
         return ''  # A Clause that is always satisfied
-    if cnf_reduced == cnf.FALSE_CNF:
+    if cnf_reduced == cnf._FALSE_CNF:
         return '0'  # A Clause that can never be satisfied
 
     clause_strs: Iterator[Iterator[str]]
@@ -200,16 +200,16 @@ def cnf_to_dimacs(cnf_instance: cnf.CNF) -> str:
     return '\n'.join(clause_strs_with_tails)
 
 
-def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
-    """Use the `subprocess` library to call minisat.c solver to sat-check a CNF.
+def cnf_minisat_satcheck(cnf_instance: cnf.Cnf) -> bool:
+    """Use the `subprocess` library to call minisat.c solver to sat-check a Cnf.
 
     minisat.c should be correctly installed for this to work.
 
     Args:
-       cnf_instance (:obj:`cnf.CNF`)
+       cnf_instance (:obj:`cnf.Cnf`)
 
     Return:
-       If the CNF is Satisfiable return ``True`` else return ``False``.
+       If the Cnf is Satisfiable return ``True`` else return ``False``.
 
     """
     cnf_dimacs: str
@@ -231,7 +231,7 @@ def cnf_minisat_satcheck(cnf_instance: cnf.CNF) -> bool:
     raise RuntimeError('Unexpected output from minisat.', output)   # pragma: no cover
 
 
-# Functions for generating CNFs from MHGraphs
+# Functions for generating Cnfs from MHGraphs
 # ===========================================
 
 
@@ -269,8 +269,8 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> tuple[cnf.Clause, ...]:
     return tuple(map(cnf.clause, lit_combinations))
 
 
-def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF]:
-    r"""Return all CNFs supported on a HEdge with multiplicity.
+def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.Cnf]:
+    r"""Return all Cnfs supported on a HEdge with multiplicity.
 
     Args:
        hedge (:obj:`mhgraph.HEdge`)
@@ -278,8 +278,8 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
           :math:`\{1, \ldots, 2^{|hedge|}\}`.
 
     Returns:
-       An iterator of cnf.CNF consisting of the :math:`\binom{2^{|hedge|}}{multiplicity}`
-       CNFs supported on a HEdge ``hedge`` with multiplicity ``multiplicity``.
+       An iterator of cnf.Cnf consisting of the :math:`\binom{2^{|hedge|}}{multiplicity}`
+       Cnfs supported on a HEdge ``hedge`` with multiplicity ``multiplicity``.
 
     Edge case:
        Returns an empty iterator if ``multiplicity`` greater than :math:`2^{|hedge|}`.
@@ -298,8 +298,8 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.CNF
 
 
 def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
-                      randomize: bool = True) -> Iterator[cnf.CNF]:
-    r"""Return all CNFs supported on a MHGraph.
+                      randomize: bool = True) -> Iterator[cnf.Cnf]:
+    r"""Return all Cnfs supported on a MHGraph.
 
     Args:
        mhgraph_instance (:obj:`mhgraph.MHGraph`)
@@ -307,19 +307,19 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
           shuffled order.
 
     Returns:
-       An iterator of cnf.CNF consisting of the
-       :math:`\displaystyle\prod_{hedge}\binom{2^{|hedge|}}{multiplicity}` CNFs supported
+       An iterator of cnf.Cnf consisting of the
+       :math:`\displaystyle\prod_{hedge}\binom{2^{|hedge|}}{multiplicity}` Cnfs supported
        on the MHGraph ``mhgraph_instance``.
 
     Edge case:
        If `mhgraph_instance` is over-saturated (i.e. if it has a HEdge with multiplicity
        greater than :math:`2^{|hedge|}`, then this function returns an empty iterator.
     """
-    cnf_iterators: Iterator[Iterator[cnf.CNF]]
+    cnf_iterators: Iterator[Iterator[cnf.Cnf]]
     cnf_iterators = it.starmap(cnfs_from_hedge, mhgraph_instance.items())
 
-    # Iterator[tuple[cnf.CNF, ...]] <: Iterator[tuple[frozenset[cnf.Clause], ...]]
-    cnf_tuples: Iterator[tuple[cnf.CNF, ...]]
+    # Iterator[tuple[cnf.Cnf, ...]] <: Iterator[tuple[frozenset[cnf.Clause], ...]]
+    cnf_tuples: Iterator[tuple[cnf.Cnf, ...]]
     cnf_tuples = it.product(*cnf_iterators)
 
     clause_frozensets: Iterator[frozenset[cnf.Clause]]
@@ -332,7 +332,7 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
 
 
 def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
-    """Return the number of CNFs supported on a MHGraph.
+    """Return the number of Cnfs supported on a MHGraph.
 
     Returns `0` in case of over-saturated graphs."""
     return math.prod(math.comb(2**len(h), m) for h, m in mhgraph_instance.items())  # type: ignore
@@ -404,19 +404,19 @@ def mhgraph_minisat_satcheck(mhgraph_instance: mhgraph.MHGraph) -> bool:
     return False
 
 
-# Function for generating MHGraphs from CNFs
+# Function for generating MHGraphs from Cnfs
 # ==========================================
 
 
-def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
-    """Return the MHGraph that supports a given CNF.
+def mhgraph_from_cnf(cnf_instance: cnf.Cnf) -> mhgraph.MHGraph:
+    """Return the MHGraph that supports a given Cnf.
 
-    This function first tautologically reduces the CNF using
+    This function first tautologically reduces the Cnf using
     :obj:`cnf.tautologically_reduce_cnf()`.
     This ensures no self-loops or collapsed HEdges in the final MHGraph.
 
     Args:
-       cnf_instance (:obj:`cnf.CNF`): a CNF that does not tautologically reduce to
+       cnf_instance (:obj:`cnf.Cnf`): a Cnf that does not tautologically reduce to
           ``cnf.cnf([[cnf.TRUE]])`` or ``cnf.cnf([[cnf.FALSE]])``.
 
     Return:
@@ -427,10 +427,10 @@ def mhgraph_from_cnf(cnf_instance: cnf.CNF) -> mhgraph.MHGraph:
           after performing tautological reductions.
 
     """
-    reduced_cnf: cnf.CNF = cnf.tautologically_reduce_cnf(cnf_instance)
+    reduced_cnf: cnf.Cnf = cnf.tautologically_reduce_cnf(cnf_instance)
 
-    if reduced_cnf in {cnf.TRUE_CNF, cnf.FALSE_CNF}:
-        raise ValueError('CNF reduced to trivial True/False & has no supporting MHGraph.')
+    if reduced_cnf in {cnf._TRUE_CNF, cnf._FALSE_CNF}:
+        raise ValueError('Cnf reduced to trivial True/False & has no supporting MHGraph.')
 
     # Iterator[frozenset[cnf.Lit]] <: Iterator[Collection[int]]
     cnf_with_abs_variables: Iterator[frozenset[cnf.Lit]]
@@ -564,12 +564,12 @@ if __name__ == '__main__':
     logger.info(">>> cnf_pysat_satcheck(cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]]))")
     logger.success(cnf_pysat_satcheck(cnf.cnf([[1, 2], [1, -2], [-1, 2], [-1, -2]])))
     logger.info('\n')
-    logger.info('mhgraph_pysat_satcheck() finds all CNFs supported on a MHGraph\n'
+    logger.info('mhgraph_pysat_satcheck() finds all Cnfs supported on a MHGraph\n'
                 + ' '*61 + 'and then sat-checks them using the pysat satchecker.')
     logger.info('>>> mhgraph_pysat_satcheck()(mhgraph.mhgraph([[1, 2], [2, 3]]))')
     logger.success(mhgraph_pysat_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
-    logger.info('True output indicates that this MHGraph only supports satisfiable CNFs.')
+    logger.info('True output indicates that this MHGraph only supports satisfiable Cnfs.')
     logger.info('\n')
-    logger.info('Given a CNF we can also ask for its supporting MHGraph.')
+    logger.info('Given a Cnf we can also ask for its supporting MHGraph.')
     logger.info('>>> mhgraph_from_cnf(cnf.cnf([[1, -2], [2, 3, 4], [1, 2]]))')
     logger.success(mhgraph_from_cnf(cnf.cnf([[1, -2], [2, 3, 4], [1, 2]])))

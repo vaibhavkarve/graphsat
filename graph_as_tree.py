@@ -3,8 +3,8 @@
 
 Each MHGraph starts off as the root of a tree. A rewrite on the graph
 creates a bunch of child-nodes such that the original graph is
-equisatisfiable to the union of the child nodes. Rewriting when
-applied iteratively to the nodes will result in a tree of greater height.
+equisatisfiable to the union of the child nodes. Rewriting when applied
+iteratively to the nodes will result in a tree of greater height.
 
 Th graph can be written as being equisatisfiable to the leaves of its
 rewrite tree.

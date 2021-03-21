@@ -272,13 +272,7 @@ if __name__ == "__main__":
     logger.add(sys.stdout, level=0)
     init()  # for initializing terminal coloring
     time0 = time()
-    G: mhgraph.MHGraph = mhgraph.mhgraph(square(1, 2, 3, 4, 5)
-                                         + square(4, 3, 6, 7, 8)
-                                         + square(7, 6, 9, 10, 11)
-                                         + square(10, 9, 12, 13, 14))
-    G = mhgraph.mhgraph([[1, 2, 3]]*1 + [[1, 2, 4]]*3 + [[1, 3, 4]]*5)
-
-    G = mhgraph.mhgraph([[1, 2], [1, 3], [2, 3], [2, 4], [4, 5], [4, 6], [5, 6]])
+    G = mhgraph.mhgraph([[1,2,3], [4,5,6], [1,4,5], [1,2,5], [2,5,6], [2,3,6], [1,4,6], [1,3,6]])
     dec: bool = decompose(G)
     print()
     logger.success(dec)

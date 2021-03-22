@@ -1,8 +1,6 @@
 #!/usr/bin/env python3.9
-"""Simple functions for propositional calculus.
+"""Functions for propositional calculus -- conjunction, disjunction and negation."""
 
-Currently, this module implements Conjunction, Disjunction and Negation.
-"""
 import functools as ft
 from loguru import logger
 from cnf import cnf, Cnf, clause, Clause, Lit, neg, tautologically_reduce_cnf

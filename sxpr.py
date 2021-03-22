@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.9
-"""Functions for working with S-expressions.
+"""Functions for working with s-expressions.
 
-S-expressions are inspired from ELisp.
+s-expressions are inspired from ELisp.
 """
 # Imports from standard library.
 from dataclasses import dataclass

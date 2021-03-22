@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.9
-"""Module for collapsing a set of Cnfs into compact graphs representation."""
+"""Functions for collapsing a set of Cnfs into compact graphs representation."""
 
 import collections
 import itertools as it

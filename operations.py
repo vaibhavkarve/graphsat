@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.9
-"""Functions and operations for working with Graph-Satisfiability."""
+"""Functions for working with graph-satisfiability and various graph parts."""
 
 # Imports from standard library.
 import functools as ft

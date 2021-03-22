@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.9
-"""Functions for Satchecking Cnfs, Graphs etc.
+"""Functions for sat-checking Cnfs, Graphs, and MHGraphs.
 
 Satisfiability of Cnfs
 ======================

@@ -1,8 +1,5 @@
 #!/usr/bin/env python3.9
-"""Graph rewriting algorithm.
-
-This module implements local graph rewriting.
-"""
+"""An implementation of the Local graph rewriting algorithm."""
 
 # Imports from standard library.
 from collections import defaultdict

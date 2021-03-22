@@ -1,8 +1,5 @@
 #!/usr/bin/env python3.9
-"""Module for simplifying Cnfs.
-
-We wish to simplify Cnfs like
-(a ∨ b ∨ c) ∧ (a ∨ b ∨ ¬c) to (a ∨ b).
+"""Functions for simplifying Cnfs, particularly (a∨b∨c) ∧ (a∨b∨¬c) to (a∨b).
 
 This simplification is traditionally handled by the Quine–McCluskey
 algorithm. But for our simple use-case, this might be over-engineered.

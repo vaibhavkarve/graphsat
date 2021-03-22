@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.9
-"""All functions that work on Graphs, HGraphs and MHGraphs live here.
+"""Constructors and functions for Graph and MHGraph morphisms.
 
 This includes an implementation of the brute-force subgraph search algorithm and a
 brute-force isomorphism search algorithm for MHGraphs.

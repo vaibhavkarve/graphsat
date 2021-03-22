@@ -25,9 +25,12 @@ A *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import AbstractSet, Collection, Counter, NewType, TypeVar, Union
+from typing import AbstractSet, Collection, Counter, NewType, Optional, TypeVar, Union
+
 # Imports from third-party modules.
-from loguru import logger
+from loguru import logger  # type: ignore
+import anytree as at  # type: ignore
+
 # Imports from local modules.
 from graph import Graph, GraphType, vertex, Vertex
 
@@ -75,6 +78,10 @@ class MHGraphType(Counter[AbstractSet[T]]):
         return ','.join(hedge_strings)
 
 
+
+# Classes and Types
+# =================
+
 class HEdge(frozenset[Vertex]):  # pylint: disable=too-few-public-methods
     """`HEdge` is a subclass of `FrozenSet[Vertex]`."""
     def __repr__(self) -> str:
@@ -82,15 +89,51 @@ class HEdge(frozenset[Vertex]):  # pylint: disable=too-few-public-methods
         return '(' + ', '.join(map(str, sorted(self))) + ')'
 
 
-
-# Classes and Types
-# =================
-
 HGraph = NewType('HGraph', GraphType[Vertex])
 HGraph.__doc__ = """`HGraph` is a subtype of `PreGraph[Vertex]`."""
 
 class MHGraph(MHGraphType[Vertex]):  # pylint: disable=too-few-public-methods
     """`MHGraph` is a subclass of `MHGraphType[Vertex]`."""
+
+
+class GraphNode(at.NodeMixin):  # type: ignore
+    """This is a MHGraph that can also act as the node in a tree.
+
+    API for interpreting MHGraphs rewriting as trees.
+
+    Each MHGraph starts off as the root of a tree. A rewrite on the graph
+    creates a bunch of child-nodes such that the original graph is
+    equisatisfiable to the union of the child nodes. Rewriting when applied
+    recursively to the nodes will result in a tree of greater height.
+
+    The graph can be written as being equisatisfiable to the leaves of its
+    rewrite tree.
+
+    """
+    def __init__(self,
+                 graph: MHGraph,
+                 free: Vertex = vertex(1),
+                 parent: Optional[MHGraph] = None,
+                 children: Optional[list[MHGraph]] = None):
+        "Make MHGraph into a node with relevant args."
+        self.graph = graph
+        self.parent = parent
+        self.free = free
+        if children:  # set children only if given
+            self.children = list(map(GraphNode, children))
+
+    def __str__(self) -> str:
+        """Pretty print a tree."""
+        lines = []
+        for pre, _, node in at.RenderTree(self):
+            #pre = ' ' + pre if pre else pre  # add some padding to the front
+            line = (f'{pre} {node.graph} '
+                    + ("@" + str(node.free) if not node.parent else ""))
+            lines.append(line)
+        return '\n'.join(lines)
+
+    __repr__ = __str__
+
 
 
 # Constructor Functions

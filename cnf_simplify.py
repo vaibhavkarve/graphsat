@@ -4,7 +4,7 @@
 We wish to simplify Cnfs like
 (a ∨ b ∨ c) ∧ (a ∨ b ∨ ¬c) to (a ∨ b).
 
-This simplification is traditionally handles by the Quine–McCluskey
+This simplification is traditionally handled by the Quine–McCluskey
 algorithm. But for our simple use-case, this might be over-engineered.
 
 Instead we implement our own functions for making this simplification.

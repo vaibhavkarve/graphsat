@@ -75,7 +75,7 @@ def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
     return True
 
 
-def compute_all_two_partitions(mhg: MHGraph, vertex: mhgraph.Vertex) \
+def compute_all_two_partitions_of_link(mhg: MHGraph, vertex: mhgraph.Vertex) \
         -> Iterator[tuple[list[mhgraph.HEdge], list[mhgraph.HEdge]]]:
     """Compute the link and then all nonempty 2-paritions of the link.
     """
@@ -117,7 +117,7 @@ def local_rewrite(mhg: MHGraph,
 
 
     two_partitions: Iterator[tuple[list[mhgraph.MHGraph], list[mhgraph.MHGraph]]]
-    two_partitions = compute_all_two_partitions(mhg, vertex)
+    two_partitions = compute_all_two_partitionsof_link(mhg, vertex)
 
     rewritten_cnfs: set[cnf.Cnf] = set()
     for hyp1, hyp2 in two_partitions:
@@ -198,7 +198,7 @@ def decompose_at_vertex(mhg: MHGraph, vertex: mhgraph.Vertex, hyperbolic_only=Fa
     logger.trace(f'       {sphr = }')
 
     two_partitions: Iterator[tuple[list[mhgraph.MHGraph], list[mhgraph.MHGraph]]]
-    two_partitions = compute_all_two_partitions(mhg, vertex)
+    two_partitions = compute_all_two_partitions_of_link(mhg, vertex)
 
     if hyperbolic_only:
         # Filter out only maximally hyperbolic two_partitions.

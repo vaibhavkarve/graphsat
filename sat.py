@@ -34,6 +34,7 @@ MHGraph sat-solvers:
     2. mhgraph_pysat_satcheck: faster.
     3. mhgraph_minisat_satcheck: slowest.
 
+TODO: Add a function for equisatisfiability of Cnfs
 """
 # Imports from standard library
 import functools as ft

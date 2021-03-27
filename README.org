@@ -1,6 +1,8 @@
-# graphsat
+* graphsat
 
-A Python package brought to you by [Vaibhav Karve](vaibhavkarve.github.io) and [Anil N. Hirani](https://faculty.math.illinois.edu/~hirani/), Department of Mathematics, University of Illinois at Urbana-Champaign.
+A Python package brought to you by [[vaibhavkarve.github.io][Vaibhav Karve]] and [Anil N.
+Hirani](https://faculty.math.illinois.edu/~hirani/), Department of
+Mathematics, University of Illinois at Urbana-Champaign.
 
 We introduce a Python package that recognizes clauses, Cnfs, graphs,
 hypergraphs, and multi-hypergraphs. The package implements local

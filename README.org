@@ -9,12 +9,12 @@ graph-rewriting, graph-satchecking, calculation of graph disjunctions, as
 well as checking of new reduction rules.
 
 This package is written in Python v3.9, and is publicly available under an
-?? license. It is set to be released on the [[https://pypi.org/][Python Packaging Index]] as an
-open-source scientific package written in the literate programming style.
-We specifically chose to write this package as a literate program, despite
-the verbosity of this style, with the goal to create reproducible
-computational research and ensure that all the computations are repeatable
-and the code is reusable.
+the [[file:LICENSE][GNU-GPL-v3.0 license]]. It is set to be released on the [[https://pypi.org/][Python Packaging
+Index]] as an open-source scientific package written in the literate
+programming style. We specifically chose to write this package as a
+literate program, despite the verbosity of this style, with the goal to
+create reproducible computational research and ensure that all the
+computations are repeatable and the code is reusable.
 
 ** Algorithms
 Currently, graphsat implements the following algorithms --

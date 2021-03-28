@@ -61,25 +61,32 @@ following principles in mind --
 The package consists of several different modules.
 
 1. Modules that act only on Cnfs --
-    - =cnf.py= :: Constructors and functions for sentences in conjunctive normal form (Cnf).
-    - =cnf_simplify.py= :: Functions for simplifying Cnfs, particularly $(a
-         \vee b \vee c) \wedge (a \vee b \vee \overline{c})
-         \rightsquigarrow (a \vee b)$.
-    - =prop.py= :: Functions for propositional calculus -- conjunction, disjunction and negation.
+    - =cnf.py= :: Constructors and functions for sentences in conjunctive
+                  normal form (Cnf).
+    - =cnf_simplify.py= :: Functions for simplifying Cnfs, particularly
+         (a∨b∨c) ∧ (a∨b∨\neg c) ⇝ (a ∨ b).
+    - =prop.py= :: Functions for propositional calculus -- conjunction,
+                   disjunction and negation.
 
 2. Modules that act only on graphs --
     - =graph.py= :: Constructors and functions for simple graphs.
-    - =mhgraph.py= :: Constructors and functions for Loopless-Multi-Hyper-Graphs
-    - =morphism.py= :: Constructors and functions for Graph and MHGraph morphisms.
+    - =mhgraph.py= :: Constructors and functions for
+                      Loopless-Multi-Hyper-Graphs
+    - =morphism.py= :: Constructors and functions for Graph and MHGraph
+                       morphisms.
 
 3. Modules concerning SAT and GraphSAT --
     - =sat.py= :: Functions for sat-checking Cnfs, Graphs, MHGraphs.
     - =sxpr.py= :: Functions for working with s-expressions.
-    - =operations.py= :: Functions for working with graph-satisfiability and various graph parts.
+    - =operations.py= :: Functions for working with graph-satisfiability
+         and various graph parts.
 
 4. Modules that implement and compute local graph rewriting, rule reduction
    etc.
-    - =graph_collapse.py= :: Functions for collapsing a set of Cnfs into compact graphs representation.
-    - =graph_rewrite.py= :: An implementation of the Local graph rewriting algorithm.
+    - =graph_collapse.py= :: Functions for collapsing a set of Cnfs into
+         compact graphs representation.
+    - =graph_rewrite.py= :: An implementation of the Local graph rewriting
+         algorithm.
 
-5. Finally, the test suite for each module is located in the =test/= folder.
+5. Finally, the test suite for each module is located in the =test/=
+   folder.

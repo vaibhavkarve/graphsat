@@ -117,7 +117,7 @@ def local_rewrite(mhg: MHGraph,
 
 
     two_partitions: Iterator[tuple[list[mhgraph.MHGraph], list[mhgraph.MHGraph]]]
-    two_partitions = compute_all_two_partitionsof_link(mhg, vertex)
+    two_partitions = compute_all_two_partitions_of_link(mhg, vertex)
 
     rewritten_cnfs: set[cnf.Cnf] = set()
     for hyp1, hyp2 in two_partitions:

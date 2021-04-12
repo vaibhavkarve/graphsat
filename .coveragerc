@@ -1,5 +1,0 @@
-[report]
-exclude_lines =
-    pragma: no cover
-    logger.
-    if __name__ == .__main__.:

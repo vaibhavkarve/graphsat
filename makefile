@@ -1,7 +1,15 @@
-.PHONY : test init tags
+.PHONY : test dev-tests install tags clean
 
-init :
+# Run `make install` for installing graphsat and all its requirements.
+install :
+	@echo Installing direnv and hooking it to bash
+	curl -sfL https://direnv.net/install.sh | bash
+	direnv hook bash
+
+	@echo Allowing direnv to pick correct python version
 	direnv allow
+
+	@echo Installing packages listed in requirements.txt
 	python -m pip install -r requirements.txt
 
 tags :

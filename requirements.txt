@@ -1,0 +1,22 @@
+# This file lists requirements for running graphsat. This file will be
+# invoked by the `make init` command at the command line.
+
+####### Requirements without version specifiers
+anytree
+colorama
+more-itertools
+mypy
+pycodestyle
+pydocstyle
+pylint
+pytest
+python-sat
+tabulate
+tqdm
+typer
+
+####### Requirements with version specifiers
+loguru==0.5.3
+
+####### Installing the package itself in editable mode.
+--editable ../graphsat

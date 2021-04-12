@@ -1,5 +1,5 @@
 # This file lists requirements for running graphsat. This file will be
-# invoked by the `make init` command at the command line.
+# invoked by the `make install` command at the command line.
 
 ####### Requirements without version specifiers
 anytree
@@ -19,4 +19,4 @@ typer
 loguru==0.5.3
 
 ####### Installing the package itself in editable mode.
---editable ../graphsat
+-e .

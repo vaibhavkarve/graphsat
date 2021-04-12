@@ -16,7 +16,7 @@ setup(name='graphsat',
       description='A python package for working with Graphs and Satisfiability',
       license='GNU GPLv3',
       keywords='graph, hypergraph, multigraph, typed',
-      long_description=read('README'),
+      long_description=read('README.org'),
       packages=find_packages(),
       classifiers=[
                    'Development Status :: 4 - Beta',

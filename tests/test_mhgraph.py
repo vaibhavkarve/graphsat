@@ -1,7 +1,9 @@
 #! /usr/bin/env python3.9
 
 import pytest
-from graphsat.mhgraph import *
+from context import graphsat
+from graphsat import mhgraph
+from mhgraph import *
 
 
 class TestPreMHGraph(object):

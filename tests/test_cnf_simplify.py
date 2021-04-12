@@ -2,7 +2,8 @@
 """Tests for cnf.simplify.py."""
 
 import pytest
-from cnf_simplify import *
+from context import graphsat
+from graphsat.cnf_simplify import *
 
 
 def test_hedge_of_clause() -> None:

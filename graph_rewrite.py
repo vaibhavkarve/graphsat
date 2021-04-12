@@ -105,7 +105,7 @@ def local_rewrite(mhg: MHGraph,
     possible, we replace entire sets of Cnfs with smaller MHGraphs that are
     created in the rewrite.
 
-    If `print_full` is True (default) then print the full table, else print
+    If `print_full` is True then print the full table, else (default) print
     only the column headers and complete/incomplete.
     """
     extra_hedge: mhgraph.HEdge = mhgraph.hedge([999])
@@ -269,9 +269,8 @@ if __name__ == "__main__":
     logger.add(sys.stdout, level=0)
     init()  # for initializing terminal coloring
     time0 = time()
-    G = mhgraph.mhgraph([[1,2,3], [4,5,6], [1,4,5], [1,2,5], [2,5,6], [2,3,6], [1,4,6], [1,3,6]])
-    dec: bool = decompose(G)
+    G = mhgraph.mhgraph([[1,2,3], [1,3,4], [1,4,5], [1,2,5]])
+    lrw = local_rewrite(G, mhgraph.vertex(1), False)
     print()
-    logger.success(dec)
-    print()
+    print(tabulate(lrw))
     logger.info(f"Total time taken = {round(time() - time0, 2)}s")

@@ -12,6 +12,8 @@ install :
 	@echo Installing packages listed in requirements.txt
 	python -m pip install -r requirements.txt
 
+# Run `make tags` for creating etags for the files. Used for
+# Emacs-navigation.
 tags :
 	etags graphsat/*.py graphsat/*.py sio2/*.py
 

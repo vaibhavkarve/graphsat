@@ -17,9 +17,21 @@ install :
 tags :
 	etags graphsat/*.py graphsat/*.py sio2/*.py
 
+# Run `make test` for running all unit tests
 test :
-	python -m pytest
+	python -m pytest tests
 
+# Run `make dev-tests` only if there are changes made to graphsat's source
+# code. This has been tested against config files `mypy.ini` and
+# `pytest.ini` -- files that are not part of this package release. Please
+# contact the authors for a copy of our local mypy.ini and pytest.ini
+# config files.
+dev-tests :
+	python -m pytest tests
+
+
+# Run `make clean` to remove superfluous files.
 clean :
 	rm -rf graphsat/__pycache__
 	rm -rf graphsat/test/__pycache__
+	rm -rf .direnv

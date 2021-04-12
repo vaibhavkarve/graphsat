@@ -10,7 +10,7 @@ Instead we implement our own functions for making this simplification.
 import functools as ft
 import itertools as it
 
-import cnf as cnf
+import cnf
 import mhgraph as mhg
 
 

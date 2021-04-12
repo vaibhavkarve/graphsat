@@ -21,18 +21,18 @@ with the following properties:
    - Collapsed edges are not allowed, meaning an edge can be incident on a given vertex
      only once.
 
-A *HGraph* is a MHGraph without HEdge-multiplicities.
+An *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
 from typing import AbstractSet, Collection, Counter, NewType, Optional, TypeVar, Union
 
 # Imports from third-party modules.
-from loguru import logger  # type: ignore
+from loguru import logger
 import anytree as at  # type: ignore
 
 # Imports from local modules.
-from graph import Graph, GraphType, vertex, Vertex
+from graph import graph, Graph, GraphType, vertex, Vertex
 
 
 # MHGraphType (Hashable Counter) for Storing MHGraphs
@@ -239,6 +239,7 @@ def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:
     """Pick vertex of highest degree."""
     degree_sequence: dict[Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
+    assert degree_sequence, 'Graph nonempty implies degree sequence nonempty'
     return max(degree_sequence, key=degree_sequence.get)
 
 

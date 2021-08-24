@@ -14,7 +14,8 @@ import graphsat.cnf as cnf
 import graphsat.morphism as morph
 import graphsat.prop as prop
 import graphsat.sat as sat
-from graphsat.mhgraph import degree, GraphNode, MHGraph, mhgraph, vertex, Vertex
+from graphsat.mhgraph import (degree, GraphNode, graph_union, MHGraph,
+                              mhgraph, vertex, Vertex)
 from graphsat.sxpr import AtomicSxpr, SatSxpr
 
 
@@ -70,8 +71,14 @@ def graph_or(graph1: Union[MHGraph, set[cnf.Cnf]],
 
 
 def graph_and(graph1: Union[MHGraph, set[cnf.Cnf]],
-              graph2: Union[MHGraph, set[cnf.Cnf]]) -> set[cnf.Cnf]:
-    """Conjunct the corresponding Cnfs."""
+              graph2: Union[MHGraph, set[cnf.Cnf]]) -> Union[MHGraph, set[cnf.Cnf]]:
+    """Conjunct the corresponding Cnfs.
+
+    If both arguments are of type MHGraph, then simply compute the
+    `graph_union` of the graphs.
+    """
+    if isinstance(graph1, MHGraph) and isinstance(graph2, MHGraph):
+        return graph_union(graph1, graph2)
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
     if not isinstance(graph2, set):

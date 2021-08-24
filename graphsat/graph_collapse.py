@@ -8,10 +8,10 @@ from typing import Any, DefaultDict
 from tabulate import tabulate
 from tqdm import tqdm  # type: ignore
 
-import cnf
-import mhgraph as mhg
-import operations as op
-import sat
+import graphsat.cnf as cnf
+import graphsat.mhgraph as mhg
+import graphsat.operations as op
+import graphsat.sat as sat
 
 
 _TRUE_FALSE: dict[cnf.Cnf, str]

@@ -3,7 +3,8 @@
 
 import functools as ft
 from loguru import logger
-from cnf import cnf, Cnf, clause, Clause, Lit, neg, tautologically_reduce_cnf
+
+from graphsat.cnf import cnf, Cnf, clause, Clause, Lit, neg, tautologically_reduce_cnf
 
 
 # Conjunction

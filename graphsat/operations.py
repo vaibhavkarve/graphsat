@@ -4,17 +4,18 @@
 # Imports from standard library.
 import functools as ft
 import itertools as it
-from typing import Optional, Union
+from typing import cast, Iterator, Optional, Union
 
 # Imports from third-party modules.
-from loguru import logger  # type: ignore
+from loguru import logger
 
 # Imports from local modules.
-import cnf
-import prop
-import sat
-from mhgraph import GraphNode, MHGraph, mhgraph, vertex
-from sxpr import AtomicSxpr, SatSxpr
+import graphsat.cnf as cnf
+import graphsat.morphism as morph
+import graphsat.prop as prop
+import graphsat.sat as sat
+from graphsat.mhgraph import degree, GraphNode, MHGraph, mhgraph, vertex, Vertex
+from graphsat.sxpr import AtomicSxpr, SatSxpr
 
 
 @ft.singledispatch
@@ -212,7 +213,7 @@ def apply_rule(graph: mhgraph, rule: GraphNode) -> list[mhgraph]:
     for sub_morph in sub_morphs:
         mapped_free: Vertex
         mapped_free = sub_morph.translation[rule.free]
-        if mhg.degree(mapped_free, graph) != mhg.degree(rule.free, rule.graph):
+        if degree(mapped_free, graph) != degree(rule.free, rule.graph):
             continue
 
         mapped_parent: mhgraph

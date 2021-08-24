@@ -32,7 +32,7 @@ from loguru import logger
 import anytree as at  # type: ignore
 
 # Imports from local modules.
-from graph import graph, Graph, GraphType, vertex, Vertex
+from graphsat.graph import graph, Graph, GraphType, vertex, Vertex
 
 
 # MHGraphType (Hashable Counter) for Storing MHGraphs

@@ -1,9 +1,9 @@
 #! /usr/bin/env python3.9
 
 import pytest
-from mhgraph import mhgraph as mhg
-from operations import sat_and, sat_or
-from sxpr import *
+from graphsat.mhgraph import mhgraph as mhg
+from graphsat.operations import sat_and, sat_or
+from graphsat.sxpr import AtomicSxpr, Sxpr, SatSxpr
 
 
 def test_Sxpr():
@@ -16,13 +16,13 @@ def test_SatSxpr():
     # empty arguments
     assert SatSxpr(sat_and, ()).reduce()
     assert not SatSxpr(sat_or, ()).reduce()
-    
+
     # boolean arguments
     assert SatSxpr(sat_and, (True, True, True)).reduce()
     assert not SatSxpr(sat_and, (True, True, False)).reduce()
     assert not SatSxpr(sat_and, (True, False, True)).reduce()
     assert not SatSxpr(sat_and, (False, True, True)).reduce()
-    
+
     assert not SatSxpr(sat_or, (False, False, False)).reduce()
     assert SatSxpr(sat_or, (True, True, False)).reduce()
     assert SatSxpr(sat_or, (True, False, True)).reduce()

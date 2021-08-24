@@ -10,8 +10,8 @@ Instead we implement our own functions for making this simplification.
 import functools as ft
 import itertools as it
 
-import cnf
-import mhgraph as mhg
+import graphsat.cnf as cnf
+import graphsat.mhgraph as mhg
 
 
 #@ft.lru_cache

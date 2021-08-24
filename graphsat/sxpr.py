@@ -11,7 +11,7 @@ from typing import Callable, Generic, TypeVar, Union
 from colorama import Fore, Style  # type: ignore[import]
 from loguru import logger
 # Import from local modules.
-from mhgraph import MHGraph
+from graphsat.mhgraph import MHGraph
 
 
 # Type variables and aliases

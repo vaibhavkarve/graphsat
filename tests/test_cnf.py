@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.9
 import pytest
+from context import graphsat
 from cnf import *
 
 
@@ -186,8 +187,9 @@ def test_assign_variable_in_clause():
     assert avic(clause([1, -2, -1]), 2, FALSE) == {TRUE}
 
     # Test for idempotence
-    _clause = clause([1, -2, -1])
-    assert avic(avic(_clause, 2, FALSE), 2, FALSE) == avic(_clause, 2, FALSE)
+    _clause: Clause = clause([lit(1), lit(-2), lit(-1)])
+    _var: Variable = variable(2)
+    assert avic(avic(_clause, _var, FALSE), _var, FALSE) == avic(_clause, _var, FALSE)
 
     pytest.raises(ValueError, assign_variable_in_clause, [], 1, TRUE)
 

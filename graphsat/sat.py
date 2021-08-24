@@ -44,13 +44,13 @@ import subprocess
 from typing import cast, Iterator, Union
 # Imports from third-party modules.
 from loguru import logger
-import more_itertools as mit  # type: ignore
+import more_itertools as mit
 from tqdm import tqdm  # type: ignore
 # Imports from local modules.
-import cnf
-import graph
-import mhgraph
-import morphism as morph
+import graphsat.cnf as cnf
+import graphsat.graph as graph
+import graphsat.mhgraph as mhgraph
+import graphsat.morphism as morph
 
 
 # Type alisases
@@ -335,8 +335,10 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
 def number_of_cnfs(mhgraph_instance: mhgraph.MHGraph) -> int:
     """Return the number of Cnfs supported on a MHGraph.
 
-    Returns `0` in case of over-saturated graphs."""
-    return math.prod(math.comb(2**len(h), m) for h, m in mhgraph_instance.items())  # type: ignore
+    Returns `0` in case of over-saturated graphs.
+    """
+    return math.prod(math.comb(2**len(h), m)
+                     for h, m in mhgraph_instance.items())
 
 
 # Functions for Checking Satisfiability of MHGraphs

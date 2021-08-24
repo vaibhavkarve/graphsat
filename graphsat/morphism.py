@@ -9,11 +9,11 @@ import itertools as it
 from typing import (AbstractSet, Callable, cast, Iterable, Iterator, KeysView,
                     Mapping, NamedTuple, NewType, Optional, TypeVar, Union)
 
-import more_itertools as mit  # type: ignore
+import more_itertools as mit
 from loguru import logger
 
-from graph import Vertex
-from mhgraph import HGraph, hgraph_from_mhgraph, mhgraph, MHGraph, vertices
+from graphsat.graph import Vertex
+from graphsat.mhgraph import HGraph, hgraph_from_mhgraph, mhgraph, MHGraph, vertices
 
 
 # Types

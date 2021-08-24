@@ -1,15 +1,16 @@
 #!/usr/bin/env python3.9
 
 import pytest
-from graph_rewrite import *
+from graphsat import mhgraph
+from graphsat.graph_rewrite import decompose
 
 
 def test_decompose() -> None:
     assert decompose(mhgraph.mhgraph([[1]]))
     assert not decompose(mhgraph.mhgraph([[1]]*2))
     assert not decompose(mhgraph.mhgraph([[1]]*3))
-    
-    
+
+
     assert decompose(mhgraph.mhgraph([[1, 2]]*1))
     assert decompose(mhgraph.mhgraph([[1, 2]]*2))
     assert decompose(mhgraph.mhgraph([[1, 2]]*3))
@@ -33,4 +34,3 @@ def test_decompose() -> None:
     assert not decompose(mhgraph.mhgraph([[1, 2], [1, 2], [2, 3], [2, 3]]))
     assert not decompose(mhgraph.mhgraph([[1, 2], [1, 2], [2, 3], [2, 4], [3, 4]]))
     assert not decompose(mhgraph.mhgraph([[1, 2], [1, 2], [1, 3], [1, 4], [2, 3], [2, 4]]))
-

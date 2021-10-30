@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Constructors and functions for simple graphs.
 
 .. _definitionofagraph:

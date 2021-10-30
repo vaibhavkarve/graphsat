@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for working with graph-satisfiability and various graph parts."""
 
 # Imports from standard library.

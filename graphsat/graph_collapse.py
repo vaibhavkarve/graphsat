@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for collapsing a set of Cnfs into compact graphs representation."""
 
 import collections

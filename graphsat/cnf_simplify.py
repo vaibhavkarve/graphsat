@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for simplifying Cnfs, particularly (a∨b∨c) ∧ (a∨b∨¬c) to (a∨b).
 
 This simplification is traditionally handled by the Quine–McCluskey

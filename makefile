@@ -1,3 +1,6 @@
+# Select your python binary.
+PY = python3.8
+
 .PHONY : test dev-tests install tags clean
 
 # Run `make install` for installing graphsat and all its requirements.
@@ -10,7 +13,7 @@ install :
 	direnv allow
 
 	@echo Installing packages listed in requirements.txt
-	python -m pip install -r requirements.txt
+	$(PY) -m pip install -r requirements.txt
 
 # Run `make tags` for creating etags for the files. Used for
 # Emacs-navigation.
@@ -19,7 +22,7 @@ tags :
 
 # Run `make test` for running all unit tests
 test :
-	python -m pytest tests
+	$(PY) -m pytest tests
 
 # Run `make dev-tests` only if there are changes made to graphsat's source
 # code. This has been tested against config files `mypy.ini` and
@@ -27,7 +30,7 @@ test :
 # contact the authors for a copy of our local mypy.ini and pytest.ini
 # config files.
 dev-tests :
-	python -m pytest tests
+	$(PY) -m pytest tests
 
 
 # Run `make clean` to remove superfluous files.

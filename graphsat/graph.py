@@ -18,7 +18,7 @@ with the following properties:
    - Edges do not have a multiplicity.
 """
 # Imports from standard library.
-from typing import Any, Collection, NewType, Protocol, TypeVar
+from typing import Any, Collection, FrozenSet, NewType, Protocol, Set, TypeVar
 # Importing third-party modules.
 from loguru import logger
 
@@ -35,7 +35,7 @@ class _SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods
 T = TypeVar("T", bound=_SupportsLessThan)  # pylint: disable=invalid-name
 
 
-class GraphType(set[Collection[T]]):  # pylint: disable=too-few-public-methods
+class GraphType(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
     """`GraphType[_T]` is a subclass of `Set[Collection[_T]]`.
 
     It overrides the ``__repr__`` method.
@@ -55,7 +55,7 @@ class GraphType(set[Collection[T]]):  # pylint: disable=too-few-public-methods
 Vertex = NewType('Vertex', int)
 Vertex.__doc__ = """`Vertex` is a subtype of `int`."""
 
-Edge = NewType('Edge', frozenset[Vertex])
+Edge = NewType('Edge', FrozenSet[Vertex])
 Edge.__doc__ = """`Edge` is a subtype of `FrozenSet[Vertex]`."""
 
 Graph = NewType('Graph', GraphType[Vertex])
@@ -144,7 +144,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
 # ===============
 
 
-def vertices(graph_instance: Graph) -> frozenset[Vertex]:
+def vertices(graph_instance: Graph) -> FrozenSet[Vertex]:
     """Return a `frozenset` of all vertices of a Graph.
 
     Args:

@@ -9,6 +9,7 @@ Instead we implement our own functions for making this simplification.
 """
 import functools as ft
 import itertools as it
+from typing import FrozenSet
 
 import graphsat.cnf as cnf
 import graphsat.mhgraph as mhg
@@ -24,7 +25,7 @@ def hedge_of_clause(clause: cnf.Clause) -> mhg.HEdge:
     return mhg.hedge(set(map(cnf.absolute_value, clause)))
 
 
-def differing_lits(clause1: cnf.Clause, clause2: cnf.Clause) -> frozenset[cnf.Lit]:
+def differing_lits(clause1: cnf.Clause, clause2: cnf.Clause) -> FrozenSet[cnf.Lit]:
     """Give a set of literals that two clauses differ on.
 
     This returns a set that can give us (2-times-of-the) Hamming distance between

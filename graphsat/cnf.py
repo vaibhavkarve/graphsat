@@ -3,9 +3,9 @@
 
 # Imports
 # =======
-from collections.abc import Set, Callable, Collection, Iterator, Mapping
+from collections.abc import Callable, Iterator
 import functools as ft
-from typing import Final, Mapping, NewType, Union
+from typing import Set, Collection, Final, FrozenSet, Mapping, NewType, Union
 
 from loguru import logger
 
@@ -51,7 +51,7 @@ TRUE: Final = Bool(1)
 FALSE: Final = Bool(0)  # Instances of Bool, needed to define Clause and Cnf
 
 
-class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
+class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
     """`Clause` is a subclass of `frozenset[Lit]`."""
 
     def __str__(self) -> str:
@@ -60,13 +60,13 @@ class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
         return "(" + ",".join(map(str, sorted_clause)) + ")"
 
 
-class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
+class Cnf(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
     """`Cnf` is a subclass of `frozenset[Clause]`."""
 
     def __str__(self) -> str:
         """Pretty print a Cnf after sorting its sorted clause tuples."""
         sorted_cnf: list[Clause]
-        sorted_cnf = sorted(self, key=lambda clause_: sum([lit < 0 for lit in clause_]))
+        sorted_cnf = sorted(self, key=lambda clause_: sum(lit < 0 for lit in clause_))
         sorted_cnf = sorted(sorted_cnf, key=len)
 
         cnf_tuple: Iterator[str] = map(str, map(clause, sorted_cnf))
@@ -210,7 +210,7 @@ def absolute_value(literal: Lit) -> Lit:
     return lit(abs(literal))
 
 
-def lits(cnf_instance: Cnf) -> frozenset[Lit]:
+def lits(cnf_instance: Cnf) -> FrozenSet[Lit]:
     """Return frozenset of all Lits that appear in a Cnf.
 
     Args:

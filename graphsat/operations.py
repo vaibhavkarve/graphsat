@@ -4,7 +4,7 @@
 # Imports from standard library.
 import functools as ft
 import itertools as it
-from typing import cast, Iterator, Optional, Union
+from typing import cast, Iterator, List, Optional, Union, Set
 
 # Imports from third-party modules.
 from loguru import logger
@@ -56,8 +56,8 @@ def sat_or(graph1: Union[bool, MHGraph, AtomicSxpr],
     return satg(graph1) or satg(graph2)
 
 
-def graph_or(graph1: Union[MHGraph, set[cnf.Cnf]],
-             graph2: Union[MHGraph, set[cnf.Cnf]]) -> set[cnf.Cnf]:
+def graph_or(graph1: Union[MHGraph, Set[cnf.Cnf]],
+             graph2: Union[MHGraph, Set[cnf.Cnf]]) -> Set[cnf.Cnf]:
     """Disjunct the corresponding Cnfs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
@@ -70,8 +70,8 @@ def graph_or(graph1: Union[MHGraph, set[cnf.Cnf]],
     return set(disjunction_reduced)
 
 
-def graph_and(graph1: Union[MHGraph, set[cnf.Cnf]],
-              graph2: Union[MHGraph, set[cnf.Cnf]]) -> Union[MHGraph, set[cnf.Cnf]]:
+def graph_and(graph1: Union[MHGraph, Set[cnf.Cnf]],
+              graph2: Union[MHGraph, Set[cnf.Cnf]]) -> Union[MHGraph, Set[cnf.Cnf]]:
     """Conjunct the corresponding Cnfs.
 
     If both arguments are of type MHGraph, then simply compute the
@@ -90,7 +90,7 @@ def graph_and(graph1: Union[MHGraph, set[cnf.Cnf]],
     return set(conjunction_reduced)
 
 
-def graphs_equisat_a_bot(graph1: set[cnf.Cnf], graph2: set[cnf.Cnf]) -> bool:
+def graphs_equisat_a_bot(graph1: Set[cnf.Cnf], graph2: Set[cnf.Cnf]) -> bool:
     """Check ∀ x₁ ∈ G₁, ∃ x₂ ∈ G₂, ∀ a ∈ A, x₁[a] ~ ⊥ → x₂[a] ~ ⊥."""
     particular_x1: cnf.Cnf = graph1.pop()
     graph1.add(particular_x1)  # add it back in.
@@ -111,8 +111,8 @@ def graphs_equisat_a_bot(graph1: set[cnf.Cnf], graph2: set[cnf.Cnf]) -> bool:
                    for cnf2 in graph2) for cnf1 in graph1)
 
 
-def graph_equisat_mod_sphr(graph1: Union[MHGraph, set[cnf.Cnf]],
-                           graph2: Union[MHGraph, set[cnf.Cnf]]) -> bool:
+def graph_equisat_mod_sphr(graph1: Union[MHGraph, Set[cnf.Cnf]],
+                           graph2: Union[MHGraph, Set[cnf.Cnf]]) -> bool:
     """Check graphs are quisat by the A⊥ criterion.
 
     This helps us conclude that Sphr∧G₁ is equisat to Sphr∧G₂ by the ⊥
@@ -188,7 +188,7 @@ KNOWN_RULES = [EDGE_SMOOTH, HEDGE_SMOOTH] \
     + []
 
 
-def apply_rule(graph: mhgraph, rule: GraphNode) -> list[mhgraph]:
+def apply_rule(graph: mhgraph, rule: GraphNode) -> List[mhgraph]:
     """Apply the given reduction rule if possible.
 
     S : MHGraph -> R : list MHGraph

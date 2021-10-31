@@ -25,7 +25,7 @@ An *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import AbstractSet, Collection, Counter, NewType, Optional, TypeVar, Union
+from typing import AbstractSet, Collection, Counter, FrozenSet, List, NewType, Optional, Tuple, TypeVar, Union
 
 # Imports from third-party modules.
 from loguru import logger
@@ -82,7 +82,7 @@ class MHGraphType(Counter[AbstractSet[T]]):
 # Classes and Types
 # =================
 
-class HEdge(frozenset[Vertex]):  # pylint: disable=too-few-public-methods
+class HEdge(FrozenSet[Vertex]):  # pylint: disable=too-few-public-methods
     """`HEdge` is a subclass of `FrozenSet[Vertex]`."""
     def __repr__(self) -> str:
         """Pretty-print the HEdge in a compact way."""
@@ -114,7 +114,7 @@ class GraphNode(at.NodeMixin):  # type: ignore
                  graph: MHGraph,
                  free: Vertex = vertex(1),
                  parent: Optional[MHGraph] = None,
-                 children: Optional[list[MHGraph]] = None):
+                 children: Optional[List[MHGraph]] = None):
         "Make MHGraph into a node with relevant args."
         self.graph = graph
         self.parent = parent
@@ -221,7 +221,7 @@ def mhgraph(edge_collection: Collection[Collection[int]]) -> MHGraph:
 # ===============
 
 
-def vertices(mhg: Union[HGraph, MHGraph]) -> frozenset[Vertex]:
+def vertices(mhg: Union[HGraph, MHGraph]) -> FrozenSet[Vertex]:
     """Return a `frozenset` of all vertices of a MHGraph."""
     return frozenset.union(*mhg)
 
@@ -250,13 +250,13 @@ def pick_min_degree_vertex(mhg: MHGraph) -> Vertex:
     return min(degree_sequence, key=degree_sequence.get)
 
 
-def star(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
+def star(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
     """Return the tuple of all HEdges in ``mhg`` incident at ``vertex``."""
     assert vertex in vertices(mhg), f'{vertex} not of vertex of {mhg}'
     return tuple(hedge(h) for h in mhg.elements() if vertex in h)
 
 
-def link(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
+def link(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
     """Return the link of ``mhg`` at ``vertex``.
 
     This is the star projected away from ``vertex``.
@@ -266,12 +266,12 @@ def link(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
                  if set(h) != {vertex})
 
 
-def sphr(mhg: MHGraph, vertex: Vertex) -> tuple[HEdge, ...]:
+def sphr(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
     """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex``."""
     return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
 
 
-def graph_union(mhg1: tuple[HEdge, ...], mhg2: tuple[HEdge, ...]) -> MHGraph:
+def graph_union(mhg1: Tuple[HEdge, ...], mhg2: Tuple[HEdge, ...]) -> MHGraph:
     """Union of the two graphs."""
     assert mhg1 or mhg2, f'Encountered empty input {mhg1 = } or {mhg2 = }'
     return mhgraph(mhg1 + mhg2)

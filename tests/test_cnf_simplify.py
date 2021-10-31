@@ -2,7 +2,6 @@
 """Tests for cnf.simplify.py."""
 
 import pytest
-from context import graphsat
 from graphsat.cnf_simplify import *
 
 

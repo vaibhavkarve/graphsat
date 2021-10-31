@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.8
 import pytest
-from context import graphsat
-from cnf import *
+from graphsat.cnf import *
 
 
 def test_variable():

@@ -38,3 +38,8 @@ clean :
 	rm -rf graphsat/__pycache__
 	rm -rf graphsat/test/__pycache__
 	rm -rf .direnv
+
+# Lint the entire project
+lintall :
+	isort graphsat/
+	isort tests/

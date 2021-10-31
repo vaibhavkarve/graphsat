@@ -1,8 +1,10 @@
 #! /usr/bin/env python3.8
 
 import pytest
+
 import graphsat.morphism as morphism
-from graphsat.mhgraph import mhgraph, hgraph
+from graphsat.mhgraph import hgraph, mhgraph
+
 vm = morphism.vertexmap
 mhg = mhgraph
 ivm = morphism.injective_vertexmap

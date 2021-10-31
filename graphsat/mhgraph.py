@@ -25,24 +25,22 @@ An *HGraph* is a MHGraph without HEdge-multiplicities.
 """
 # Imports from standard library.
 from collections import Counter as counter
-from typing import AbstractSet, Collection, Counter, FrozenSet, List, NewType, Optional, Tuple, TypeVar, Union
+from typing import (AbstractSet, Collection, Counter, FrozenSet, List, NewType,
+                    Optional, Tuple, TypeVar, Union)
 
 # Imports from third-party modules.
-from loguru import logger
 import anytree as at  # type: ignore
+from loguru import logger
 
 # Imports from local modules.
-from graphsat.graph import graph, Graph, GraphType, vertex, Vertex
-
-
-# MHGraphType (Hashable Counter) for Storing MHGraphs
-# ===================================================
-# (for internal use only, partially documented)
+from graphsat.graph import Graph, GraphType, Vertex, graph, vertex
 
 #: ``T = TypeVar('T')``, i.e. ``T`` is a type variable.
 T = TypeVar('T')  # pylint: disable=invalid-name
 
-
+# MHGraphType (Hashable Counter) for Storing MHGraphs
+# ===================================================
+# (for internal use only, partially documented)
 class MHGraphType(Counter[AbstractSet[T]]):
     """`MHGraphType[_T]` is a subclass of `collections.Counter[AbstractSet[_T]]`.
 

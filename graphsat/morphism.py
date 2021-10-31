@@ -6,15 +6,16 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, Callable, cast, Dict, Iterable, Iterator, KeysView,
-                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar, Union)
+from typing import (AbstractSet, Callable, Dict, Iterable, Iterator, KeysView,
+                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
+                    Union, cast)
 
 import more_itertools as mit
 from loguru import logger
 
 from graphsat.graph import Vertex
-from graphsat.mhgraph import HGraph, hgraph_from_mhgraph, mhgraph, MHGraph, vertices
-
+from graphsat.mhgraph import (HGraph, MHGraph, hgraph_from_mhgraph, mhgraph,
+                              vertices)
 
 # Types
 # =====

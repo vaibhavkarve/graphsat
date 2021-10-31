@@ -2,10 +2,11 @@
 """Functions for propositional calculus -- conjunction, disjunction and negation."""
 
 import functools as ft
+
 from loguru import logger
 
-from graphsat.cnf import cnf, Cnf, clause, Clause, Lit, neg, tautologically_reduce_cnf
-
+from graphsat.cnf import (Clause, Cnf, Lit, clause, cnf, neg,
+                          tautologically_reduce_cnf)
 
 # Conjunction
 # ===========

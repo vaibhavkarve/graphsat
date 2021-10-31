@@ -1,7 +1,8 @@
 #!/usr/bin/env python3.8
 
 import os
-from setuptools import setup, find_packages  # type: ignore[import]
+
+from setuptools import find_packages, setup  # type: ignore[import]
 
 
 def read(fname: str) -> str:

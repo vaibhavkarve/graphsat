@@ -1,16 +1,18 @@
 #! /usr/bin/env python3.8
 
 from collections import Counter as counter
+
 import pytest
-from graphsat.cnf import clause, cnf, FALSE, TRUE
+
+from graphsat.cnf import FALSE, TRUE, clause, cnf
 from graphsat.mhgraph import mhgraph
-from graphsat.sat import (generate_assignments, cnf_bruteforce_satcheck,
-                          cnf_pysat_satcheck, cnf_minisat_satcheck,
-                          lits_from_vertex, clauses_from_hedge,
+from graphsat.sat import (clauses_from_hedge, cnf_bruteforce_satcheck,
+                          cnf_minisat_satcheck, cnf_pysat_satcheck,
                           cnfs_from_hedge, cnfs_from_mhgraph,
-                          mhgraph_bruteforce_satcheck,
-                          mhgraph_pysat_satcheck, mhgraph_minisat_satcheck,
-                          mhgraph_from_cnf, is_oversaturated)
+                          generate_assignments, is_oversaturated,
+                          lits_from_vertex, mhgraph_bruteforce_satcheck,
+                          mhgraph_from_cnf, mhgraph_minisat_satcheck,
+                          mhgraph_pysat_satcheck)
 
 mm = mhgraph
 cc = cnf

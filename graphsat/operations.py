@@ -4,7 +4,7 @@
 # Imports from standard library.
 import functools as ft
 import itertools as it
-from typing import cast, Iterator, List, Optional, Union, Set
+from typing import Iterator, List, Optional, Set, Union, cast
 
 # Imports from third-party modules.
 from loguru import logger
@@ -14,8 +14,8 @@ import graphsat.cnf as cnf
 import graphsat.morphism as morph
 import graphsat.prop as prop
 import graphsat.sat as sat
-from graphsat.mhgraph import (degree, GraphNode, graph_union, MHGraph,
-                              mhgraph, vertex, Vertex)
+from graphsat.mhgraph import (GraphNode, MHGraph, Vertex, degree, graph_union,
+                              mhgraph, vertex)
 from graphsat.sxpr import AtomicSxpr, SatSxpr
 
 

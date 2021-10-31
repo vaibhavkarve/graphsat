@@ -13,7 +13,6 @@ import graphsat.mhgraph as mhg
 import graphsat.operations as op
 import graphsat.sat as sat
 
-
 _TRUE_FALSE: Dict[cnf.Cnf, str]
 _TRUE_FALSE = {cnf._TRUE_CNF: 'TRUE_Graph', cnf._FALSE_CNF: 'FALSE_Graph'}
 

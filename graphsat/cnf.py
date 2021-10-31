@@ -3,9 +3,9 @@
 
 # Imports
 # =======
-from collections.abc import Callable, Iterator
 import functools as ft
-from typing import Set, Collection, Final, FrozenSet, Mapping, NewType, Union
+from collections.abc import Callable, Iterator
+from typing import Collection, Final, FrozenSet, Mapping, NewType, Set, Union
 
 from loguru import logger
 

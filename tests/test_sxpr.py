@@ -1,9 +1,10 @@
 #! /usr/bin/env python3.8
 
 import pytest
+
 from graphsat.mhgraph import mhgraph as mhg
 from graphsat.operations import sat_and, sat_or
-from graphsat.sxpr import AtomicSxpr, Sxpr, SatSxpr
+from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
 
 def test_Sxpr():

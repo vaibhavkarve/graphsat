@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.8
 import pytest
+
 from graphsat.cnf import *
 
 

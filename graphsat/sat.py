@@ -41,17 +41,18 @@ import functools as ft
 import itertools as it
 import math
 import subprocess
-from typing import cast, Dict, Iterator, Tuple, Union
+from typing import Dict, Iterator, Tuple, Union, cast
+
 # Imports from third-party modules.
-from loguru import logger
 import more_itertools as mit
+from loguru import logger
 from tqdm import tqdm  # type: ignore
+
 # Imports from local modules.
 import graphsat.cnf as cnf
 import graphsat.graph as graph
 import graphsat.mhgraph as mhgraph
 import graphsat.morphism as morph
-
 
 # Type alisases
 Assignment = Dict[cnf.Variable, cnf.Bool]
@@ -149,7 +150,8 @@ def cnf_pysat_satcheck(cnf_instance: cnf.Cnf) -> bool:
        If the Cnf is Satisfiable return ``True`` else return ``False``.
 
     """
-    from pysat.solvers import Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
+    from pysat.solvers import \
+        Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
 
     try:
         with Minisat22(cnf_instance) as minisat_solver:

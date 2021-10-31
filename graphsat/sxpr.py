@@ -4,15 +4,16 @@
 s-expressions are inspired from ELisp.
 """
 # Imports from standard library.
-from dataclasses import dataclass
 import functools as ft
-from typing import Callable, Generic, TypeVar, Tuple, Union
+from dataclasses import dataclass
+from typing import Callable, Generic, Tuple, TypeVar, Union
+
 # Imports from third-party modules.
 from colorama import Fore, Style  # type: ignore[import]
 from loguru import logger
+
 # Import from local modules.
 from graphsat.mhgraph import MHGraph
-
 
 # Type variables and aliases
 Src = TypeVar('Src')

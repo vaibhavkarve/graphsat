@@ -19,9 +19,9 @@ with the following properties:
 """
 # Imports from standard library.
 from typing import Any, Collection, FrozenSet, NewType, Protocol, Set, TypeVar
+
 # Importing third-party modules.
 from loguru import logger
-
 
 # GraphType for Storing Graphs
 # ============================

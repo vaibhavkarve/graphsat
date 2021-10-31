@@ -2,32 +2,29 @@
 """An implementation of the Local graph rewriting algorithm."""
 
 # Imports from standard library.
-from collections import defaultdict
 import functools as ft
 import itertools as it
 import multiprocessing as mp
+from collections import defaultdict
 from typing import Any, Collection, Dict, Iterator, List, Tuple
 
 # Imports from third-paty modules.
+import more_itertools as mit
 from colorama import init  # type: ignore
 from loguru import logger
-import more_itertools as mit
 from tabulate import tabulate
 from tqdm import tqdm  # type: ignore
 
 # Imports from local modules.
-from graphsat import cnf
-import graphsat.mhgraph as mhg
-import graphsat.operations as op
-from graphsat.prop import cnf_and_cnf
-from graphsat import sat
-
-# Importing because single-dispatch does not do well with imported
-# types.
-from graphsat.mhgraph import MHGraph
-
 import graphsat.cnf_simplify as csimp
 import graphsat.graph_collapse as gcol
+import graphsat.mhgraph as mhg
+import graphsat.operations as op
+# Importing because single-dispatch does not do well with imported
+# types.
+from graphsat import cnf, sat
+from graphsat.mhgraph import MHGraph
+from graphsat.prop import cnf_and_cnf
 
 
 def get_head_and_cnfs(list_hedges: Tuple[mhg.HEdge, ...]) \
@@ -262,8 +259,8 @@ def square(a: int, b: int, c: int, d: int, x: int) -> mhg.MHGraph:  # pylint: di
 
 
 if __name__ == "__main__":
-    from time import time
     import sys
+    from time import time
     logger.remove()
     logger.add(sys.stdout, level=0)
     init()  # for initializing terminal coloring

@@ -1,0 +1,94 @@
+-*- org -*-
+#+title: sat/sio2/
+#+subtitle: Functions for quickly sat-checking various MHGraphs via graph-rewriting
+
+* generate_structures.sage
+  Given a number V, it generates all MHGraph G on V vertices such:
+  - G is connected
+  - G has edges of size 2 or 3
+  - G has no leaf vertices (degree = 1 vertex).
+
+
+* graph_rewrite.py
+** decompose()
+   Picks a vertex of *min* degree in G.
+
+   Computes *sphr(G, v)* and *link(G, v)*.
+   
+   Computes sat-status of G by computing:
+   [[satcheck_entangled()][satcheck_entangled(sphr, hyp1, hyp2)]] conjugated over all
+   hyp1, hyp2 in the set of 2-partitione of *link(G, v)*
+ 
+** satcheck_entangled()
+   True iff ∀ xₛ ∈ sphr, ∀ xₕ₁ ∈ hyp1, ∀ xₕ₂ ∈ hyp2,
+       (xₛ ∧ xₕ₁) ∨ (xₛ ∧ xₕ₂) ∼ ⊤
+   
+
+* hg_criminals.py
+** check_suspects()
+** check_criminals()
+
+
+* Unsat previously, now sat
+K(2, 4)
+
+
+K(3, 5) = 123,124,125,
+          134,135,
+          145,
+          234,235,
+          245,
+          345
+
+Butterfly          =  12,13,23 + 34,35,45
+Suped-up butterfly = (1,2,3,6)-tet + (3,4,5,7)-tet  // (5~1)  **SAT**
+Three-tets-meeting-at-an-edge:
+(1,2,3,6)-tet + (1,2,4,7)-tet + (1,2,5,8)-tet
+
+[1,2,3], [1,2,6], [1,3,6], [2,3,6], [1,3,4], [3,4,7], [1,3,7], [1,4,7]
+
+Book          = 12, 13,14,15, 23,24,25
+Suped-up book = (1,2,3,4)-tet + (1,2,3,5)-tet + (1,2,3,6)-tet  
+[1,2,3], [1,2,4], [1,3,4], [2,3,4]
+
+Bowtie 
+Suped-up bowtie = (1,2,3,4)-tet + (3,5,6,7)-tet + (1,3,6)   [+ (1,6,8,9)-tet]
+
+
+[1,2,3], [1,2,4], [1,3,4], [2,3,4], [1,2,5], [1,3,5], [2,3,5], [1,2,6], [1,3,6], [2,3,6]
+[1,2,3], [1,2,4], [1,3,4], [2,3,4], [3,5,6], [3,5,7], [3,6,7], [5,6,7], [1,3,6]
+[1,2,3], [1,2,4], [1,3,4], [2,3,4], [3,5,6], [3,5,7], [3,6,7], [5,6,7], [1,3,6], [1,6,8], [1,6,9], [1,8,9], [6,8,9]
+
+
+
+
+
+All |V| = 4 MHGraphs and |V| = 5 MHGraphs are SAT.
+Need to do |V| = 6 → mem.math  (13 hrs)
+
+2-skeleton of the 4-simplex
+
+Recipe:
+ab → abc,abc → abd,acd,bcd
+
+* TODO Thicken single edge in K4 and check sat-status.
+
+* V = 6
+Interesting 
+
+* Known Criminals
+
+
+| Description            | MHGraph                                                                                                                                         |
+|------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4e²                    | [(1, 2), (1, 2), (1, 2), (1, 2)]                                                                                                                |
+| 2e² + 2e²              | [(1, 2), (1, 2), (2, 3), (2, 3)]                                                                                                                |
+| K₄                     | [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]                                                                                                |
+| Butterfly              | [(1, 2), (1, 3), (2, 3), (3, 4), (3, 5), (4, 5)]                                                                                                |
+| Bowtie                 | [(1, 2), (1, 3), (2, 3), (3, 4), (4, 5), (4, 6), (5, 6)]                                                                                        |
+| K₁₁₃                   | [(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 4), (2, 5)]                                                                                        |
+| 4 tets sharing a face  | [(1, 2, 3), (1, 2, 4), (1, 3, 4), (2, 3, 4), (1, 2, 5), (1, 3, 5), (2, 3, 5), (1, 2, 6), (1, 3, 6), (2, 3, 6), (1, 2, 7), (1, 3, 7), (2, 3, 7)] |
+|------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------|
+|                        | [(1, 2, 3), (1, 2, 4), (1, 2, 6), (1, 3, 5), (1, 4, 5), (1, 5, 6), (2, 3, 5), (2, 4, 5), (2, 5, 6), (3, 4, 6)]                                  |
+|                        |                                                                                                                                                 |
+

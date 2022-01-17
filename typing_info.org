@@ -1,0 +1,163 @@
+"""This file tracks type-level information for graphsat/ and 3sat/.
+
+Open as python file for proper highlighting.
+"""
+
+
+# cnf.py
+# ------
+
+Literal  <: int
+Bool     <: Literal
+Variable <: int
+Clause   <: FrozenSet[Literal]
+CNF      <: FrozenSet[Clause]
+
+TRUE  : Final[Bool]
+FALSE : Final[Bool]
+
+variable : int → Variable
+literal  : int|Bool → Literal
+clause   : Collection[int] → Clause
+cnf      : Collection[Collection[int]] → CNF
+
+TRUE_CLAUSE  : Final[Clause]
+FALSE_CLAUSE : Final[Clause]
+TRUE_CNF     : Final[CNF]
+FALSE_CNF    : Final[CNF]
+
+neg           : Literal → Literal
+absolute_vale : Literal → Literal
+literals      : CNF → FrozenSet[Literal]
+pprint_cnf    : CNF → str
+
+tautologically_reduce_clause : AbsractSet[Literal] → Clause
+tautologically_reduce_cnf    : AbstractSet[AbstractSet[Literal]] → CNF
+
+assign_variable_in_literal   : Literal → Variable → Bool → Literal:
+assign_variable_in_clause    : AbstractSet[Literal] → Variable → Bool → Clause
+assign_variable_in_cnf       : AbstractSet[AbstractSet[Literal]] → Variable → Bool → CNF
+assign : CNF → Mapping[Variable, Bool] → CNF
+
+
+                     
+# graph.py
+# --------
+
+T = TypeVar
+
+GraphType[T] <: Set[Collection[T]]
+Vertex       <: int
+Edge         <: FrozenSet[Vertex]
+Graph        <: GraphType[Vertex] <: Set[Collection[Vertex]]
+
+vertex   : int → Vertex
+edge     : Collection[int] → Edge
+graph    : Collection[Collection[int]] → Graph
+vertices : Graph → FrozenSet[Vertex]
+
+
+# mhgraph.py
+# ----------
+
+MHGraphType[T] <: Counter[AbstractSet[T]]
+HEdge          <: FrozenSet[Vertex]
+HGraph         <: GraphType[Vertex]
+MHGraph        <: MHGraphType[Vertex]
+
+hedge                  : Collection[int] → Hedge
+hgraph                 : Collection[Collection[int]] → Hedge
+mhgraph                : Collection[Collection[int]] → MHedge
+vertices               : HGraph|MHGraph → FrozenSet[Vertex]
+degree                 : Vertex → MHGraph → int
+pick_max_degree_vertex : MHGraph → Vertex
+pick_min_degree_vertex : MHGraph → Vertex
+
+
+# morphism.py
+# -----------
+
+Translation         = Dict[Vertex, Vertex]
+VertexMap           = (HGraph, HGraph, Translation)  # actually a named tuple
+InjectiveVertexMap <: VertexMap
+Morphism           <: InjectiveVertexMap
+
+graph_from_mhgraph  : MHGraph → Graph
+hgraph_from_mhgraph : MHGraph → HGraph
+mhgraph_from_graph  : Graph → MHGraph
+
+vertexmap           : Mapping[Vertex, Vertex] → HGraph → Optional[HGraph] → Optional[VertexMap]
+injective_vertexmap : VertexMap → Optional[InjectiveVertexMap]
+graph_image         : InjectiveVertexMap → MHGraph → MHGraph
+morphism            : InjectiveVertexMap → Optional[Morphism]
+
+generate_vertexmaps   : HGraph → Optional[HGraph] → bool → Iterator[VertexMap]
+is_immediate_subgraph : MHGraph → MHGraph → bool
+subgraph_search       : MHGraph → MHGraph → bool → Tuple[bool, None|Morphism|Iterator[Morphism]
+isomorphism_search    : MHGraph → MHGraph → bool → Tuple[bool, None|Morphism|Iterator[Morphism]
+
+
+# sat.py
+# ------
+Assignment              = Dict[Variable, Bool]
+generate_assignments    : CNF → Iterator[Assignment]
+
+cnf_bruteforce_satcheck : CNF → bool
+cnf_pysat_satcheck      : CNF → bool
+cnf_to_dimacs           : CNF → str
+
+literals_from_vertex : Vertex → Tuple[Literal, Literal]
+clauses_from_hedge   : HEdge → Iterator[Clause]
+cnfs_from_hedge      : HEdge → int → Iterator[CNF]
+cnfs_from_mhgraph    : MHGraph → CNF
+
+mhgraph_bruteforce_satcheck : MHGraph → bool
+mhgraph_pysat_satcheck      : MHGraph → bool
+mhgraph_minisat_satcheck    : MHGraph → bool
+
+mhgraph_from_cnf : CNF → MHGraph
+simplify_at_loops : MHGraph → bool|MHGraph
+
+
+# sxpr.py
+# -------
+
+Src  = TypeVar
+Trgt = TypeVar
+Sxpr[Src, Trgt] = (op     : Trgt → Src → Trgt)
+	              (terms  : Tuple[Src, ...])
+				  (init   : Trgt)
+				  (reduce : Sxpr[Src, Trgt] → Trgt)
+
+SatSxpr[Src] <: Sexpr[Src, bool]
+AtomicSxpr   = SatSxpr[bool|MHGraph]
+
+
+# operations.py
+# -------------
+
+graph_union : List[HEdge] → List[HEdge] → MHGraph
+
+satg : bool|MHGraph|Sxpr → bool
+| bool → bool
+| MHGraph → bool
+| Sexpr → bool
+
+sat_and : bool|MHGraph|Sxpr → bool|MHGraph|Sxpr → bool
+sat_or  : bool|MHGraph|Sxpr → bool|MHGraph|Sxpr → bool
+
+
+# graph_rewrite.py
+# ----------------
+
+hyperbolic : bool|MHGraph → List[bool] | List[AtomicSxpr]
+| bool → List[bool]
+| MHGraph → List[bool] | List[AtomicSxpr]
+
+decompose : bool|MHGraph|SatSxpr[Any] → SatSxpr[Any]
+| bool → SatSxpr[bool]
+| MHGraph → SatSxpr[Any]
+| SatSxpr[Any] → SatSxpr[SatSxpr[Any]]
+
+decompose_upto_level : MHGraph → int → AtomicSxpr|SatSxpr
+square : int → int → int → int → int → MHGraph

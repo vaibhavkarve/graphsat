@@ -1,0 +1,6 @@
+*.pdf
+auto/
+_minted-cnf/
+.coverage
+*org_archive
+**/.ipynb_checkpoints

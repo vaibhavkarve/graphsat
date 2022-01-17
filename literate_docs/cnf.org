@@ -1,0 +1,1403 @@
+# -*- mode: org -*-
+#+title: cnf.py
+#+author: Vaibhav Karve
+#+email: vkarve2@illinois.edu
+#+subtitle: Constructors and functions for sentences in conjunctive normal form.
+#+options: tex:t toc:2
+#+latex_header: \input{header}
+#+property: header-args :noweb no-export :exports code :mkdirp yes
+
+
+
+
+* Introduction to =cnf.py=
+This module defines Cnf (boolean formulas in conjunctive normal form) as a
+python class and creates an API of functions for defining Cnfs and computing
+with them. We define variables, literals, clauses, Cnfs and assignements in \S
+[[Types and their constructor functions]] and functions that manipulate them in \S\S
+[[Basic functions]]--[[Functions for assignment]].
+
+The end-goal of this module is to equip us with a Cnf-calculator using python
+syntax. We illustrate this using the following example. Consider the following
+statement --- assigning the variable \(x_2\) to true and \(x_3\) to false in
+\((x_1\vee\neg x_2\vee x_4)\wedge(x_1 \vee \neg x_3\vee x_5)\) gives us
+\(x_1\vee x_4\).
+
+We can verify this statement by carrying out the following calculation.
+  \begin{align*}
+   (1\overline{2}4,1\overline{3}5)\left[\,2, \overline{3}\,\right]\;
+     &=\; (1\bot4,1\overline{3}5)\left[\,\overline{3}\,\right]\\
+     &=\; (14,1\overline{3}5)\left[\,\overline{3}\,\right]\\
+     &=\; 14,1\top5 \\
+     &=\; 14,\top \\
+     &=\; 14.
+  \end{align*}
+
+The same calcultion can also be carried out in python using the
+functions defined in this module. The output is included below the
+codeblock.
+#+attr_latex: :options label= (python3.9) (scratch) <<example>>
+#+begin_src python :results pp
+from cnf import assign, Assignment, cnf, Cnf, TRUE, FALSE
+
+x : Cnf = cnf([[1, -2, 4], [1, -3, 5]])
+a : Assignment = {2: TRUE, 3: FALSE}
+
+return assign(x, a)
+#+end_src
+
+\footnotesize
+\color{darkgray}
+_Output:_
+: Cnf({Clause({1, 4})})
+\color{black}
+\normalsize
+
+All codeblocks in this chapter have been formatted in a manner similar to
+the one shown above. The top-margin of the codeblock starts by indicating
+the programming language used in the block (=python3.9= in the example).
+Shell scripts for example will have =sh= in that position instead.
+
+The second of three slots represents the file of which this codeblock is a
+part. For example, a codeblock that has =cnf.py= in this slot will be a part of
+the =cnf.py= file. This helps with persistence of variables and definitions
+defined the file -- codeblocks in =cnf.py= can refer to other variables from
+different codeblocks that are also part of =cnf.py=. We use the name =scratch=
+to represent a throw-away file. In the example above, the =scratch= label means
+that this was a one-time calculation that we do not wish to store in a file.
+
+The third label in the top-margin of the codeblock represents a unique
+identifier of the codeblock (=<<example>>= in the example above). This
+identifier is used to keep track of the codeblock we are referring to as well as
+to refer to it inside other codeblocks (via the process called /tangling/ in the
+literate programming terminology).
+
+
+** Definitions
+We start by summarizing the relevant definitions in top-down
+order. Details for each definition and accompanying implementations
+can be found in the relevant subsections.
+- A [[Cnfs][Cnf]] is a conjunction of one or more Clauses. It is implemented as a subclass
+  of frozensets of Clauses in \S [[Cnfs]].
+- A [[Clauses][Clause]] is a disjunction of one or more Lits. It is implemented as a subclass
+  of frozensets of Lits in \S [[Clauses]].
+- A [[Lits][Lit]] is either a Variable, the negation of a Variable, or a Bool. These
+  are usually called /Literals/ in CS literature but this sounds too close
+  to =typing.Literal= which is already defined in python and refers to a
+  different, unrelated object. It is implemented as a subtype of python's
+  built-in data type =int= in \S [[Lits]].
+- A [[Variables][Variable]] is any element from a fixed countably infinite set of symbols that
+  can be assigned the value of Bool in a boolean expression. We implement it as
+  a subtype of =int=, with the additional restriction that only positive =int=
+  values are allowed. The implementation is explained in \S [[Variables]].
+- A [[Bools][Bool]] is a set of two reserved the symbols called =TRUE= and =FALSE=
+  (not to be confused with =bool=, =True= and =False=). Justification of
+  the need for defining such a type distinct from =bool= can be found in \S
+  [[Bools]]. That section also details the implementation of Bool as a subclass
+  of Lits.
+
+\newpage
+** Overview of =cnf.py=
+#+name: cnf.py
+#+attr_latex: :options label= (python3.9) (cnf.py) <<cnf.py-full>>
+#+begin_src python
+  #!/usr/bin/env python3.9
+  """Constructors and functions for sentences in conjunctive normal form (Cnf)."""
+
+  # Imports
+  # =======
+  <<imports>>
+
+  # Classes and Types
+  # =================
+  <<Variable>>
+  <<Lit>>
+  <<Bool>>
+  <<TRUE_and_FALSE>>  # Instances of Bool, needed to define Clause and Cnf
+  <<Clause>>
+  <<Cnf>>
+  <<Assignment>>
+
+  # Constructor Functions
+  # =====================
+  <<variable>>
+  <<lit>>
+  <<clause>>
+  <<cnf>>
+
+  # Helpful Constants
+  # =================
+  <<constants>>  # not documented, for internal use only
+
+  # Basic Functions
+  # ===============
+  <<neg>>
+  <<absolute_value>>
+  <<lits>>
+
+  # Functions for Simplification
+  # ============================
+  <<tautologically_reduce_clause>>
+  <<tautologically_reduce_cnf>>
+
+  # Functions for Assignment
+  # ========================
+  <<assign_variable_in_lit>>
+  <<assign_variable_in_clause>>
+  <<assign_variable_in_cnf>>
+  <<assign>>
+
+  if __name__ == '__main__':
+      <<standalone_run_commands>>
+#+end_src
+
+** Imports and dependencies
+We start by importing the required packages. We will be using the [[https://docs.python.org/3/library/typing.html][=typing=]]
+and [[https://docs.python.org/3/library/collections.abc.html][=collections.abc=]] libraries to add type-hints throughout our code. This
+acts as a kind of documentation while also catching type-errors when we use
+it in conjunction with an external static type-checker like [[https://mypy.readthedocs.io/en/stable/][=mypy=]].
+
+#+name: imports
+#+attr_latex: :options label= (python3.9)  (cnf.py) <<imports>>
+#+begin_src python
+  from collections.abc import Set, Callable, Collection, Iterator, Mapping
+  import functools as ft
+  from typing import final, Final, NewType, Union
+
+  from loguru import logger
+#+end_src
+
+* Types and their constructor functions
+We now implement each of the definitions given in \S [[Definitions]] as types.
+For each type we will also define a unique constructor function.
+
+** Variables
+A /Variable/ is any element from a fixed countably infinite set of symbols
+that can be assigned the value of [[Bools][Bool]] in a boolean expression. We use
+python's built-in =int= type as our countably infinite set. Using
+[[https://docs.python.org/3/library/typing.html#typing.NewType][=typing.NewType=]], we can declare Variable to be a subtype of =int=. This
+means that any =int= \(n\) can be cast into a term of type Variable as
+=Variable(n)=. In type-theoretic notation, we can write the relation
+between Variable and =int= as \(\textrm{Variable} \sqsubset \texttt{int}\).
+
+#+name: Variable
+#+attr_latex: :options label= (python3.9)  (cnf.py) <<Variable>>
+#+begin_src python
+  Variable = NewType('Variable', int)
+  Variable.__doc__ = """`Variable` is a subtype of `int`."""
+#+end_src
+
+In fact, we only want the positive integers to denote Variables. However,
+this restriction cannot be encoded when defining the type itself and so we
+also write a constructor function =variable= to check for positivity.
+#+name: variable-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<variable-docstring>>
+#+begin_src python :exports none
+"""Constructor-function for Variable type.
+
+By definition, a `Variable` is just a positive integer.  This
+function is idempotent.
+
+Args:
+   positive_int (:obj:`int`):
+
+Return:
+   If input is indeed positive, then return ``positive_int``
+   after casting to Variable.
+
+Raises:
+   ValueError: if ``positive_int <= 0``.
+"""
+#+end_src
+
+#+name: variable
+#+attr_latex: :options label= (python3.9)  (cnf.py) <<variable>>
+#+begin_src python
+  def variable(positive_int: int) -> Variable:
+      <<variable-docstring>>
+      if positive_int <= 0:
+          raise ValueError('Variable must be a positive integer.')
+      return Variable(positive_int)
+#+end_src
+
+
+We note that this function is injective and idempotent.
+#+name: test_variable
+#+attr_latex: :options label= (python3.9)  (tests/test\_cnf.py) <<test\_variable>>
+#+BEGIN_SRC python
+  def test_variable():
+      assert variable(1) == 1
+      assert variable(11) == 11
+      assert variable(variable(2)) == variable(2)  # Test for idempotence
+      pytest.raises(ValueError, variable, 0)
+#+END_SRC
+
+** Lits
+A /Lit/ is either a Variable, its negation, or a [[Bools][Bool]]. We have not yet defined
+=Bool=, but for now we can simply assume that it is a special type of =int=
+(justification for this can be found in \S [[Bools]]). Since both =Variable= and =Bool=
+are subtypes of =int=, we can define =Lit= in a similar.  The only caveat to
+this is that we want =Lit= to act as a subscriptable argument later, allowing us
+to define =Clause= as a being a subtype/subclass of frozen sets of =Lit=. To
+make =Lit= subscriptable, we define it as a *subclass* of =int= instead of a
+*subtype*.
+
+#+name: Lit
+#+attr_latex: :options label= (python3.9)  (cnf.py) <<Lit>>
+#+begin_src python
+  class Lit(int):
+      """`Lit` is a subclass of `int`. It has no other special methods."""
+#+end_src
+
+Next, we define a constructor function for =Lit=, called =lit=. On =Bools=,
+we want the constructor function to act as the identity function, while on
+an integer argument, it should check that the integer is nonzero (thus
+ensuring that it is either a =Variable= or its negation). To implement such
+a piece-wise definition we use [[https://docs.python.org/3/library/functools.html#functools.singledispatch][=functools.singledispatch=]]. This allows us
+to pick the correct variant of =lit= based on the type of its first (and
+only) argument.
+
+
+#+name: lit
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lit>>
+#+begin_src python
+  @ft.singledispatch
+  def lit(int_or_bool: Union[int, Bool]) -> Lit:
+      <<lit-docstring>>
+      raise TypeError('Lit must be either Bool or int.')
+
+  @lit.register
+  <<lit_bool>>
+
+  @lit.register
+  <<lit_int>>
+#+end_src
+
+where we have the following functions that are single-dispatched based
+on the type of the first argument.
+
+#+name: lit_bool
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lit\_bool>>
+#+BEGIN_SRC python
+  def lit_bool(arg: Bool) -> Lit:
+      """Return as is because Bool is already a subtype of Lit."""
+      return arg
+#+END_SRC
+
+#+name: lit_int
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lit\_int>>
+#+BEGIN_SRC python
+  def lit_int(arg: int) -> Lit:
+      """Cast to Lit."""
+      if arg != 0:
+          return Lit(arg)
+      raise ValueError('Lit must be a nonzero integer.')
+#+END_SRC
+
+As mentioned in its docstring below, =lit= is an idempotent function. To
+ensure this, we write the following set of tests.  (While we have not
+yet defined =Bool.TRUE= and =Bool.FALSE=, their meaning in the
+following assert statements should be obvious from context).
+
+#+name: lit-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lit-docstring>>
+#+BEGIN_SRC python
+  """Constructor-function for Lit type.
+
+  By definition, a `Lit` is in the set ℤ \\ {0} ∪ {`TRUE`, `FALSE`}.
+  This function is idempotent.
+  """
+#+END_SRC
+
+#+name: test_lit
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_lit>>
+#+BEGIN_SRC python
+def test_lit():
+    assert lit(1) == 1
+    assert lit(-1) == -1
+    assert lit(11) ==  11
+    assert lit(TRUE) == TRUE
+    assert lit(FALSE) == FALSE
+    assert lit(lit(2)) == lit(2)          # Test for idempotence.
+    assert lit(lit(TRUE)) == lit(TRUE)    # Test for idempotence.
+    assert lit(lit(FALSE)) == lit(FALSE)  # Test for idempotence.
+
+    pytest.raises(ValueError, lit, 0)
+#+END_SRC
+
+** Bools
+/Bool/ refers to two reserved symbols -- =TRUE= and =FALSE=. Note that
+python already has a =bool= type (with elements =True= and =False=).
+However, =bool= is actually implemented as a subclass of the =int= type.
+This has some unintended consequences when considering data structures that
+contain both integers and elements due to the fact that =True= and =False=
+are just aliases for the integers =1= and =0= respectively. This means that
+python will always simplify the set ={1, 2, 3, True}= to ={1, 2, 3}= since
+it treats =True= as a duplicate of =1=. This is a big problem and the
+primary reason why we define Bools to be distinct from =bool=.
+
+We want Bool to be a type that is a subclass of =int= and not just a
+subtype. In fact, since all Bools are Lits, we also want Bool to be a
+subtype of Lit. Thus we define Bool as shown below with special methods
+=__str__=, =__hash__=, and =__eq__=. Additionally, we define the =__repr__=
+method to be identical to the =__str__= method. All other methods of Bool
+are inherited from the =int= parent type.
+
+#+name: Bool
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Bool>>
+#+BEGIN_SRC python
+  @final
+  class Bool(Lit):
+      """`Bool` is a subclass of `Lit`.
+
+      It overrides the ``__str__``, ``__repr__``, ``__hash__`` and ``__eq__``
+      methods inherited from :obj:`int` (and from Lit).
+      """
+      <<Bool-str>>
+      __repr__ = __str__
+      <<Bool-hash>>
+      <<Bool-eq>>
+#+end_src
+
+We now give detailed definitions for each of Bool's special methods. The
+=__str__= method allows us to change the value displayed when we print the
+a Bool. Even though python will internally store Bools as =0= and =1=, when
+asked, it will still print the values as =<Bool: TRUE>= and =<Bool: FALSE>=
+respectively. Any other numeric value raises a =ValueError=.
+
+#+name: Bool-str
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Bool-str>>
+#+begin_src python
+  def __str__(self) -> str:
+      """Bool(0) and Bool(1) are treated as constant values labeled FALSE and TRUE."""
+      if self.__int__() == 0:
+          return '<Bool: FALSE>'
+      if self.__int__() == 1:
+          return '<Bool: TRUE>'
+      raise ValueError('In-valid Bool value encountered.')
+#+end_src
+
+To prevent python from simplifying ={1, TRUE}= to ={1}=, we modify
+its hash value. We set the hash of =TRUE= to =hash(str(TRUE))=, which
+simplifies to \(4422589586725646474\). Similarly, the hash of =FALSE= is set to
+\(6211323488567046769\).
+#+name: Bool-hash
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Bool-hash>>
+#+begin_src python
+    def __hash__(self) -> int:
+        """Ensure that ``hash(Bool(n))`` doesn't clash with ``hash(n)``."""
+        return hash(str(self))
+#+end_src
+
+Moreover, we redefine the =__eq__= method to now use hash values as a means
+to establish equality. This makes =Bool(n)= unequal to =n=.
+#+name: Bool-eq
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Bool-eq>>
+#+begin_src python
+  def __eq__(self, other: object) -> bool:
+      """Make ``Bool(n)`` unequal to ``n``."""
+      return hash(self) == hash(other)
+#+end_src
+
+
+Finally, having defined the class of Bool, we now define exactly two
+instances of Bool. In type-theoretic language, we can say that Bool is an
+enumerated type (since we enumerate all its instances explicitly).
+Furthermore, to prevent the user from accidentally (or maliciously)
+redefining the values of =TRUE= and =FALSE=, we use [[https://docs.python.org/3/library/typing.html?#typing.Final][typing.Final]] to disable
+overriding and re-assigning of these constants. We also mark the class
+definition of Bool itself with the [[https://docs.python.org/3/library/typing.html?#typing.final][@typing.final]] decorator in order to
+prevent this class from being sub-classed by the user.
+#+name: TRUE_and_FALSE
+#+attr_latex: :options label= (python3.9) (cnf.py) <<TRUE\_and\_FALSE>>
+#+begin_src python
+#: ``TRUE = Bool(1)``, a final instance of Bool.
+TRUE: Final = Bool(1)
+#: ``FALSE = Bool(0)``, a final instance of Bool.
+FALSE: Final = Bool(0)
+#+end_src
+
+Lastly, to check that the Bool values indeed possess all the desired properties,
+we add unit-tests.
+#+name: test_Bool
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_Bool>>
+#+begin_src python
+  def test_Bool():
+      assert TRUE == TRUE               # check for consistency
+      assert TRUE not in [1, 2, 3]      # check that eq is working
+      assert TRUE in {1, 2, 3, TRUE}    # check that eq and hash are working
+      assert isinstance(TRUE, Bool)     # check that python recognizes the class correctly
+      assert not isinstance(TRUE, bool) # check that Bool and bool are district
+#+end_src
+
+** Clauses
+Next, we wish to define a /Clause/ to be a container of Lits. The choice of
+container is driven by three properties we desire in Clauses --
+1. We do not care for repetitions in the clause. This is in keeping with the
+   identity \(x\vee x=x\).
+2. We also do not care about the ordering of elements in a clause. This is in
+   keeping with the fact that disjunction is commutative.
+3. Looking ahead, we will want to put clauses inside other containers to form
+   Cnf. Thus it is desirable that clauses be hashable (and therefore immutable)
+   objects.
+These properties suggest that we should have our containers be frozensets
+(python's unordered, immutable, hashable sets). We define Clause as a
+subclass instead of just a subtype, allowing us to also override its
+=__str__= method to offer more human-readable printouts.
+
+#+name: Clause
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Clause>>
+#+begin_src python
+  class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
+      """`Clause` is a subclass of `frozenset[Lit]`."""
+      def __str__(self) -> str:
+          """Pretty print a Clause after sorting its contents."""
+          sorted_clause: list[Lit] = sorted(self, key=absolute_value)
+          return '(' + ','.join(map(str, sorted_clause)) + ')'
+#+end_src
+
+Having defined a class, we next define a constructor function =clause= for said
+class. The function ensures that a Clause is always a nonempty collection of
+Lits. The function is also guaranteed to be idempotent.
+#+name: clause
+#+attr_latex: :options label= (python3.9) (cnf.py) <<clause>>
+#+begin_src python
+def clause(lit_collection: Collection[int]) -> Clause:
+    <<clause-docstring>>
+    if not lit_collection:
+        raise ValueError(f'Encountered empty input {list(lit_collection)}.')
+    return Clause(frozenset(map(lit, lit_collection)))
+#+end_src
+
+Finally, we add in the doc-string describing the function we have just defined
+and we add some unit-tests to for the function as well.
+#+name: clause-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<clause-docstring>>
+#+begin_src python
+  """Constructor-function for Clause type.
+
+  By definition, a `Clause` is a nonempty frozenset of Lits. This function is idempotent.
+
+  Args:
+     lit_collection (:obj:`Collection[int]`): a nonempty collection of ints.
+
+  Return:
+     Check that each element in the collection satisfies axioms for being a Lit and then cast
+        to Clause.
+
+  Raises:
+     ValueError: if ``lit_collection`` is an empty collection.
+
+  """
+#+end_src
+
+
+#+name: test_clause
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_clause>>
+#+begin_src python
+def test_clause():
+    assert clause([1, 2, -3]) == {1, 2, -3}    # check for correct type
+    assert clause([1, -1, 2]) == {1, -1, 2}    # +ve and -ve Lits are treated as distinct
+    assert clause([TRUE]) == {TRUE}            # TRUE can be part of a Clause
+    assert clause([FALSE]) == {FALSE}          # FALSE can be part of a Clause
+    assert clause([1, TRUE]) == {1, TRUE}      # TRUE is distinct from 1 in a Clause
+    assert clause([-1, FALSE]) == {-1, FALSE}  # FALSE is distinct from -1 in a Clause
+    assert clause([1, TRUE, FALSE]) == {1, TRUE, FALSE}  # TRUE and FALSE can both appear
+
+    # Tests for idempotence
+    assert clause(clause([1, 2, -3])) == clause([1, 2, -3])
+    assert clause(clause([TRUE])) == clause([TRUE])
+    assert clause(clause([FALSE])) == clause([FALSE])
+
+    pytest.raises(ValueError, clause, [])
+#+end_src
+
+** Cnfs
+We define a /Cnf/ to be a container of Clauses. The choice of container is
+driven by three properties we desire in Cnfs --
+1. We do not care for repetitions in the Cnf. This is in keeping with the
+   identity \(x\wedge x=x\).
+2. We also do not care about the ordering of elements in a Cnf. This is in
+   keeping with the fact that conjunction is commutative.
+3. Looking ahead, we will want to put Cnfs inside other containers when
+   performing calculations. Thus it is desirable that Cnfs be hashable (and
+   therefore immutable) objects.
+These properties are exactly the ones we desired for Clauses, so we
+similarly select frozensets as our containers. We define Cnf as a subclass
+instead of just a subtype, allowing us to also override its =__str__=
+method to offer more human-readable printouts.
+
+#+name: Cnf
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Cnf>>
+#+begin_src python
+class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
+    """`Cnf` is a subclass of `frozenset[Clause]`."""
+
+    def __str__(self) -> str:
+        """Pretty print a Cnf after sorting its sorted clause tuples."""
+        sorted_cnf: list[Clause]
+        sorted_cnf = sorted(self, key=lambda clause_: sum([lit < 0 for lit in clause_]))
+        sorted_cnf = sorted(sorted_cnf, key=len)
+
+        cnf_tuple: Iterator[str] = map(str, map(clause, sorted_cnf))
+        return ''.join(cnf_tuple)
+#+end_src
+
+We define a constructor function =cnf= for this class. This function
+ensures that a Cnf is always a nonempty collection of Clauses. This
+constructor function is also guaranteed to be idempotent.
+
+#+name: cnf
+#+attr_latex: :options label= (python3.9) (cnf.py) <<cnf>>
+#+begin_src python
+def cnf(clause_collection: Collection[Collection[int]]) -> Cnf:
+    <<cnf-docstring>>
+    if not clause_collection:
+        raise ValueError(f'Encountered empty input {list(clause_collection)}.')
+    return Cnf(frozenset(map(clause, clause_collection)))
+#+end_src
+
+Finally, we add in a docstring and some unit tests for the constructor function.
+#+name: cnf-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<cnf-docstring>>
+#+begin_src python
+  """Constructor-function for Cnf type.
+
+  By definition, a `Cnf` is a nonempty frozenset of Clauses. This function is idempotent.
+
+  Args:
+     clause_collection (:obj:`Collection[Collection[int]]`): a nonempty collection (list, tuple,
+        set, frozenset) of nonempty collections of integers or Bools.
+
+  Return:
+     Check that each element in the collection satisfies axioms for being a Clause and then cast
+        to Cnf.
+
+  Raises:
+     ValueError: if ``clause_collection`` is an empty collection.
+  """
+#+end_src
+
+
+#+name: test_cnf
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_cnf>>
+#+begin_src python
+  def test_cnf():
+      fs = frozenset  # a temporary alias for frozenset
+
+      # Generic example use-case
+      assert cnf([[1, 2, -3], [-4, 5]]) == {fs([1, 2, -3]), fs([-4, 5])}
+
+      # Test for removing repetitions
+      assert cnf([[1, 1, -1], [1, -1]]) == {fs([1, -1])}
+
+      # Cnf with TRUE and FALSE inside a Clause
+      assert cnf([[1, 2, TRUE], [3, FALSE]]) == {fs([1, 2, TRUE]), fs([3, FALSE])}
+
+      # Cnf with a Bool-only Clause
+      assert cnf([[1, 2, 3], [FALSE], [TRUE]]) == {fs([1, 2, 3]), fs([FALSE]), fs([TRUE])}
+      assert cnf([[TRUE], [TRUE, TRUE]]) == {fs([TRUE])}
+
+      # Single-Lit-single-Clause Cnf
+      assert cnf([[1]]) == {fs([1])}
+      assert cnf([[-1]]) == {fs([-1])}
+
+      # Test for idempotence.
+      assert cnf(cnf([[1, 2, 3], [-4, 5]])) == cnf([[1, 2, 3], [-4, 5]])
+
+      pytest.raises(ValueError, cnf, [])
+      pytest.raises(ValueError, cnf, [[]])
+#+end_src
+
+** Assignments
+A /truth-assignment/ is a map that assigns true/false values to variables
+and literals. The functions that implement these assignments will be
+explained in \S [[Functions for assignment]], but here we specify the type for
+assignments.
+
+We make a distinction between /full assignments/, which assign all
+(countably-many) variables to true/false, and /partial assignments/, which
+assign only some finite subset of variables to true/false. The type of full
+assignments is best encoded as a function of type \(\mathbb{N}\rightarrow\)
+=Bool=, while the partial assignments are best encoded as a dictionary of
+=Variable= keys and =Bool= values.
+
+For computations, we will be more concerned with partial assignments, so we
+denote their type by =Assignment= and define it to be a type alias for
+Mapping from Variables to Bools called =Assignment=. Note that
+[[https://docs.python.org/3/library/collections.abc.html#collections.abc.Mapping][collections.abc.Mappings]] are the abstract base class for python's =dict=
+container type.
+
+#+name: Assignment
+#+attr_latex: :options label= (python3.9) (cnf.py) <<Assignment>>
+#+begin_src python
+  Assignment = Mapping[Variable, Bool]  # defines a type alias
+#+end_src
+** Helpful constants
+We introduce some constants for ease of writing functions in the sections
+that follow. However, it should be noted that these constants are intended
+for internal use only, and are not to be called by a user of this module.
+To enforce this restriction, we name these constants starting with an
+underscore to prevent them from being imported in other modules. Further,
+we wrap their types in the =typing.Final= type construct to prevent these
+values from being re-assigned or overridden.
+
+#+name: constants
+#+attr_latex: :options label= (python3.9) (cnf.py) <<constants>>
+#+begin_src python
+_TRUE_CLAUSE  : Final[Clause] = clause([TRUE])
+_FALSE_CLAUSE : Final[Clause] = clause([FALSE])
+_TRUE_CNF     : Final[Cnf]    = cnf([_TRUE_CLAUSE])
+_FALSE_CNF    : Final[Cnf]    = cnf([_FALSE_CLAUSE])
+#+end_src
+
+* Basic functions
+We define some basic functions for manipulating terms of one type into another --
+- In \S [[Negation of literals]], we will define a function that negates
+  Lits. This is a function that ties a Lit \(l\) to its negation \(\neg
+  l\).
+- In \S [[Absolute value of literals]], we will define a function that computes
+  the absolute value of a Lit by returning its underlying Variable (but
+  cast as a Lit). This is the function that ties the Lits \(\{l, \neg l\}\)
+  to their underlying Variable, denoted \(|l|\).
+- In \S [[Literals in a Cnf]], we will define a function that returns a set of
+  all Lits in a Cnf. This function will allows us to iterate over, or
+  assign to, every Lit in the Cnf.
+
+** Negation of literals
+The negation function sends a literal \(l\) to \(\neg l\). For Bools, the
+negation sends =TRUE= to =FALSE=, and =FALSE= to =TRUE=.
+
+One important property of the negation function is that it is an involution
+since \(\neg(\neg l) = l\), for any literal \(l\). It should also be noted
+that our negation function has a severely restricted scope compared to the
+mathematical operation of \((\neg)\), since our negation function can only
+act on Lits and not on Clauses or Cnfs. The reason for this is that the
+negation of a Clause is not in general a Clause, and the negation of a Cnf
+is not in general a Cnf.
+
+#+name: neg
+#+attr_latex: :options label= (python3.9) (cnf.py) <<neg>>
+#+begin_src python
+  def neg(literal: Lit) -> Lit:
+      <<neg-docstring>>
+      if literal == TRUE:
+          return FALSE
+      if literal == FALSE:
+          return TRUE
+      return lit(-literal)
+#+end_src
+
+Finally, we add a docstring and some unit tests for the negation function.
+
+#+name: neg-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<neg-docstring>>
+#+begin_src python
+  """Negate a Lit.
+
+  This function is an involution.
+
+  Args:
+     literal (:obj:`Lit`): a Lit formed from a nonzero integer or from a Bool.
+
+  Return:
+     Return the Lit cast from the negative of ``literal``. If ``literal`` is of type Bool, then
+        return ``TRUE`` for ``FALSE``, ``FALSE`` for ``TRUE``.
+
+  """
+#+end_src
+
+
+#+name: test_neg
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_neg>>
+#+begin_src python
+def test_neg():
+    assert neg(lit(1))  == lit(-1)
+    assert neg(lit(-1)) == lit(1)
+    assert neg(lit(23)) == lit(-23)
+    assert neg(TRUE)    == FALSE
+    assert neg(FALSE)   == TRUE
+
+    # Test for involution.
+    assert neg(neg(lit(1)))  == lit(1)
+    assert neg(neg(lit(-1))) == lit(-1)
+
+    pytest.raises(ValueError, neg, 0)
+#+end_src
+
+** Absolute value of literals
+The /absolute value/ of a literal \(l\) is denoted \(|l|\) and is defined
+as the literal formed by the underlying variable. For Bools, the absolute
+value of a Bool is itself.
+
+#+name: absolute_value
+#+attr_latex: :options label= (python3.9) (cnf.py) <<absolute\_value>>
+#+begin_src python
+  def absolute_value(literal: Lit) -> Lit:
+      <<absolute_value-docstring>>
+      if isinstance(literal, Bool):
+          return literal
+      return lit(abs(literal))
+#+end_src
+
+We then add a docstring and some unit tests for the function.
+
+#+name: absolute_value-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<absolute\_value-docstring>>
+#+begin_src python
+  """Unnegated form of a Lit.
+
+  This function is idempotent.
+
+  Args:
+     literal (:obj:`Lit`): a Lit formed from a nonzero integer.
+
+  Return:
+     Check that ``literal`` is not of type Bool and then return the absolute value of ``literal``.
+        If it is of type Bool, then return ``literal`` as is.
+  """
+#+end_src
+
+#+name: test_absolute_value
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_absolute\_value>>
+#+begin_src python
+  def test_absolute_value():
+      assert absolute_value(lit(1)) == lit(1)
+      assert absolute_value(lit(-1)) == lit(1)
+
+      # Test for idempotence.
+      assert absolute_value(absolute_value(lit(1))) == absolute_value(lit(1))
+      assert absolute_value(absolute_value(lit(-1))) == absolute_value(lit(-1))
+
+      # Test for Bools
+      assert absolute_value(TRUE) == TRUE
+      assert absolute_value(FALSE) == FALSE
+
+      pytest.raises(ValueError, absolute_value, 0)
+#+end_src
+
+** Literals in a Cnf
+This function returns the set of Lits in a given Cnf. We wish to keep these
+sets immutable, and hence we return frozensets instead of regular sets. It
+is computed simply by combining all the clauses and putting the Lits thus
+gathered into a frozenset.
+
+#+name: lits
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lits>>
+#+begin_src python
+def lits(cnf_instance: Cnf) -> frozenset[Lit]:
+    <<lits-docstring>>
+    return frozenset.union(*cnf_instance)
+#+end_src
+
+Lastly, we add in a docstring and a unit test for this function.
+#+name: lits-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<lits-docstring>>
+#+begin_src python
+  """Return frozenset of all Lits that appear in a Cnf.
+
+  Args:
+     cnf_instance (:obj:`Cnf`)
+
+  Return:
+     A frozenset of all lits that appear in a Cnf.
+  """
+#+end_src
+
+#+name: test_lits
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_lits>>
+#+begin_src python
+def test_lits():
+    assert lits(cnf([[1, -2],[3, TRUE], [FALSE]])) == frozenset({1, -2, 3, TRUE, FALSE})
+#+end_src
+* Functions for simplification
+We define some functions for reducing/simplifying clauses and Cnfs --
+- In \S [[Tautologically reduce clauses]] we define a function for applying a set
+  of standard tautologies for simplifying a Clause.
+- In \S [[Tautologically reduce Cnfs]] we define a function for applying a set
+  of standard tautologies for simplifying a Cnf.
+
+Both these functions come in use especially after making assignments in
+Cnfs. Selectively assigning some Lits to true/false results in Clauses and
+Cnfs that contain Bools and can be simplified. The simplification functions
+defined in this section help us do just that.
+
+** Tautologically reduce clauses
+We can reduce a Clause using the following tautologies -- \[\top \vee c =
+\top, \quad \bot \vee c = c,\quad c \vee \neg c = \top,\] where \(c\) is a
+Clause. These are tautologies that feature disjunctions -- which is what
+bind all the Lits together in a Clause.
+
+We check for these tautologies on a case-by-case basis. It should be noted
+that the order in which the cases are checked is important for the correct
+behavior of this function.
+
+Furthermore, the input type of this function is abstracted to =Set[Lit]=,
+of which =set[Lit]= and =frozenset[Lit]= are subtypes. This allows us to
+use both sets and frozensets as valid inputs to this function.
+
+Checking of the first two tautologies is straightforward. We describe here
+the implementation of how the third tautology \((c \vee \neg c = \top)\) is
+checked. Given a Lit-set \(\{l_i \mid i \in I\}\), for some finite indexing
+set \(I\), we check that \(\{\neg l_i \mid i\in I\} \cap \{l_i \mid i\in
+I\} = \emptyset\). If yes, then we return a Clause formed from \(\{l_i\mid
+i\in I\}\). If not, then we return the Clause \(\top\).
+
+We also ensure that this reduction (and our implementation of it in the
+form of this function) are idempotent.
+
+#+name: tautologically_reduce_clause
+#+attr_latex: :options label= (python3.9) (cnf.py) <<tautologically\_reduce\_clause>>
+#+begin_src python
+def tautologically_reduce_clause(lit_set: Set[Lit]) -> Clause:
+    <<tautologically_reduce_clause-docstring>>
+    if TRUE in lit_set:
+        return _TRUE_CLAUSE
+    if lit_set == {FALSE}:
+        return _FALSE_CLAUSE
+    if FALSE in lit_set:
+        lit_set -= _FALSE_CLAUSE
+    if not set(map(neg, lit_set)).isdisjoint(lit_set):
+        return _TRUE_CLAUSE
+    return clause(lit_set)
+#+end_src
+
+Having implemented the function, we now include a docstring and some unit
+tests for it.
+
+#+name: tautologically_reduce_clause-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<tautologically\_reduce\_clause-docstring>>
+#+begin_src python
+    r"""Reduce a Clause using various tautologies.
+
+    The order in which these reductions are performed is important. This function is
+    idempotent.
+
+    Tautologies affecting Clauses:
+       (⊤ ∨ c = ⊤)  (⊥ = ⊥)  (⊥ ∨ c = c)  (c ∨ ¬c = ⊤),
+       where `x` is a Clause, `⊤` represents ``TRUE``, `⊥` represents ``FALSE``, and `∨` is
+          disjunction.
+
+    Args:
+       lit_set (:obj:`Set[Lit]`): an abstract set (a set or a frozenset) of Lits.
+
+    Return:
+       The Clause formed by performing all the above-mentioned tautological reductions.
+    """
+#+end_src
+
+#+name: test_tautologically_reduce_clause
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_tautologically\_reduce\_clause>>
+#+begin_src python
+  def test_tautologically_reduce_clause():
+      trc = tautologically_reduce_clause  # local alias for long function name
+      assert trc(clause([lit(1), TRUE]))    == clause([TRUE])
+      assert trc(clause([FALSE]))           == clause([FALSE])
+      assert trc(clause([lit(1), FALSE]))   == clause([lit(1)])
+      assert trc(clause([lit(1), lit(-1)])) == clause([TRUE])
+
+      # Test for idempotence
+      _clause = clause([lit(1), lit(-2), lit(3), lit(3)])
+      assert trc(trc(_clause)) == trc(_clause)
+
+      pytest.raises(ValueError, trc, set())
+#+end_src
+
+** Tautologically reduce Cnfs
+We can reduce a Cnf using the following tautologies -- \[x \wedge \bot =
+\bot,\quad \top \wedge x = x,\] where \(x\) is a Cnf. These are tautologies
+that feature conjunctions -- which is what bind all the Clauses together in
+a Cnf.
+
+We check for these tautologies on a case-by-cases basis. It should be noted
+that the order in which the cases are checked is important for the correct
+behavior of this function.
+
+The input type is abstracted to =Set[Set[Lit]]=. This means the input can
+be one of the following types --
+1. a frozenset of frozenset of Lits -- this is the preferred type and all
+   other inputs will be converted to this type by the function.
+2. a frozenset of set of Lits -- this form is not possible because a
+   frozenset will only accept entries of hashable type.
+3. a set of frozenset of Lits
+4. a set of set of Lits -- this form is not possible because a set will
+   only accept entries hashable type.
+
+Given an input of the right type, the function first reduces all its
+clauses using the =tautologically_reduce_clause= function. In the case when
+the clause set contains the TRUE Clause, we remove the TRUE clause and call
+our function recursively on the reduced clause-set. This recursive call is
+guaranteed to terminate because we always apply it to a clause set of
+smaller length each time.
+
+Lastly, we note that this function is idempotent.
+
+#+name: tautologically_reduce_cnf
+#+attr_latex: :options label= (python3.9) (cnf.py) <<tautologically\_reduce\_cnf>>
+#+begin_src python
+  def tautologically_reduce_cnf(clause_set: Set[Set[Lit]]) -> Cnf:
+      <<tautologically_reduce_cnf-docstring>>
+      clause_set_reduced: set[Clause]
+      clause_set_reduced = set(map(tautologically_reduce_clause, clause_set))
+
+      if _FALSE_CLAUSE in clause_set_reduced:
+          return _FALSE_CNF
+      if clause_set_reduced == _TRUE_CNF:
+          return _TRUE_CNF
+      if _TRUE_CLAUSE in clause_set_reduced:
+          return tautologically_reduce_cnf(clause_set_reduced - _TRUE_CNF)
+      return cnf(clause_set_reduced)
+#+end_src
+
+Below, we specify the docstring and some unit tests for this function.
+
+#+name: tautologically_reduce_cnf-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<tautologically\_reduce\_cnf-docstring>>
+#+begin_src python
+  r"""Reduce a Cnf using various tautologies.
+
+  The order in which these reductions are performed is important. This function is idempotent.
+  This is a recursive function that is guaranteed to terminate.
+
+  Tautologies affecting Cnfs:
+     (x ∧ ⊥ = ⊥)  (⊤ = ⊤)  (⊤ ∧ x = x),
+     where `x` is a Cnf, `⊤` represents ``TRUE``, `⊥` represents ``FALSE``, and `∧` is
+     conjunction.
+
+  Args:
+     clause_set (:obj:`Set[Set[Lit]]`): an abstract set (set or frozenset) of abstract sets of
+     Lits.
+
+  Return:
+     The Cnf formed by first reducing all the clauses tautologically and then performing all the
+     above-mentioned tautological reductions on the Cnf itself.
+  """
+#+end_src
+
+#+name: test_tautologically_reduce_cnf
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_tautologically\_reduce\_cnf>>
+#+begin_src python
+    def test_tautologically_reduce_cnf():
+        trc = tautologically_reduce_cnf  # local alias for long function name
+        # cases where Clause reductions appear within Cnf reductions
+        assert trc(cnf([[1, TRUE], [1, 2]]))  == cnf([[1, 2]])
+        assert trc(cnf([[FALSE], [1, 2]]))    == cnf([[FALSE]])
+        assert trc(cnf([[1, FALSE], [1, 2]])) == cnf([[1], [1, 2]])
+        assert trc(cnf([[1, -1], [1, 2]]))    == cnf([[1, 2]])
+
+        # cases where we might have two simultaneous clause reductions
+        assert trc(cnf([[1, TRUE], [FALSE]]))    == cnf([[FALSE]])
+        assert trc(cnf([[1, TRUE], [1, FALSE]])) == cnf([[1]])
+        assert trc(cnf([[1, TRUE], [1, -1]]))    == cnf([[TRUE]])
+        assert trc(cnf([[FALSE], [1, FALSE]]))   == cnf([[FALSE]])
+        assert trc(cnf([[FALSE], [1, -1]]))      == cnf([[FALSE]])
+        assert trc(cnf([[1, FALSE], [1, -1]]))   == cnf([[1]])
+
+        # cases where we might have a cnf-related tautology
+        assert trc(cnf([[1], [FALSE]])) == cnf([[FALSE]])
+        assert trc(cnf([[TRUE]]))       == cnf([[TRUE]])
+        assert trc(cnf([[1], [TRUE]]))  == cnf([[1]])
+
+        # Test for idempotence.
+        _cnf = cnf([[lit(1), lit(2)], [lit(-2)]])
+        assert trc(trc(_cnf)) == trc(_cnf)
+
+        pytest.raises(ValueError, trc, set())
+        pytest.raises(ValueError, trc, frozenset())
+#+end_src
+
+* Functions for assignment
+We define functions for applying truth-assignments to Lits, Clauses, and Cnfs.
+- In \S [[Assign to variable in a literal]] we define a function that assigns a
+  given truth value to a variable in a Lit.
+- In \S [[Assign to variable in a clause]] we define a function that assigns a
+  given truth value to a variable in a Clause.
+- In \S [[Assign to variable in a Cnf]] we define a function that assigns a
+  given truth value to a variable in a Cnf.
+- In \S [[Assign]] we define a function that applies an Assignment to Cnf.
+
+We refer to the =<<example>>= code-block in \S [[Introduction to =cnf.py=]] for
+a demonstration of the usage of the =assign= function defined in \S [[Assign]].
+
+Throughout this section, we will denote the assignment of \(a\) to an
+object \(x\) by the notation \(x[a]\).
+
+** Assign to variable in a literal
+For a literal \(l\) and a variable \(v\), this function encodes the result
+that the value \(l[v]\), i.e. the value obtained by setting \(v\) to \(\top\) is,
+- \(\top\), if \(l = v\),
+- \(\bot\), if \(l = \neg v\),
+- \(l\), otherwise.
+
+This function is idempotent because \(l[v][v] = l[v]\), for every literal
+\(l\) and every variable \(v\).
+
+#+name: assign_variable_in_lit
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_lit>>
+#+begin_src python
+def assign_variable_in_lit(literal: Lit, variable_instance: Variable, boolean: Bool) -> Lit:
+    <<assign_variable_in_lit-docstring>>
+    if literal == variable_instance:
+        return boolean
+    if neg(literal) == variable_instance:
+        return neg(boolean)
+    return literal
+#+end_src
+
+We complete the definition by adding in a docstring and some unit-tests for
+the function.
+#+name: assign_variable_in_lit-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_lit-docstring>>
+#+begin_src python
+  """Assign Bool value to a Variable if present in Lit.
+
+  Replace all instances of ``variable_instance`` and its negation with ``boolean`` and its
+  negation respectively. Leave all else unchanged. This function is idempotent.
+
+  Args:
+     literal (:obj:`Lit`)
+     variable_instance (:obj:`Variable`)
+     boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+
+  Return:
+     Lit formed by assigning ``variable_instance`` to ``boolean`` in ``literal``.
+  """
+#+end_src
+
+
+#+name: test_assign_variable_in_lit
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_assign\_variable\_in\_lit>>
+#+begin_src python
+  def test_assign_variable_in_lit():
+      avil = assign_variable_in_lit  # local alias for long function name
+
+      assert avil(1, 1, TRUE)     == TRUE
+      assert avil(1, 1, FALSE)    == FALSE
+      assert avil(-1, 1, TRUE)    == FALSE
+      assert avil(-1, 1, FALSE)   == TRUE
+      assert avil(1, 2, TRUE)     == 1
+      assert avil(TRUE, 1, TRUE)  == TRUE
+      assert avil(FALSE, 1, TRUE) == FALSE
+
+      # Test for idempotence
+      assert avil(avil(1, 1, TRUE), 1, TRUE)  == avil(1, 1, TRUE)
+      assert avil(avil(-1, 1, TRUE), 1, TRUE) == avil(-1, 1, TRUE)
+#+end_src
+
+** Assign to variable in a clause
+Next, we define a function that assigns variables to Bools wherever the
+variable occurs in a clause. The function carries out the following computation --
+\begin{align*}
+  c[v] &= (l_1 \vee l_2 \vee \cdots \vee l_n)[v],\\
+       &= l_1[v] \vee l_2[v] \vee \cdots \vee l_n[v],
+\end{align*}
+where \(c\) is a clause, \(v\) is a variable, and each \(l_i\) is a literal.
+
+In the implementation of the function, we use =functools.partial= to define
+=assign_variable= to be the partial function =assign_variable_in_lit(__,
+variable_instance, boolean)=. This partial function takes a single Lit as
+an input while freezing the other arguments in place.
+
+We note also that this function is idempotent in the first argument.
+Meaning, for a fixed variable and Bool value, applying this function twice
+to the same Clause is the same as applying it only once.
+
+#+name: assign_variable_in_clause
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_clause>>
+#+begin_src python
+  def assign_variable_in_clause(lit_set: Set[Lit], variable_instance: Variable, boolean: Bool) \
+          -> Clause:
+      <<assign_variable_in_clause-docstring>>
+      assign_variable: Callable[[Lit], Lit]
+      assign_variable = ft.partial(assign_variable_in_lit, variable_instance=variable_instance,
+                                   boolean=boolean)
+      mapped_lits: set[Lit]
+      mapped_lits = set(map(assign_variable, lit_set))
+
+      return tautologically_reduce_clause(mapped_lits)
+#+end_src
+
+We now add in a docstring and some unit-tests for the function we just defined.
+#+name: assign_variable_in_clause-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_clause-docstring>>
+#+begin_src python
+  """Assign Bool value to a Variable if present in Clause.
+
+  Replace all instances of ``variable_instance`` and its negation in ``lit_set`` with ``boolean``
+  and its negation respectively. Leave all else unchanged. Perform tautological reductions on the
+  Clause before returning results. This function is idempotent.
+
+  Args:
+     lit_set (:obj:`Set[Lit]`): an abstract set (set or frozenset) of Lits.
+     variable_instance (:obj:`Variable`)
+     boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+
+  Return:
+     Tautologically-reduced Clause formed by assigning ``variable_instance`` to ``boolean`` in
+        ``lit_set``.
+  """
+#+end_src
+
+
+#+name: test_assign_variable_in_clause
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_assign\_variable\_in\_clause>>
+#+begin_src python
+  def test_assign_variable_in_clause():
+      avic = assign_variable_in_clause  # local alias for long function name
+
+      assert avic(clause([1, -2]), 1, TRUE)      == {TRUE}
+      assert avic(clause([1, -2]), 1, FALSE)     == {-2}
+      assert avic(clause([1, -2, -1]), 1, TRUE)  == {TRUE}
+      assert avic(clause([1, -2, -1]), 1, FALSE) == {TRUE}
+      assert avic(clause([1, -2]), 2, TRUE)      == {1}
+      assert avic(clause([1, -2]), 2, FALSE)     == {TRUE}
+      assert avic(clause([1, -2, -1]), 2, TRUE)  == {TRUE}
+      assert avic(clause([1, -2, -1]), 2, FALSE) == {TRUE}
+
+      # Test for idempotence
+      _clause: Clause = clause([lit(1), lit(-2), lit(-1)])
+      _var: Variable = variable(2)
+      assert avic(avic(_clause, _var, FALSE), _var, FALSE) == avic(_clause, _var, FALSE)
+
+      pytest.raises(ValueError, assign_variable_in_clause, [], 1, TRUE)
+#+end_src
+
+** Assign to variable in a Cnf
+We define a function that assigns variables to Bools whenever the variable
+occurs in a Cnf. This function carries out the following computation --
+\begin{align*}
+  x[v] &= (c_1 \wedge c_2 \wedge \cdots \vee c_n)[v],\\
+       &= c_1[v] \wedge c_2[v] \wedge \cdots \wedge c_n[v],
+\end{align*}
+where \(x\) is a Cnf, \(v\) is a variable, and each \(c_i\) is a clause.
+
+In the implementation of the function, we use =functools.partial= to define
+=assign_variable= to be the partial function =assign_variable_in_clause(__,
+variable_instance, boolean)=. This partial function takes a single Clause
+as an input while freezing the other arguments in place.
+
+We note also that this function is idempotent in the first argument.
+Meaning, for a fixed variable and Bool value, applying this function twice
+to the same Cnf is the same as applying it only once.
+
+#+name: assign_variable_in_cnf
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_cnf>>
+#+begin_src python
+def assign_variable_in_cnf(clause_set: Set[Set[Lit]], variable_instance: Variable, boolean: Bool) \
+        -> Cnf:
+    <<assign_variable_in_cnf-docstring>>
+    assign_variable: Callable[[Clause], Clause]
+    assign_variable = ft.partial(assign_variable_in_clause,
+                                 variable_instance=variable_instance,
+                                 boolean=boolean)
+
+    mapped_clauses: set[Clause]
+    mapped_clauses = set(map(assign_variable, clause_set))
+
+    return tautologically_reduce_cnf(mapped_clauses)
+#+end_src
+
+We now add in a docstring and some unit-tests for the function.
+
+#+name: assign_variable_in_cnf-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign\_variable\_in\_cnf-docstring>>
+#+begin_src python
+    """Assign Bool value to a Variable if present in Cnf.
+
+    Replace all instances of ``variable_instance`` and its negation in ``clause_set`` with
+    ``boolean`` and its negation respectively. Leave all else unchanged. Perform tautological
+    reductions on the Cnf before returning results. This function is idempotent.
+
+    Args:
+       clause_set (:obj:`Set[Set[Lit]]`): an abstract set (set or frozenset) of abstract sets of
+          Lits.
+       variable_instance (:obj:`Variable`)
+       boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
+
+    Return:
+       Tautologically-reduced Cnf formed by assigning ``variable_instance`` to ``boolean`` in
+          ``clause_set``.
+    """
+#+end_src
+
+
+#+name: test_assign_variable_in_cnf
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_assign\_variable\_in\_cnf>>
+#+begin_src python
+def test_assign_variable_in_cnf():
+    avic = assign_variable_in_cnf  # local alias for long function name
+
+    assert avic(cnf([[1, -2], [-1, 3]]), 1, TRUE)  == cnf([[3]])
+    assert avic(cnf([[1, -2], [-1, 3]]), 1, FALSE) == cnf([[-2]])
+
+    # Test for idempotence.
+    _cnf = cnf([[1, -2], [-1, 3]])
+    assert avic(avic(_cnf, 1, FALSE), 1, FALSE) == avic(_cnf, 1, FALSE)
+
+    pytest.raises(ValueError, avic, [[]], 1, TRUE)
+#+end_src
+
+** Assign
+We define a function that applies a (possibly partial) Boolean assignment
+to a given Cnf. This function carries out the following computation --
+  \[x[A] = x[\{l_1, \ldots, l_n\}] = (((x[l_1])[l_2]) \cdots )[l_n],\]
+where \(x\) is a Cnf, \(A\) is an assignment, and each \(l_i\) is a
+literal.
+
+For positive literals in the assignment, we set the underlying variable to
+true using =assign_variable_in_cnf=. For negative literals in the
+assignment, we use the same function to set the underlying variable to
+false.
+
+We note that this function is idempotent in the first argument (i.e.
+keeping the assignment fixed, applying this function twice to a Cnf is the
+same as applying it once).
+
+A complete assignment might return a trivial Cnf value (a true or false
+Cnf). However, in general, since the assignments can be partial, the
+function can return a nontrivial Cnf instead.
+
+#+name: assign
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign>>
+#+begin_src python
+  def assign(cnf_instance: Cnf, assignment: Assignment) -> Cnf:
+      <<assign-docstring>>
+      cnf_copy: frozenset[Clause] = cnf_instance.copy()
+      for variable_instance, boolean in assignment.items():
+          cnf_copy = assign_variable_in_cnf(cnf_copy, variable_instance, boolean)
+      return tautologically_reduce_cnf(cnf_copy)
+#+end_src
+
+We add a docstring and some unit-tests for the function.
+
+#+name: assign-docstring
+#+attr_latex: :options label= (python3.9) (cnf.py) <<assign-docstring>>
+#+begin_src python
+  """Assign Bool values to Variables if present in Cnf.
+
+  For each Variable (key) in ``assignment``, replace the Variable and its negation in
+  ``cnf_instance`` using the Bool (value) in ``assignment``. The final output is always
+  tautologically reduced. This function is idempotent.
+
+  Args:
+     cnf_instance (:obj:`Cnf`)
+     assignment (:obj:`Assignment`): a dict with keys being Variables to be replaced and values
+        being Bools that the Variables are to be assigned to.  The ``assignment`` dict need not be
+        complete and can be partial.
+
+  Edge case:
+     An empty assignment dict results in ``cnf_instance`` simply getting topologically reduced.
+
+  Return:
+     Tautologically-reduced Cnf formed by replacing every key in the ``assignment`` dict (and
+        those keys' negations) by corresponding Bool values.
+  """
+#+end_src
+
+
+#+name: test_assign
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_assign>>
+#+begin_src python
+  def test_assign():
+      assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE})                     == cnf([[3]])
+      assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE})           == cnf([[3]])
+      assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE, 3: FALSE}) == cnf([[FALSE]])
+      assert assign(cnf([[TRUE]]), {1: TRUE})                               == cnf([[TRUE]])
+      assert assign(cnf([[TRUE]]), {})                                      == cnf([[TRUE]])
+      assert assign(cnf([[FALSE]]), {})                                     == cnf([[FALSE]])
+      assert assign(cnf([[1]]), {})                                         == cnf([[1]])
+
+      # Test for idempotence.
+      _cnf = cnf([[1, -2], [-1, 3]])
+      assert assign(assign(_cnf, {1: TRUE}), {1: TRUE}) == assign(_cnf, {1: TRUE})
+
+      pytest.raises(ValueError, assign, [[]], {1: TRUE})
+#+end_src
+
+
+* Standalone script run commands
+We now add in some commands that will be run when the module is called from
+the command line by a user, say by invoking =python3 -m cnf.py= at the
+terminal prompt. The purpose of these lines is to test that the user has
+installed the module correctly and it also serves to demonstrate the
+construction of a Cnf.
+
+To invoke these lines only when the script is run as stand-alone, and not
+during regular imports, we put these lines in a =if __name__ == 'main'=
+block.
+
+We use a logger to send messages and output to /stdout/.
+
+#+name: standalone_run_commands
+#+attr_latex: :options label= (python3.9) (cnf.py) <<standalone\_run\_commands>>
+#+begin_src python
+    logger.info('Cnfs can be constructed using the cnf() function.')
+    logger.info('>>> cnf([[1, -2], [3, 500]])')
+    logger.info(cnf([[1, -2], [3, 500]]))
+#+end_src
+
+* Tangling
+We now tangle all the code blocks defined in this chapter into a single
+file (=cnf.py=) following the overview laid out in \S [[Overview of =cnf.py=]].
+#+begin_src python :tangle cnf.py :exports none
+<<cnf.py>>
+#+end_src
+
+Using the source file for this chapter, the tangling can be carried out by
+running the following script
+#+attr_latex: :options label= (sh) (scratch) <<tangle>>
+#+begin_src sh
+  cp subchapter_cnf.org cnf.org                     # create a temp file
+  emacs --batch cnf.org -f org-babel-tangle --kill  # cnf.org -> cnf.py + test_cnf.py (tangle)
+  black cnf.py tests/test_cnf.py                     # auto-format for PEP8 compliance
+  rm cnf.org                                        # remove temp file
+#+end_src
+
+We similarly tangle all the unit-tests into a single file
+(=tests/test_cnf.py=) using the following layout.
+\todo{explain the role of *context*}
+#+name: test_cnf-setup
+#+attr_latex: :options label= (python3.9) (tests/test\_cnf.py) <<test\_cnf.py-full>>
+#+begin_src python :tangle tests/test_cnf.py
+#!/usr/bin/env python3.9
+import pytest
+from context import graphsat
+from cnf import *
+
+<<test_variable>>
+<<test_Bool>>
+<<test_lit>>
+<<test_clause>>
+<<test_cnf>>
+
+<<test_neg>>
+<<test_absolute_value>>
+<<test_lits>>
+
+<<test_tautologically_reduce_clause>>
+<<test_tautologically_reduce_cnf>>
+
+<<test_assign_variable_in_lit>>
+<<test_assign_variable_in_clause>>
+<<test_assign_variable_in_cnf>>
+<<test_assign>>
+#+end_src
+
+
+Finally, we can run all the tests on module functions as follows --
+#+attr_latex: :options label= (sh) (scratch) <<run-tests>>
+#+begin_src bash :results pp :exports both
+python3 -m mypy cnf.py  # static typechecking of code
+python3 -m py.test      # run all the unit tests
+python3 -m cnf.py       # run the module as a stand-alone script
+#+end_src
+
+* Concluding remarks
+\todo{add conclusion to cnf.py and graphsat}
+
+\newpage
+# Local Variables:
+# eval: (column-marker-1 100)
+# end:
+# LocalWords: Cnf sublink sublinks graphsat Levin mutli vis subscriptable Bool Bools Lits
+# LocalWords: frozensets frozenset

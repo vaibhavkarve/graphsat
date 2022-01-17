@@ -1,0 +1,40 @@
+\usepackage{hyperref}
+\hypersetup{colorlinks, linkcolor={blue!100!black}, citecolor={blue!50!black}, urlcolor={blue!80!black}}
+
+\usepackage[nottoc,notlot,notlof]{tocbibind}
+
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage[utf8x]{inputenc}
+\usepackage{minted}
+
+% Change to a font that has all the glyphs. This option necessitates
+% XeLaTeX or LuaLaTeX as the compiler engine.
+\usepackage{fontspec}
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+
+
+\setminted{fontsize=\small}
+\setminted{stripnl=false}
+\usepackage{amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+\usepackage{todonotes}
+%\usepackage{fontspec}  % use any system font with LuaLaTeX or XeLaTeX only
+%\usepackage{unicode-math}
+%\usepackage[mathletters]{ucs}
+
+\usemintedstyle{emacs}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{cor}{Corollary}
+
+
+\setminted{python3=true}
+\setminted{labelposition=topline}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% End:

@@ -32,6 +32,8 @@ from loguru import logger
 #: ``T = TypeVar('T')``, i.e. ``T`` is a type variable
 class _SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods
     def __lt__(self, __other: Any) -> bool: ...
+
+
 T = TypeVar("T", bound=_SupportsLessThan)  # pylint: disable=invalid-name
 
 

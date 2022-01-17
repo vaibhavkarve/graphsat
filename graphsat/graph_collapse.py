@@ -78,13 +78,9 @@ def print_grouping_table(cnf_set: set[cnf.Cnf]) -> None:
 
 
 if __name__ == '__main__':
-    g1: mhg.MHGraph = mhg.mhgraph([[2, 3]])
-    g2: mhg.MHGraph = mhg.mhgraph([[3, 4], [4, 5]])
-    g3: mhg.MHGraph = mhg.mhgraph([[3, 4]])
-    g4: mhg.MHGraph = mhg.mhgraph([[2, 3], [4, 5]])
-    g5: mhg.MHGraph = mhg.mhgraph([[4, 5]])
-    g6: mhg.MHGraph = mhg.mhgraph([[2, 3], [3, 4]])
+    g1: mhg.MHGraph = mhg.mhgraph([[2, 3, 4]])
+    g2: mhg.MHGraph = mhg.mhgraph([[2, 3, 5]])
 
     cnfs: set[cnf.Cnf]
-    cnfs = op.graph_or(g1, g2) | op.graph_or(g3, g4) | op.graph_or(g5, g6)
+    cnfs = op.graph_or(g1, g2)
     print_grouping_table(cnfs)

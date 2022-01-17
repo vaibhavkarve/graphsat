@@ -58,7 +58,7 @@ def sat_or(graph1: Union[bool, MHGraph, AtomicSxpr],
 
 def graph_or(graph1: Union[MHGraph, set[cnf.Cnf]],
              graph2: Union[MHGraph, set[cnf.Cnf]]) -> set[cnf.Cnf]:
-    """Disjunct the corresponding Cnfs."""
+    """Disjunction of the Cartesian product of Cnfs."""
     if not isinstance(graph1, set):
         graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
     if not isinstance(graph2, set):

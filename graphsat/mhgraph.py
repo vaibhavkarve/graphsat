@@ -231,8 +231,8 @@ def degree(vertex: Vertex, mhg: MHGraph) -> int:
 
     This counts multiplicities.
     """
-    return sum([multiplicity for hedge, multiplicity in mhg.items()
-                if vertex in hedge])
+    return sum(multiplicity for hedge, multiplicity in mhg.items()
+                if vertex in hedge)
 
 
 def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:

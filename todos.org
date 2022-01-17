@@ -1,0 +1,36 @@
+#+title: todos.org
+
+* Graphsat futuristic improvements
+- Read: 12 steps to scientificpython : http://www.davidketcheson.info/2015/05/10/rock_solid_code.html
+- Try out concurrency for apply_patterns.py as well as pattern_recognition.py [[http://pljung.de/posts/easy-concurrency-in-python][helpful link]]
+- Make it a Sage package.
+- Python Package Structure: Dead Simple Python: Project Structure and Imports - DEV
+  https://dev.to/codemouse92/dead-simple-python-project-structure-and-imports-38c6
+** Implement rule rewriting using PLY (Python Lex-Yacc)
+- docs :: http://dabeaz.com/ply/
+- github :: https://github.com/dabeaz/ply
+** Construct the following graph-satchecker
+Take a graph. Compute all Cnfs on it. Translate each CNF by the correct
+amount so that each CNF has a disjoint variable set. Then send this
+big-bloated CNF to a cnf-satchecker.
+*Question:* Is this strategy faster than other graph-satcheckers?
+** Use =hypothesis= for property-based testing of graphsat functions
+** Make UML diagrams for all of =graphsat= using PlantML
+** The multi dispatch module will make graphsat better
+https://pypi.org/project/multipledispatch/#description
+** Post it on PyPI
+** Add an inventory of each file, it's purpose, it's format.
+This should include the data files and config files.
+** Add instructions on how to carry out all the calculations from the paper/thesis
+** Add a clear pointer to all the project dependencies.
+How to keep these dependencies up to date? Mamba perhaps?
+If we decided to use a =pyproject.toml= then this PEP is a guide to
+writing that file: https://www.python.org/dev/peps/pep-0518/
+** Add installation instructions for both conda and pip.
+** Have raw → intermediate → final data available for download
+** Add contact info: in case user has questions/comments
+But for issues they should open a new issue on github.
+** Add instructions on how to cite the software
+** Create a docker container image
+Perhaps a VirtualBox image for getting the running environment quickly
+** Public outreach: add visuals and examples and other popular things for layperson

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for sat-checking Cnfs, Graphs, and MHGraphs.
 
 Satisfiability of Cnfs
@@ -41,20 +41,21 @@ import functools as ft
 import itertools as it
 import math
 import subprocess
-from typing import cast, Iterator, Union
+from typing import Dict, Iterator, Tuple, Union, cast
+
 # Imports from third-party modules.
-from loguru import logger
 import more_itertools as mit
+from loguru import logger
 from tqdm import tqdm  # type: ignore
+
 # Imports from local modules.
 import graphsat.cnf as cnf
 import graphsat.graph as graph
 import graphsat.mhgraph as mhgraph
 import graphsat.morphism as morph
 
-
 # Type alisases
-Assignment = dict[cnf.Variable, cnf.Bool]
+Assignment = Dict[cnf.Variable, cnf.Bool]
 
 
 # Functions for Checking Satisfiability of Cnfs
@@ -149,7 +150,8 @@ def cnf_pysat_satcheck(cnf_instance: cnf.Cnf) -> bool:
        If the Cnf is Satisfiable return ``True`` else return ``False``.
 
     """
-    from pysat.solvers import Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
+    from pysat.solvers import \
+        Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
 
     try:
         with Minisat22(cnf_instance) as minisat_solver:
@@ -222,7 +224,7 @@ def cnf_minisat_satcheck(cnf_instance: cnf.Cnf) -> bool:
                                  capture_output=True,
                                  shell=True,
                                  check=False).stdout
-
+    assert output, "Empty output. Check if minisat is installed on your system."
     result: str = output.split()[-1]
     if result == 'SATISFIABLE':
         return True
@@ -236,7 +238,7 @@ def cnf_minisat_satcheck(cnf_instance: cnf.Cnf) -> bool:
 # ===========================================
 
 
-def lits_from_vertex(vertex: graph.Vertex) -> tuple[cnf.Lit, cnf.Lit]:
+def lits_from_vertex(vertex: graph.Vertex) -> Tuple[cnf.Lit, cnf.Lit]:
     """Return a Lit as well as its negation from a Vertex.
 
     Args:
@@ -250,7 +252,7 @@ def lits_from_vertex(vertex: graph.Vertex) -> tuple[cnf.Lit, cnf.Lit]:
     return positive_lit, cnf.neg(positive_lit)
 
 
-def clauses_from_hedge(hedge: mhgraph.HEdge) -> tuple[cnf.Clause, ...]:
+def clauses_from_hedge(hedge: mhgraph.HEdge) -> Tuple[cnf.Clause, ...]:
     r"""Return all Clauses supported on a HEdge.
 
     Args:
@@ -261,10 +263,10 @@ def clauses_from_hedge(hedge: mhgraph.HEdge) -> tuple[cnf.Clause, ...]:
        that are supported on ``hedge``.
 
     """
-    lits_positive_and_negative: Iterator[tuple[cnf.Lit, cnf.Lit]]
+    lits_positive_and_negative: Iterator[Tuple[cnf.Lit, cnf.Lit]]
     lits_positive_and_negative = map(lits_from_vertex, hedge)
 
-    lit_combinations: Iterator[tuple[cnf.Lit, ...]]
+    lit_combinations: Iterator[Tuple[cnf.Lit, ...]]
     lit_combinations = it.product(*lits_positive_and_negative)
 
     return tuple(map(cnf.clause, lit_combinations))
@@ -289,10 +291,10 @@ def cnfs_from_hedge(hedge: mhgraph.HEdge, multiplicity: int) -> Iterator[cnf.Cnf
        ValueError if ``multiplicity`` is less than 1.
 
     """
-    clause_possibilities: tuple[cnf.Clause, ...]
+    clause_possibilities: Tuple[cnf.Clause, ...]
     clause_possibilities = clauses_from_hedge(hedge)
 
-    clause_tuples: Iterator[tuple[cnf.Clause, ...]]
+    clause_tuples: Iterator[Tuple[cnf.Clause, ...]]
     clause_tuples = it.combinations(clause_possibilities, r=multiplicity)
 
     return map(cnf.cnf, clause_tuples)
@@ -319,8 +321,8 @@ def cnfs_from_mhgraph(mhgraph_instance: mhgraph.MHGraph,
     cnf_iterators: Iterator[Iterator[cnf.Cnf]]
     cnf_iterators = it.starmap(cnfs_from_hedge, mhgraph_instance.items())
 
-    # Iterator[tuple[cnf.Cnf, ...]] <: Iterator[tuple[frozenset[cnf.Clause], ...]]
-    cnf_tuples: Iterator[tuple[cnf.Cnf, ...]]
+    # Iterator[Tuple[cnf.Cnf, ...]] <: Iterator[Tuple[frozenset[cnf.Clause], ...]]
+    cnf_tuples: Iterator[Tuple[cnf.Cnf, ...]]
     cnf_tuples = it.product(*cnf_iterators)
 
     clause_frozensets: Iterator[frozenset[cnf.Clause]]
@@ -469,7 +471,7 @@ def simplify_at_leaves(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     if mhgraph.degree(leaf_vertex, mhg) > 1:
         return mhg
     logger.trace(f'{leaf_vertex = }')
-    sphr: tuple[mhgraph.HEdge, ...] = mhgraph.sphr(mhg, leaf_vertex)
+    sphr: Tuple[mhgraph.HEdge, ...] = mhgraph.sphr(mhg, leaf_vertex)
     logger.trace(f'simplified to {sphr}')
     return mhgraph.mhgraph(sphr) if sphr else True
 
@@ -512,11 +514,11 @@ def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     vertex = cast(graph.Vertex, vertex)
     logger.trace(f'{vertex = }')
 
-    sphr: tuple[mhgraph.HEdge, ...]
+    sphr: Tuple[mhgraph.HEdge, ...]
     sphr = mhgraph.sphr(mhg, vertex)
     logger.trace(f'{sphr = }')
 
-    link: tuple[mhgraph.HEdge, ...]
+    link: Tuple[mhgraph.HEdge, ...]
     link = mhgraph.link(mhg, vertex)
     logger.trace(f'{link = }')
 

@@ -1,9 +1,9 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for collapsing a set of Cnfs into compact graphs representation."""
 
 import collections
 import itertools as it
-from typing import Any, DefaultDict
+from typing import Any, DefaultDict, Dict, Set
 
 from tabulate import tabulate
 from tqdm import tqdm  # type: ignore
@@ -13,12 +13,11 @@ import graphsat.mhgraph as mhg
 import graphsat.operations as op
 import graphsat.sat as sat
 
-
-_TRUE_FALSE: dict[cnf.Cnf, str]
+_TRUE_FALSE: Dict[cnf.Cnf, str]
 _TRUE_FALSE = {cnf._TRUE_CNF: 'TRUE_Graph', cnf._FALSE_CNF: 'FALSE_Graph'}
 
 
-def is_complete_cnf_set(cnf_set: set[cnf.Cnf], graph: mhg.MHGraph) -> bool:
+def is_complete_cnf_set(cnf_set: Set[cnf.Cnf], graph: mhg.MHGraph) -> bool:
     """Check if a set of Cnfs is the complete set on the given MHGraph."""
     for x in sat.cnfs_from_mhgraph(graph):
         if not x in cnf_set:
@@ -26,12 +25,12 @@ def is_complete_cnf_set(cnf_set: set[cnf.Cnf], graph: mhg.MHGraph) -> bool:
     return True
 
 
-def group_trivial_cnf(cnf_set: set[cnf.Cnf]) -> dict[str, set[cnf.Cnf]]:
+def group_trivial_cnf(cnf_set: Set[cnf.Cnf]) -> Dict[str, Set[cnf.Cnf]]:
     """Put trivial Cnfs in a printable dict."""
     return  {_TRUE_FALSE[x] : {x} for x in _TRUE_FALSE if x in cnf_set}
 
 
-def group_set_cnf_by_mhgraph(cnf_set: set[cnf.Cnf]) -> DefaultDict[mhg.MHGraph, set[Any]]:
+def group_set_cnf_by_mhgraph(cnf_set: Set[cnf.Cnf]) -> DefaultDict[mhg.MHGraph, Set[Any]]:
     """Group non-trivial Cnfs by mhgraphs.
 
     We will use itertools.groupby for the grouping with sat.mhgraph_from_cnf as the
@@ -46,13 +45,13 @@ def group_set_cnf_by_mhgraph(cnf_set: set[cnf.Cnf]) -> DefaultDict[mhg.MHGraph, 
     return group
 
 
-def create_grouping(cnf_set: set[cnf.Cnf]) -> dict[Any, Any]:
+def create_grouping(cnf_set: Set[cnf.Cnf]) -> Dict[Any, Any]:
     """Group cnfs in the set according to their MHGraph supports.
     """
-    group_trivial: dict[str, set[cnf.Cnf]]
+    group_trivial: dict[str, Set[cnf.Cnf]]
     group_trivial = group_trivial_cnf(cnf_set)
 
-    group_nontrivial: DefaultDict[mhg.MHGraph, set[Any]]
+    group_nontrivial: DefaultDict[mhg.MHGraph, Set[Any]]
     group_nontrivial = group_set_cnf_by_mhgraph(cnf_set - set(_TRUE_FALSE.keys()))
 
     for key, value in group_nontrivial.items():
@@ -65,7 +64,7 @@ def create_grouping(cnf_set: set[cnf.Cnf]) -> dict[Any, Any]:
 
 
 
-def print_grouping_table(cnf_set: set[cnf.Cnf]) -> None:
+def print_grouping_table(cnf_set: Set[cnf.Cnf]) -> None:
     """Print table after grouping.
 
     Indicate complete sets by the string 'Complete'.
@@ -81,6 +80,6 @@ if __name__ == '__main__':
     g1: mhg.MHGraph = mhg.mhgraph([[2, 3, 4]])
     g2: mhg.MHGraph = mhg.mhgraph([[2, 3, 5]])
 
-    cnfs: set[cnf.Cnf]
-    cnfs = op.graph_or(g1, g2)
+    cnfs: Set[cnf.Cnf]
+    cnfs = op.graph_or(g1, g2) | op.graph_or(g3, g4) | op.graph_or(g5, g6)
     print_grouping_table(cnfs)

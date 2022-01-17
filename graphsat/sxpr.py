@@ -1,18 +1,19 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Functions for working with s-expressions.
 
 s-expressions are inspired from ELisp.
 """
 # Imports from standard library.
-from dataclasses import dataclass
 import functools as ft
-from typing import Callable, Generic, TypeVar, Union
+from dataclasses import dataclass
+from typing import Callable, Generic, Tuple, TypeVar, Union
+
 # Imports from third-party modules.
 from colorama import Fore, Style  # type: ignore[import]
 from loguru import logger
+
 # Import from local modules.
 from graphsat.mhgraph import MHGraph
-
 
 # Type variables and aliases
 Src = TypeVar('Src')
@@ -24,7 +25,7 @@ class Sxpr(Generic[Src, Trgt]):
     """Define generic S-expression."""
 
     op: Callable[[Trgt, Src], Trgt]  # pylint: disable=invalid-name
-    terms: tuple[Src, ...]
+    terms: Tuple[Src, ...]
     init: Trgt
 
     def reduce(self) -> Trgt:
@@ -47,7 +48,7 @@ class SatSxpr(Sxpr[Src, bool]):  # pylint: disable=too-few-public-methods
     Returns:
        Computes `init` value based on `op`. Then calls the `__init__` method of `Sxpr`.
     """
-    def __init__(self, op: Callable[[bool, Src], bool], terms: tuple[Src, ...]):
+    def __init__(self, op: Callable[[bool, Src], bool], terms: Tuple[Src, ...]):
         init: bool
         if op.__name__ == 'sat_and':
             init = True
@@ -72,7 +73,7 @@ class SatSxpr(Sxpr[Src, bool]):  # pylint: disable=too-few-public-methods
 
         reset: str = Style.RESET_ALL
         colored_symbol: str = color + symb + reset
-        bracket: tuple[str, str] = (color + "[" + reset, color + "]" + reset)
+        bracket: Tuple[str, str] = (color + "[" + reset, color + "]" + reset)
 
         if not self.terms:
             return bracket[0] + colored_symbol.join(map(repr, [self.init])) + bracket[1]

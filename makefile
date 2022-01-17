@@ -17,6 +17,10 @@ TEST_FOLDER = tests/
 .PHONY: all
 all: list
 
+# Select your python binary.
+PY = python3.8
+
+.PHONY : test dev-tests install tags clean
 
 # Run `make install` for installing graphsat and all its requirements.
 .PHONY: install install-direnv install-pip-packages
@@ -35,6 +39,7 @@ install-direnv:
 install-pip-packages:
 	@echo Installing packages listed in requirements.txt
 	$(PYRUN) pip install -r requirements.txt
+	$(PY) -m pip install -r requirements.txt
 
 
 # Run `make test` for running all unit tests
@@ -61,6 +66,8 @@ distclean: clean
 COVERAGE_RC_FILE = .coveragerc
 COVERAGE_RC_FLAG = --rcfile=$(COVERAGE_RC_FILE)
 
+test :
+	$(PY) -m pytest tests
 
 # Run `make dev-tests` only if there are changes made to graphsat's source
 # code. This has been tested against config files `mypy.ini` and
@@ -69,6 +76,8 @@ COVERAGE_RC_FLAG = --rcfile=$(COVERAGE_RC_FILE)
 # config files.
 .PHONY: dev-tests test-mypy test-pylint test-coverage
 dev-tests: test-mypy test-pylint test-coverage
+dev-tests :
+	$(PY) -m pytest tests
 
 test-mypy:
 	$(PYRUN) mypy -p graphsat
@@ -105,3 +114,13 @@ $(READY_FILES): literate_docs/cnf.org
 
 list:
 	@grep "^.*:.*" makefile | grep -v ".PHONY"
+# Run `make clean` to remove superfluous files.
+clean :
+	rm -rf graphsat/__pycache__
+	rm -rf graphsat/test/__pycache__
+	rm -rf .direnv
+
+# Lint the entire project
+lintall :
+	isort graphsat/
+	isort tests/

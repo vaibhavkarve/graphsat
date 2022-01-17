@@ -1,9 +1,9 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.8
 
 import pytest
 
-from graphsat.operations import satg, sat_and
 from graphsat.mhgraph import mhgraph
+from graphsat.operations import sat_and, satg
 from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
 

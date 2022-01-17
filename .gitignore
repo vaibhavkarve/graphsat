@@ -24,3 +24,6 @@
 **/*.run.xml
 
 local_rewriting.tex
+.coverage
+.coveragerc
+TAGS

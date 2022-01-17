@@ -1,44 +1,41 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """An implementation of the Local graph rewriting algorithm."""
 
 # Imports from standard library.
-from collections import defaultdict
 import functools as ft
 import itertools as it
 import multiprocessing as mp
-from typing import Any, Collection, Iterator
+from collections import defaultdict
+from typing import Any, Collection, Dict, Iterator, List, Tuple
 
 # Imports from third-paty modules.
+import more_itertools as mit
 from colorama import init  # type: ignore
 from loguru import logger
-import more_itertools as mit
 from tabulate import tabulate
 from tqdm import tqdm  # type: ignore
 
 # Imports from local modules.
-from graphsat import cnf
-import graphsat.mhgraph as mhg
-import graphsat.operations as op
-from graphsat.prop import cnf_and_cnf
-from graphsat import sat
-
-# Importing because single-dispatch does not do well with imported
-# types.
-from graphsat.mhgraph import MHGraph
-
 import graphsat.cnf_simplify as csimp
 import graphsat.graph_collapse as gcol
+import graphsat.mhgraph as mhg
+import graphsat.operations as op
+# Importing because single-dispatch does not do well with imported
+# types.
+from graphsat import cnf, sat
+from graphsat.mhgraph import MHGraph
+from graphsat.prop import cnf_and_cnf
 
 
-def get_head_and_cnfs(list_hedges: tuple[mhg.HEdge, ...]) \
-        -> tuple[cnf.Cnf, Iterator[cnf.Cnf]]:
+def get_head_and_cnfs(list_hedges: Tuple[mhg.HEdge, ...]) \
+        -> Tuple[cnf.Cnf, Iterator[cnf.Cnf]]:
     """Return first and all Cnfs supported on a list of HEdges."""
     cnfs: Iterator[cnf.Cnf]
     cnfs = sat.cnfs_from_mhgraph(mhg.mhgraph(list_hedges))
     return mit.spy(cnfs)  # type: ignore
 
 
-def decompose_pair(hyp1_hyp2: tuple[list[mhg.HEdge], list[mhg.HEdge]]) \
+def decompose_pair(hyp1_hyp2: Tuple[List[mhg.HEdge], List[mhg.HEdge]]) \
         -> bool:
     """Return True iff either part is satisfiable."""
     return any(map(decompose, map(mhg.mhgraph, hyp1_hyp2)))
@@ -56,7 +53,7 @@ def satcheck_independent(sphr_hyp1: MHGraph, sphr_hyp2: MHGraph) -> bool:
 
 def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
                        cnfs_hyp1: Iterator[cnf.Cnf],
-                       cnfs_hyp2: list[cnf.Cnf]) -> bool:
+                       cnfs_hyp2: List[cnf.Cnf]) -> bool:
     """Satcheck entangled decomposition terms.
 
     Return True iff ∀xₛ ∈ cnfs_sphr, ∀xₕ₁ ∈ cnfs_hyp1 and ∀xₕ₂ ∈
@@ -79,7 +76,7 @@ def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
                                        guarantee_nonempty: bool = True) \
         -> Iterator[tuple[list[mhg.HEdge], list[mhg.HEdge]]]:
     """Compute the link and then all nonempty 2-paritions of the link."""
-    link: tuple[mhg.HEdge, ...] = mhg.link(mhg_, vertex)
+    link: Tuple[mhg.HEdge, ...] = mhg.link(mhg_, vertex)
     logger.trace(f'{link = }')
 
     # because link = [] iff mhg_ only has loops incident at vertex.
@@ -98,7 +95,7 @@ def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
 
 def local_rewrite(mhg_: MHGraph,
                   vertex: mhg.Vertex = mhg.vertex(1),
-                  print_full: bool = False) -> dict[Any, Any]:
+                  print_full: bool = False) -> Dict[Any, Any]:
     """Rewrite under the assumption that the graph is only partially known.
 
     This function will perform a local rewrite at vertex while only affecting
@@ -121,7 +118,7 @@ def local_rewrite(mhg_: MHGraph,
     sphr_mhg_: mhg.MHGraph = mhg.mhgraph(sphr)
 
 
-    two_partitions: Iterator[tuple[list[mhg.MHGraph], list[mhg.MHGraph]]]
+    two_partitions: Iterator[Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]]
     two_partitions = compute_all_two_partitions_of_link(mhg_, vertex)
 
     rewritten_cnfs: set[cnf.Cnf] = set()
@@ -153,7 +150,7 @@ def local_rewrite(mhg_: MHGraph,
 
 def satcheck_partition(mhg_: mhg.MHGraph,
                        sphr: Collection[mhg.HEdge],
-                       hyp1_hyp2: tuple[list[mhg.MHGraph], list[mhg.MHGraph]]):
+                       hyp1_hyp2: Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]):
     """Return true if the partition term is satisfiable."""
     hyp1, hyp2 = hyp1_hyp2
 
@@ -199,10 +196,10 @@ def satcheck_partition(mhg_: mhg.MHGraph,
 def decompose_at_vertex(mhg_: MHGraph, vertex: mhg.Vertex, hyperbolic_only=False) -> bool:
     """Decompose mhg at a specified vertex."""
     # sphr is empty iff every HEdge of mhg is incident on vertex.
-    sphr: tuple[mhg.HEdge, ...] = mhg.sphr(mhg_, vertex)
+    sphr: Tuple[mhg.HEdge, ...] = mhg.sphr(mhg_, vertex)
     logger.trace(f'       {sphr = }')
 
-    two_partitions: Iterator[tuple[list[mhg.MHGraph], list[mhg.MHGraph]]]
+    two_partitions: Iterator[Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]]
     two_partitions = compute_all_two_partitions_of_link(mhg_, vertex)
 
     if hyperbolic_only:
@@ -268,8 +265,8 @@ def square(a: int, b: int, c: int, d: int, x: int) -> mhg.MHGraph:  # pylint: di
 
 
 if __name__ == "__main__":
-    from time import time
     import sys
+    from time import time
     logger.remove()
     logger.add(sys.stdout, level=0)
     init()  # for initializing terminal coloring

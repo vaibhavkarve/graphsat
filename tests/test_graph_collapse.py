@@ -1,7 +1,9 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 
 import pytest
-from graph_collapse import *
+
+from graphsat.graph_collapse import *
+
 
 def test_is_complete_cnf_set() -> None:
     assert not is_complete_cnf_set(set(), mhg.mhgraph([[1]]))

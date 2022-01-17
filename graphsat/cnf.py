@@ -1,11 +1,11 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Constructors and functions for sentences in conjunctive normal form (Cnf)."""
 
 # Imports
 # =======
-from collections.abc import Set, Callable, Collection, Iterator, Mapping
 import functools as ft
-from typing import final, Final, NewType, Union
+from collections.abc import Callable, Iterator
+from typing import Collection, Final, FrozenSet, Mapping, NewType, Set, Union
 
 from loguru import logger
 
@@ -52,7 +52,7 @@ TRUE: Final = Bool(1)
 FALSE: Final = Bool(0)  # Instances of Bool, needed to define Clause and Cnf
 
 
-class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
+class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
     """`Clause` is a subclass of `frozenset[Lit]`."""
 
     def __str__(self) -> str:
@@ -61,7 +61,7 @@ class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
         return "(" + ",".join(map(str, sorted_clause)) + ")"
 
 
-class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
+class Cnf(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
     """`Cnf` is a subclass of `frozenset[Clause]`."""
 
     def __str__(self) -> str:
@@ -213,7 +213,7 @@ def absolute_value(literal: Lit) -> Lit:
     return lit(abs(literal))
 
 
-def lits(cnf_instance: Cnf) -> frozenset[Lit]:
+def lits(cnf_instance: Cnf) -> FrozenSet[Lit]:
     """Return frozenset of all Lits that appear in a Cnf.
 
     Args:

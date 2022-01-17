@@ -1,8 +1,8 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Tests for cnf.simplify.py."""
 
 import pytest
-from context import graphsat
+
 from graphsat.cnf_simplify import *
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 """Constructors and functions for Graph and MHGraph morphisms.
 
 This includes an implementation of the brute-force subgraph search algorithm and a
@@ -6,21 +6,22 @@ brute-force isomorphism search algorithm for MHGraphs.
 """
 
 import itertools as it
-from typing import (AbstractSet, Callable, cast, Iterable, Iterator, KeysView,
-                    Mapping, NamedTuple, NewType, Optional, TypeVar, Union)
+from typing import (AbstractSet, Callable, Dict, Iterable, Iterator, KeysView,
+                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
+                    Union, cast)
 
 import more_itertools as mit
 from loguru import logger
 
 from graphsat.graph import Vertex
-from graphsat.mhgraph import HGraph, hgraph_from_mhgraph, mhgraph, MHGraph, vertices
-
+from graphsat.mhgraph import (HGraph, MHGraph, hgraph_from_mhgraph, mhgraph,
+                              vertices)
 
 # Types
 # =====
 
 #: `Translation` is an alias for ``dict[Vertex, Vertex]``.
-Translation = dict[Vertex, Vertex]
+Translation = Dict[Vertex, Vertex]
 
 #: `VertexMap` is a `collections.NamedTuple` with three named entries --- a `domain`
 #: HGraph  (called ``hgraph1``), a `codomain` HGraph (called ``hgraph2``), and a
@@ -197,18 +198,18 @@ def generate_vertexmaps(hgraph1: HGraph,
     if hgraph2 is None:
         hgraph2 = hgraph1
 
-    domain: Iterator[tuple[Vertex, ...]]
+    domain: Iterator[Tuple[Vertex, ...]]
     domain = it.permutations(vertices(hgraph1))
 
     scheme = it.combinations if injective else it.combinations_with_replacement
 
-    codomain: Iterator[tuple[Vertex, ...]]
+    codomain: Iterator[Tuple[Vertex, ...]]
     codomain = scheme(vertices(hgraph2), len(vertices(hgraph1)))
 
-    mappings1: Iterator[tuple[tuple[Vertex, ...], tuple[Vertex, ...]]]
+    mappings1: Iterator[Tuple[Tuple[Vertex, ...], Tuple[Vertex, ...]]]
     mappings1 = it.product(domain, codomain)
 
-    mappings2: Iterator[Iterator[tuple[Vertex, Vertex]]]
+    mappings2: Iterator[Iterator[Tuple[Vertex, Vertex]]]
     mappings2 = (zip(*pair) for pair in mappings1)
 
     translations: Iterator[Translation]
@@ -262,7 +263,7 @@ def is_immediate_subgraph(mhg1: MHGraph, mhg2: MHGraph) -> bool:
 
 
 def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
-        -> tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
+        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhg1`` is a `subgraph` of ``mhg2`` if there is a Morphism with domain HGraph
@@ -328,7 +329,7 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
 
 
 def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \
-        -> tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
+        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
     """Brute-force isomorphism-search algorithm extended to MHGraphs.
 
     Use :obj:`subgraph_search()` twice to check if ``mhg1`` is isomorphic to

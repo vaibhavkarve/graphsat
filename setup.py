@@ -1,7 +1,8 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.8
 
 import os
-from setuptools import setup, find_packages  # type: ignore[import]
+
+from setuptools import find_packages, setup  # type: ignore[import]
 
 
 def read(fname: str) -> str:
@@ -24,7 +25,7 @@ setup(name='graphsat',
                    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                    'Natural Language :: English',
                    'Operating System :: OS Independent',
-                   'Programming Language :: Python :: 3.9',
+                   'Programming Language :: Python :: 3.8',
                    'Topic :: Scientific/Engineering :: Mathematics',
                    'Typing :: Typed'
                    ])

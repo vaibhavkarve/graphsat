@@ -4,8 +4,11 @@
 ####### Requirements without version specifiers
 anytree
 colorama
+coverage
+loguru
 more-itertools
 mypy
+pip
 pycodestyle
 pydocstyle
 pylint
@@ -16,7 +19,7 @@ tqdm
 typer
 
 ####### Requirements with version specifiers
-loguru==0.5.3
+
 
 ####### Installing the package itself in editable mode.
 -e .

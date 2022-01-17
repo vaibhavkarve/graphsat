@@ -537,7 +537,7 @@ def simplify_at_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
 def simplify_at_leaves_and_loops(mhg: mhgraph.MHGraph) -> Union[bool, mhgraph.MHGraph]:
     """Call both simplify_at_leaves() and simplify_at_loops().
 
-    This results in a graph that is equisatisfiable to the first.
+    This resultant graph is always equisatisfiable to the input graph.
 
     """
     mhg_simp = simplify_at_leaves(mhg)
@@ -570,7 +570,7 @@ if __name__ == '__main__':
     logger.info('mhgraph_pysat_satcheck() finds all Cnfs supported on a MHGraph\n'
                 + ' '*61 + 'and then sat-checks them using the pysat satchecker.')
     logger.info('>>> mhgraph_pysat_satcheck()(mhgraph.mhgraph([[1, 2], [2, 3]]))')
-    logger.success(mhgraph_pysat_satcheck((mhgraph.mhgraph([[1, 2], [2, 3]]))))
+    logger.success(mhgraph_pysat_satcheck(mhgraph.mhgraph([[1, 2], [2, 3]])))
     logger.info('True output indicates that this MHGraph only supports satisfiable Cnfs.')
     logger.info('\n')
     logger.info('Given a Cnf we can also ask for its supporting MHGraph.')

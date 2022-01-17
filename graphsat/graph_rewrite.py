@@ -75,7 +75,8 @@ def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
     return True
 
 
-def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex) \
+def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
+                                       guarantee_nonempty: bool = True) \
         -> Iterator[tuple[list[mhg.HEdge], list[mhg.HEdge]]]:
     """Compute the link and then all nonempty 2-paritions of the link."""
     link: tuple[mhg.HEdge, ...] = mhg.link(mhg_, vertex)
@@ -83,10 +84,15 @@ def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex) \
 
     # because link = [] iff mhg_ only has loops incident at vertex.
     assert link, 'Link should be nonempty.'
-    # because we simplified at all degree 1 vertices.
-    assert len(link) > 1, 'Link should have more than one element.'
 
-    # All 2-partitions of the link. Guaranteed to be a nonempty iter.
+    if guarantee_nonempty:
+        # because user is ecpected to simplify at all degree 1 vertices.`
+        assert len(link) > 1, ('Simplify graph using the'
+                               ' "simplify_at_leaves_and_loops" function or'
+                               ' set the guarantee_nonempty flag to False.')
+
+    # All 2-partitions of the link. Guaranteed to be a nonempty iter if
+    # guarantee_nonempty is set to True (default).
     return mit.set_partitions(link, 2)
 
 

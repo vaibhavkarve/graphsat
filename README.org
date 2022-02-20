@@ -2,7 +2,7 @@
 
 [[https://zenodo.org/record/4662169][https://zenodo.org/badge/doi/10.5281/zenodo.4662169.svg]]
 
-A Python package brought to you by [[vaibhavkarve.github.io][Vaibhav Karve]] and [[https://faculty.math.illinois.edu/~hirani/][Anil N. Hirani]],
+A Python package brought to you by [[https://vaibhavkarve.github.io][Vaibhav Karve]] and [[https://faculty.math.illinois.edu/~hirani/][Anil N. Hirani]],
 Department of Mathematics, University of Illinois at Urbana-Champaign.
 
 We introduce a Python package that recognizes clauses, Cnfs, graphs,

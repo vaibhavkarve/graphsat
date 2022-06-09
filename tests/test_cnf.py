@@ -4,14 +4,14 @@ import pytest
 from graphsat.cnf import *
 
 
-def test_variable():
+def test_variable() -> None:
     assert variable(1) == 1
     assert variable(11) == 11
     assert variable(variable(2)) == variable(2)  # Test for idempotence
     pytest.raises(ValueError, variable, 0)
 
 
-def test_Bool():
+def test_Bool() -> None:
     assert TRUE == TRUE  # check for consistency
     assert TRUE not in [1, 2, 3]  # check that eq is working
     assert TRUE in {1, 2, 3, TRUE}  # check that eq and hash are working
@@ -19,7 +19,7 @@ def test_Bool():
     assert not isinstance(TRUE, bool)  # check that Bool and bool are district
 
 
-def test_lit():
+def test_lit() -> None:
     assert lit(1) == 1
     assert lit(-1) == -1
     assert lit(11) == 11
@@ -32,7 +32,7 @@ def test_lit():
     pytest.raises(ValueError, lit, 0)
 
 
-def test_clause():
+def test_clause() -> None:
     assert clause([1, 2, -3]) == {1, 2, -3}  # check for correct type
     assert clause([1, -1, 2]) == {1, -1, 2}  # +ve and -ve Lits are treated as distinct
     assert clause([TRUE]) == {TRUE}  # TRUE can be part of a Clause
@@ -53,7 +53,7 @@ def test_clause():
     pytest.raises(ValueError, clause, [])
 
 
-def test_cnf():
+def test_cnf() -> None:
     fs = frozenset  # a temporary alias for frozenset
 
     # Generic example use-case
@@ -80,7 +80,7 @@ def test_cnf():
     pytest.raises(ValueError, cnf, [[]])
 
 
-def test_neg():
+def test_neg() -> None:
     assert neg(lit(1)) == lit(-1)
     assert neg(lit(-1)) == lit(1)
     assert neg(lit(23)) == lit(-23)
@@ -94,7 +94,7 @@ def test_neg():
     pytest.raises(ValueError, neg, 0)
 
 
-def test_absolute_value():
+def test_absolute_value() -> None:
     assert absolute_value(lit(1)) == lit(1)
     assert absolute_value(lit(-1)) == lit(1)
 
@@ -109,13 +109,13 @@ def test_absolute_value():
     pytest.raises(ValueError, absolute_value, 0)
 
 
-def test_lits():
+def test_lits() -> None:
     assert lits(cnf([[1, -2], [3, TRUE], [FALSE]])) == frozenset(
         {1, -2, 3, TRUE, FALSE}
     )
 
 
-def test_tautologically_reduce_clause():
+def test_tautologically_reduce_clause() -> None:
     trc = tautologically_reduce_clause  # local alias for long function name
     assert trc(clause([lit(1), TRUE])) == clause([TRUE])
     assert trc(clause([FALSE])) == clause([FALSE])
@@ -129,7 +129,7 @@ def test_tautologically_reduce_clause():
     pytest.raises(ValueError, trc, set())
 
 
-def test_tautologically_reduce_cnf():
+def test_tautologically_reduce_cnf() -> None:
     trc = tautologically_reduce_cnf  # local alias for long function name
     # cases where Clause reductions appear within Cnf reductions
     assert trc(cnf([[1, TRUE], [1, 2]])) == cnf([[1, 2]])
@@ -158,7 +158,7 @@ def test_tautologically_reduce_cnf():
     pytest.raises(ValueError, trc, frozenset())
 
 
-def test_assign_variable_in_lit():
+def test_assign_variable_in_lit() -> None:
     avil = assign_variable_in_lit  # local alias for long function name
 
     assert avil(1, 1, TRUE) == TRUE
@@ -174,7 +174,7 @@ def test_assign_variable_in_lit():
     assert avil(avil(-1, 1, TRUE), 1, TRUE) == avil(-1, 1, TRUE)
 
 
-def test_assign_variable_in_clause():
+def test_assign_variable_in_clause() -> None:
     avic = assign_variable_in_clause  # local alias for long function name
 
     assert avic(clause([1, -2]), 1, TRUE) == {TRUE}
@@ -194,7 +194,7 @@ def test_assign_variable_in_clause():
     pytest.raises(ValueError, assign_variable_in_clause, [], 1, TRUE)
 
 
-def test_assign_variable_in_cnf():
+def test_assign_variable_in_cnf() -> None:
     avic = assign_variable_in_cnf  # local alias for long function name
 
     assert avic(cnf([[1, -2], [-1, 3]]), 1, TRUE) == cnf([[3]])
@@ -207,7 +207,7 @@ def test_assign_variable_in_cnf():
     pytest.raises(ValueError, avic, [[]], 1, TRUE)
 
 
-def test_assign():
+def test_assign() -> None:
     assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE}) == cnf([[3]])
     assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE}) == cnf([[3]])
     assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE, 3: FALSE}) == cnf(

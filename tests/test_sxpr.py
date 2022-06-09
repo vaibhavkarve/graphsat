@@ -7,13 +7,13 @@ from graphsat.operations import sat_and, sat_or
 from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
 
-def test_Sxpr():
+def test_Sxpr() -> None:
     assert Sxpr(lambda x, y: x+y, (1, 2, 3, 4), 0).reduce() == 10
     assert Sxpr(lambda x, y: x+y, (1, 2, 3, 4), 100).reduce() == 110
     assert Sxpr(lambda x, b: x**2 if b else x, (True, True, False, True), 2).reduce() == 256
 
 
-def test_SatSxpr():
+def test_SatSxpr() -> None:
     # empty arguments
     assert SatSxpr(sat_and, ()).reduce()
     assert not SatSxpr(sat_or, ()).reduce()
@@ -41,7 +41,7 @@ def test_SatSxpr():
     assert not SatSxpr(sat_or, (g2, g2)).reduce()
 
 
-def test_AtomicSxpr():
+def test_AtomicSxpr() -> None:
     # MHGraph arguments
     assert AtomicSxpr(sat_and, (mhg([[1]]), mhg([[2]]), mhg([[3]]))).reduce()
     assert not AtomicSxpr(sat_and, (mhg([[1]]), mhg([[2]]*2), mhg([[3]]))).reduce()

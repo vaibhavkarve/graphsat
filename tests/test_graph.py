@@ -5,11 +5,11 @@ import pytest
 from graphsat.graph import *
 
 
-def test_pregraph__repr__():
+def test_pregraph__repr__() -> None:
         assert repr(graph([[1, 2], [2, 3], [3, 2]])) == '(1,2),(2,3)'
 
 
-def test_vertex():
+def test_vertex() -> None:
     assert vertex(1) == 1
     assert vertex(22) == 22
 
@@ -22,7 +22,7 @@ def test_vertex():
         vertex(-1)
 
 
-def test_edge():
+def test_edge() -> None:
     assert edge([1]) == {1}
     assert edge([1, 2]) == {1, 2}
     assert edge([2, 1]) == {1, 2}
@@ -35,7 +35,7 @@ def test_edge():
         edge([2, -1])
 
 
-def test_graph():
+def test_graph() -> None:
     assert graph([[1]]) == {frozenset({1})}
     assert graph([[1, 2]]) == {frozenset({1, 2})}
     assert graph([[1, 2], [2, 1]]) == {frozenset({1, 2})}
@@ -58,5 +58,5 @@ def test_graph():
         graph([[-1]])
 
 
-def test_vertices():
+def test_vertices() -> None:
     assert vertices(graph([[1, 2], [4], [1, 3]])) == {1, 2, 3, 4}

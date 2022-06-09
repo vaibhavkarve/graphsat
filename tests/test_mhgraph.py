@@ -6,16 +6,16 @@ from graphsat.mhgraph import *
 
 
 class TestPreMHGraph(object):
-    def test__hash__(self):
+    def test__hash__(self) -> None:
         assert hash(MHGraphType([(1, 2), (2, 3), (2, 3)])) \
             == hash(MHGraphType(counter({(1, 2): 1, (2, 3): 2})))
 
-    def test__repr__(self):
+    def test__repr__(self) -> None:
         assert repr(mhgraph([[1, 2], [2, 3], [3, 2]])) in \
         ['(1, 2)¹,(2, 3)²', '(1, 2)¹,(3, 2)²', '(2, 1)¹,(2, 3)²', '(2, 1)¹,(3, 2)²']
 
 
-def test_hedge():
+def test_hedge() -> None:
     assert hedge([1]) == {1}
     assert hedge([1, 2]) == {1, 2}
     assert hedge([1, 2, 1]) == {1, 2}
@@ -28,7 +28,7 @@ def test_hedge():
         hedge([2, -1])
 
 
-def test_hgraph():
+def test_hgraph() -> None:
     assert hgraph([[1]]) == {frozenset({1})}
     assert hgraph([[1, 2]]) == {frozenset({1, 2})}
     assert hgraph([[1, 2], [2, 1]]) == {frozenset({1, 2})}
@@ -48,7 +48,7 @@ def test_hgraph():
         hgraph([[-1]])
 
 
-def test_mhgraph():
+def test_mhgraph() -> None:
     assert mhgraph([[1]]) == {frozenset({1}): 1}
     assert mhgraph([[1, 2]]) == {frozenset({1, 2}) : 1}
     assert mhgraph([[1, 2], [2, 1]]) == {frozenset({1, 2}) : 2}
@@ -68,15 +68,15 @@ def test_mhgraph():
         mhgraph([[-1]])
 
 
-def test_vertices():
+def test_vertices() -> None:
     assert vertices(mhgraph([[1,2,3], [4], [1, 2]])) == {1, 2, 3, 4}
 
 
-def test_degree():
+def test_degree() -> None:
     assert degree(2, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 3
     assert degree(1, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 2
     assert degree(4, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 1
     assert degree(5, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 0
 
-def test_graph_union():
+def test_graph_union() -> None:
     assert graph_union(mhgraph([[1, 2], [3]]), mhgraph([[1, 11]])) ==  mhgraph([[1, 2], [3], [1, 11]])

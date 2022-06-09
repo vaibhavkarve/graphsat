@@ -7,7 +7,7 @@ from graphsat.operations import sat_and, satg
 from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
 
-def test_satg():
+def test_satg() -> None:
     assert satg(True)
     assert not satg(False)
 

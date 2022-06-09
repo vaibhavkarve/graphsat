@@ -188,7 +188,7 @@ KNOWN_RULES = [EDGE_SMOOTH, HEDGE_SMOOTH] \
     + []
 
 
-def apply_rule(graph: mhgraph, rule: GraphNode) -> List[mhgraph]:
+def apply_rule(graph: MHGraph, rule: GraphNode) -> List[MHGraph]:
     """Apply the given reduction rule if possible.
 
     S : MHGraph -> R : list MHGraph
@@ -223,10 +223,10 @@ def apply_rule(graph: mhgraph, rule: GraphNode) -> List[mhgraph]:
         if degree(mapped_free, graph) != degree(rule.free, rule.graph):
             continue
 
-        mapped_parent: mhgraph
+        mapped_parent: MHGraph
         mapped_parent = morph.graph_image(sub_morph, rule.graph)
 
-        mapped_children: Iterator[mhgraph]
+        mapped_children: Iterator[MHGraph]
         mapped_children = (morph.graph_image(sub_morph, child.graph)
                            for child in rule.children)
 
@@ -235,12 +235,12 @@ def apply_rule(graph: mhgraph, rule: GraphNode) -> List[mhgraph]:
 
 
 @logger.catch
-def make_tree(mhgraph: mhgraph, parent: Optional[GraphNode] = None) -> GraphNode:
+def make_tree(mhgraph: MHGraph, parent: Optional[GraphNode] = None) -> GraphNode:
     """Make a tree starting at mhgraph as root."""
     node = GraphNode(mhgraph, parent=parent or GraphNode(mhgraph))
 
     for rule in KNOWN_RULES:
-        reduction: list[mhgraph] = apply_rule(mhgraph, rule)
+        reduction: list[MHGraph] = apply_rule(mhgraph, rule)
         if reduction[0] != mhgraph:
             for child in reduction:
                 make_tree(child, parent=node)

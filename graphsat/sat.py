@@ -150,8 +150,7 @@ def cnf_pysat_satcheck(cnf_instance: cnf.Cnf) -> bool:
        If the Cnf is Satisfiable return ``True`` else return ``False``.
 
     """
-    from pysat.solvers import \
-        Minisat22  # type: ignore  # pylint: disable=import-outside-toplevel  # noqa
+    from pysat.solvers import Minisat22  # type: ignore # pylint: disable=import-outside-toplevel  # noqa
 
     try:
         with Minisat22(cnf_instance) as minisat_solver:

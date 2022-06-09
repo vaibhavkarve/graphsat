@@ -34,7 +34,7 @@ class Sxpr(Generic[Src, Trgt]):
         Example:
            (+, (1 2 3 4), 0) will evaluate to ((((0 + 1) + 2) + 3) + 4).
         """
-        return ft.reduce(self.op, self.terms, self.init)  # type: ignore
+        return ft.reduce(self.op, self.terms, self.init)
 
 
 class SatSxpr(Sxpr[Src, bool]):  # pylint: disable=too-few-public-methods

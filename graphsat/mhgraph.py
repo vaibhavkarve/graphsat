@@ -238,14 +238,14 @@ def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:
     degree_sequence: dict[Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
     assert degree_sequence, 'Graph nonempty implies degree sequence nonempty'
-    return max(degree_sequence, key=degree_sequence.get)
+    return max(degree_sequence, key=lambda v: degree_sequence[v])
 
 
 def pick_min_degree_vertex(mhg: MHGraph) -> Vertex:
     """Pick vertex of lowest degree."""
     degree_sequence: dict[Vertex, int]
     degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
-    return min(degree_sequence, key=degree_sequence.get)
+    return min(degree_sequence, key=lambda v: degree_sequence[v])
 
 
 def star(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:

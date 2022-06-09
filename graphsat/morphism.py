@@ -7,7 +7,7 @@ brute-force isomorphism search algorithm for MHGraphs.
 
 import itertools as it
 from typing import (AbstractSet, Callable, Dict, Iterable, Iterator, KeysView,
-                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
+                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeGuard, TypeVar,
                     Union, cast)
 
 import more_itertools as mit
@@ -221,7 +221,8 @@ def generate_vertexmaps(hgraph1: HGraph,
     def vertexmaps_should_be_non_none() -> Iterator[VertexMap]:
         vertexmaps: Iterator[VertexMap]
         vertexmaps_none: Iterator[None]
-        vertexmaps_none, vertexmaps = mit.partition(lambda vm: vm is not None, vertexmaps_optional)
+        vertexmaps_none, vertexmaps = mit.partition(  # type: ignore
+            lambda vm: vm is not None, vertexmaps_optional)
         assert not list(vertexmaps_none), 'All generated vertexmaps should have been non-None.'
         return vertexmaps
 
@@ -235,8 +236,8 @@ def generate_vertexmaps(hgraph1: HGraph,
     def inj_vertexmaps_should_be_non_none() -> Iterator[InjectiveVertexMap]:
         inj_vertexmaps: Iterator[InjectiveVertexMap]
         inj_vertexmaps_none: Iterator[None]
-        inj_vertexmaps_none, inj_vertexmaps = mit.partition(lambda vm: vm is not None,
-                                                            inj_vertexmaps_optional)
+        inj_vertexmaps_none, inj_vertexmaps = mit.partition(  # type: ignore
+            lambda vm: vm is not None, inj_vertexmaps_optional)
         assert not list(inj_vertexmaps_none), \
             'All generated inj-vertexmaps should have been non-None.'
         return inj_vertexmaps
@@ -263,7 +264,7 @@ def is_immediate_subgraph(mhg1: MHGraph, mhg2: MHGraph) -> bool:
 
 
 def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
-        -> Tuple[bool, Union[None, Morphism, Iterator[Morphism]]]:
+        -> Tuple[bool, None | Morphism | Iterator[Morphism]]:
     """Brute-force subgraph search algorithm extended to MHGraphs.
 
     ``mhg1`` is a `subgraph` of ``mhg2`` if there is a Morphism with domain HGraph
@@ -325,7 +326,9 @@ def subgraph_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool) \
         # Not a subgraph.
         return False, None
 
-    return True, subgraph_morphs if return_all else mit.one(first_morph)
+    if return_all:
+        return True, subgraph_morphs
+    return True, mit.one(first_morph)
 
 
 def isomorphism_search(mhg1: MHGraph, mhg2: MHGraph, return_all: bool = False) \

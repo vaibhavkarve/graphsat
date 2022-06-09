@@ -4,8 +4,8 @@
 # Imports
 # =======
 import functools as ft
-from collections.abc import Callable, Iterator
-from typing import Collection, Final, FrozenSet, Mapping, NewType, Set, Union
+from collections.abc import Callable, Iterator, Set
+from typing import Set, Collection, final, Final, Mapping, NewType, Union
 
 from loguru import logger
 
@@ -52,7 +52,7 @@ TRUE: Final = Bool(1)
 FALSE: Final = Bool(0)  # Instances of Bool, needed to define Clause and Cnf
 
 
-class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
+class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
     """`Clause` is a subclass of `frozenset[Lit]`."""
 
     def __str__(self) -> str:
@@ -61,7 +61,7 @@ class Clause(FrozenSet[Lit]):  # pylint: disable=too-few-public-methods
         return "(" + ",".join(map(str, sorted_clause)) + ")"
 
 
-class Cnf(FrozenSet[Clause]):  # pylint: disable=too-few-public-methods
+class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
     """`Cnf` is a subclass of `frozenset[Clause]`."""
 
     def __str__(self) -> str:
@@ -101,7 +101,7 @@ def variable(positive_int: int) -> Variable:
 
 
 @ft.singledispatch
-def lit(int_or_bool: Union[int, Bool]) -> Lit:
+def lit(int_or_bool: int | Bool) -> Lit:
     r"""Constructor-function for Lit type.
 
     By definition, a `Lit` is in the set ℤ \\ {0} ∪ {`TRUE`, `FALSE`}.
@@ -213,7 +213,7 @@ def absolute_value(literal: Lit) -> Lit:
     return lit(abs(literal))
 
 
-def lits(cnf_instance: Cnf) -> FrozenSet[Lit]:
+def lits(cnf_instance: Cnf) -> frozenset[Lit]:
     """Return frozenset of all Lits that appear in a Cnf.
 
     Args:
@@ -239,7 +239,7 @@ def tautologically_reduce_clause(lit_set: Set[Lit]) -> Clause:
           disjunction.
 
     Args:
-       lit_set (:obj:`Set[Lit]`): an abstract set (a set or a frozenset) of Lits.
+       lit_set (:obj:`set[Lit]`): an abstract set (a set or a frozenset) of Lits.
 
     Return:
        The Clause formed by performing all the above-mentioned tautological reductions.
@@ -267,7 +267,7 @@ def tautologically_reduce_cnf(clause_set: Set[Set[Lit]]) -> Cnf:
        conjunction.
 
     Args:
-       clause_set (:obj:`Set[Set[Lit]]`): an abstract set (set or frozenset) of abstract sets
+       clause_set (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
        of Lits.
 
     Return:
@@ -312,7 +312,7 @@ def assign_variable_in_lit(
 
 
 def assign_variable_in_clause(
-    lit_set: Set[Lit], variable_instance: Variable, boolean: Bool
+    lit_set: set[Lit], variable_instance: Variable, boolean: Bool
 ) -> Clause:
     """Assign Bool value to a Variable if present in Clause.
 
@@ -321,7 +321,7 @@ def assign_variable_in_clause(
     reductions on the Clause before returning results. This function is idempotent.
 
     Args:
-       lit_set (:obj:`Set[Lit]`): an abstract set (set or frozenset) of Lits.
+       lit_set (:obj:`set[Lit]`): an abstract set (set or frozenset) of Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
@@ -349,7 +349,7 @@ def assign_variable_in_cnf(
     reductions on the Cnf before returning results. This function is idempotent.
 
     Args:
-       clause_set (:obj:`Set[Set[Lit]]`): an abstract set (set or frozenset) of abstract sets
+       clause_set (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
           of Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.

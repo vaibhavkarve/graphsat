@@ -7,25 +7,26 @@ algorithm. But for our simple use-case, this might be over-engineered.
 Instead we implement our own functions for making this simplification.
 
 """
-import functools as ft
 import itertools as it
-from typing import FrozenSet
+from typing import FrozenSet, cast
 
-import graphsat.cnf as cnf
+from graphsat.cnf import cnf, Bool, Cnf, Clause, Lit, clause, absolute_value
 import graphsat.mhgraph as mhg
 
 
 #@ft.lru_cache
-def hedge_of_clause(clause: cnf.Clause) -> mhg.HEdge:
+def hedge_of_clause(clause: Clause) -> mhg.HEdge:
     """Return the hedge corresponding to a clause.
 
     hedge_of_clause = hedge ∘ set ∘ map(absolute_value, __)
 
     """
-    return mhg.hedge(set(map(cnf.absolute_value, clause)))
+    absolute_literal_values: set[int | Bool] = {absolute_value(literal).value for literal in clause}
+    assert all(isinstance(value, int) for value in absolute_literal_values), "Encountered Bool value."
+    return mhg.hedge(cast(set[int], absolute_literal_values))
 
 
-def differing_lits(clause1: cnf.Clause, clause2: cnf.Clause) -> FrozenSet[cnf.Lit]:
+def differing_lits(clause1: Clause, clause2: Clause) -> FrozenSet[Lit]:
     """Give a set of literals that two clauses differ on.
 
     This returns a set that can give us (2-times-of-the) Hamming distance between
@@ -45,7 +46,7 @@ def differing_lits(clause1: cnf.Clause, clause2: cnf.Clause) -> FrozenSet[cnf.Li
     return clause1 ^ clause2
 
 
-def equivalent_smaller_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.Clause:
+def equivalent_smaller_clause(clause1: Clause, clause2: Clause) -> Clause:
     """Given clauses that are distance 1 apart, return smaller equiv. clause.
 
     The smaller equivalent clause is given by the intersection of the two clauses.
@@ -54,13 +55,13 @@ def equivalent_smaller_clause(clause1: cnf.Clause, clause2: cnf.Clause) -> cnf.C
     """
     assert len(differing_lits(clause1, clause2)) == 2, 'Hamming distance should be 1.'
 
-    equiv_clause: cnf.Clause = cnf.clause(clause1 & clause2)
+    equiv_clause: Clause = clause(clause1 & clause2)
     assert len(equiv_clause) == len(clause1) - 1
     return equiv_clause
 
 
-def reduce_distance_one_clauses(cnf_instance: cnf.Cnf) -> cnf.Cnf:
-    """Reduce all clauses in the the Cnf.
+def reduce_distance_one_clauses(cnf_instance: Cnf) -> Cnf:
+    """Reduce all clauses in the the
 
     The problem this function is trying to solve is known to be NP-hard. This is an
     inefficient solution to this problem. Do not apply it to Cnfs with more than 5
@@ -75,11 +76,11 @@ def reduce_distance_one_clauses(cnf_instance: cnf.Cnf) -> cnf.Cnf:
             # Hamming distance in clauses = 1
             reduced_cnf = cnf_instance - {clause1, clause2}
             reduced_cnf = reduced_cnf | {equivalent_smaller_clause(clause1, clause2)}
-            return reduce_distance_one_clauses(cnf.cnf(reduced_cnf))
+            return reduce_distance_one_clauses(cnf(reduced_cnf))
     return cnf_instance
 
 
-def subclause_reduction(cnf_instance: cnf.Cnf) -> cnf.Cnf:
+def subclause_reduction(cnf_instance: Cnf) -> Cnf:
     """Replace the conjunction of two clauses with the smaller clause.
 
     If c₁ c₂ : Clause, we sat the c₁ ≪ c₂ if every literal of c₁ is in c₂.
@@ -89,18 +90,17 @@ def subclause_reduction(cnf_instance: cnf.Cnf) -> cnf.Cnf:
     """
     for clause1, clause2 in it.permutations(cnf_instance, 2):
         if clause1 <= clause2:
-            new_cnf: cnf.Cnf = cnf.cnf(cnf_instance - {clause2})
+            new_cnf: Cnf = cnf(cnf_instance - {clause2})
             return subclause_reduction(new_cnf)
     return cnf_instance
 
 
-
-def reduce_cnf(cnf_instance: cnf.Cnf) -> cnf.Cnf:
+def reduce_cnf(cnf_instance: Cnf) -> Cnf:
     """Reduce distance=1 as well as subclauses."""
     return subclause_reduction(reduce_distance_one_clauses(cnf_instance))
 
 
 
-if __name__ == '__main__':
-    x: cnf.Cnf = cnf.cnf([[1, 2, -3], [1, 2, 3], [-1, -2, 3], [4, 5], [4, 5, -6]])
+if __name__ == '__main__':  # pragma: no cover
+    x: Cnf = cnf([[1, 2, -3], [1, 2, 3], [-1, -2, 3], [4, 5], [4, 5, -6]])
     print(reduce_cnf(x))

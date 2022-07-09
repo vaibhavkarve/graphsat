@@ -2,81 +2,83 @@
 
 import pytest
 
-from graphsat.mhgraph import *
+from collections import Counter as counter
+from hypothesis import given, strategies as st, assume
+from graphsat.graph import vertex, Vertex
+from graphsat.mhgraph import (HEdge, HGraph, MHGraph, degree, graph_union, hedge,
+                              hgraph, mhgraph, vertices)
 
 
-class TestPreMHGraph(object):
-    def test__hash__(self) -> None:
-        assert hash(MHGraphType([(1, 2), (2, 3), (2, 3)])) \
-            == hash(MHGraphType(counter({(1, 2): 1, (2, 3): 2})))
-
-    def test__repr__(self) -> None:
-        assert repr(mhgraph([[1, 2], [2, 3], [3, 2]])) in \
-        ['(1, 2)¹,(2, 3)²', '(1, 2)¹,(3, 2)²', '(2, 1)¹,(2, 3)²', '(2, 1)¹,(3, 2)²']
+def test__repr() -> None:
+    assert repr(mhgraph([[1, 2], [2, 3], [3, 2]])) in \
+    ['(1, 2)¹,(2, 3)²', '(1, 2)¹,(3, 2)²', '(2, 1)¹,(2, 3)²', '(2, 1)¹,(3, 2)²']
 
 
-def test_hedge() -> None:
-    assert hedge([1]) == {1}
-    assert hedge([1, 2]) == {1, 2}
-    assert hedge([1, 2, 1]) == {1, 2}
-
-    with pytest.raises(ValueError):
-        hedge([])
-    with pytest.raises(ValueError):
-        hedge([0])
-    with pytest.raises(ValueError):
-        hedge([2, -1])
+@given(st.lists(st.integers(min_value=1), min_size=1))
+def test_hedge_on_list_of_integers_input(instance: list[int]) -> None:
+    pytest.raises(ValueError, hedge, [])
+    pytest.raises(ValueError, hedge, [0])
+    assert hedge(instance) == frozenset(instance)
 
 
-def test_hgraph() -> None:
-    assert hgraph([[1]]) == {frozenset({1})}
-    assert hgraph([[1, 2]]) == {frozenset({1, 2})}
-    assert hgraph([[1, 2], [2, 1]]) == {frozenset({1, 2})}
+st.register_type_strategy(HEdge, st.frozensets(st.from_type(Vertex),
+                                               min_size=1).map(hedge))
 
-    assert hgraph(counter({(1,)})) == {frozenset({1})}
-    assert hgraph(counter({(1, 2)})) == {frozenset({1, 2})}
-    assert hgraph(counter({(1, 2)})) == {frozenset({1, 2})}
-
-    # Test for idempotence
-    assert hgraph(hgraph([[1, 2], [2, 1], [3]])) == hgraph([[1, 2], [2, 1], [3]])
-
-    with pytest.raises(ValueError):
-        hgraph([[]])
-    with pytest.raises(ValueError):
-        hgraph([[0]])
-    with pytest.raises(ValueError):
-        hgraph([[-1]])
+@given(st.from_type(HEdge))
+def test_hedge_on_hedge_input(instance: HEdge) -> None:
+    assert hedge(instance) == frozenset(instance)
 
 
-def test_mhgraph() -> None:
-    assert mhgraph([[1]]) == {frozenset({1}): 1}
-    assert mhgraph([[1, 2]]) == {frozenset({1, 2}) : 1}
-    assert mhgraph([[1, 2], [2, 1]]) == {frozenset({1, 2}) : 2}
-
-    assert mhgraph(counter({(1,): 1})) == {frozenset({1}): 1}
-    assert mhgraph(counter({(1, 2): 1})) == {frozenset({1, 2}) : 1}
-    assert mhgraph(counter({(1, 2): 2})) == {frozenset({1, 2}) : 2}
-
-    # Test for idempotence
-    assert mhgraph(mhgraph([[1, 2], [2, 1], [3]])) == mhgraph([[1, 2], [2, 1], [3]])
-
-    with pytest.raises(ValueError):
-        mhgraph([[]])
-    with pytest.raises(ValueError):
-        mhgraph([[0]])
-    with pytest.raises(ValueError):
-        mhgraph([[-1]])
+@given(st.lists(st.from_type(HEdge), min_size=1))
+def test_hgraph_on_list_of_hedge_input(instance: list[HEdge]) -> None:
+    pytest.raises(ValueError, hgraph, [])
+    assert hgraph(instance) == frozenset(instance)
+    assert hgraph(hgraph(instance)) == hgraph(instance)
 
 
-def test_vertices() -> None:
-    assert vertices(mhgraph([[1,2,3], [4], [1, 2]])) == {1, 2, 3, 4}
+st.register_type_strategy(HGraph, st.frozensets(st.from_type(HEdge),
+                                                min_size=1).map(hgraph))
 
 
-def test_degree() -> None:
-    assert degree(2, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 3
-    assert degree(1, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 2
-    assert degree(4, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 1
-    assert degree(5, mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == 0
+@given(st.from_type(HGraph))
+def test_hgraph_on_hgraph_input(instance: HGraph) -> None:
+    assert hgraph(instance) == frozenset(instance)
+    assert hgraph(hgraph(instance)) == hgraph(instance)
 
-def test_graph_union() -> None:
-    assert graph_union(mhgraph([[1, 2], [3]]), mhgraph([[1, 11]])) ==  mhgraph([[1, 2], [3], [1, 11]])
+
+@given(st.lists(st.from_type(HEdge), min_size=1))
+def test_mhgraph_on_list_of_hedge_input(instance: list[HEdge]) -> None:
+    pytest.raises(ValueError, mhgraph, [])
+    assert mhgraph(instance) == counter(instance)
+    assert mhgraph(mhgraph(instance)) == mhgraph(counter(instance))
+    assert hash(mhgraph(instance))
+
+
+st.register_type_strategy(MHGraph, st.dictionaries(st.from_type(HEdge),
+                                                   st.integers(), min_size=1).map(mhgraph))
+
+@given(st.from_type(MHGraph))
+def test_mhgraph_on_mhgraph_input(instance: MHGraph) -> None:
+    # Test if instance is hashable.
+    {instance: 1}
+    assert mhgraph(instance) == counter(instance)
+    assert mhgraph(mhgraph(instance)) == mhgraph(counter(instance))
+
+
+@given(st.one_of(st.from_type(HGraph), st.from_type(MHGraph)))
+def test_vertices(instance: HGraph | MHGraph) -> None:
+    assert vertices(instance) == {vertex_instance for edge_instance in instance
+                                     for vertex_instance in edge_instance}
+
+@pytest.mark.parametrize("vertex_instance,degree_output",
+                         [(2, 3),
+                          (1, 2),
+                          (4, 1),
+                          (5, 0)])
+def test_degree(vertex_instance: int, degree_output: int) -> None:
+    assert degree(vertex(vertex_instance), mhgraph([[1, 2], [3, 4, 2], [1, 2]])) == degree_output
+
+
+@given(st.from_type(MHGraph), st.from_type(MHGraph))
+def test_graph_union(instance1: MHGraph, instance2: MHGraph) -> None:
+    assert graph_union(instance1, instance2) == mhgraph(instance1 + instance2)

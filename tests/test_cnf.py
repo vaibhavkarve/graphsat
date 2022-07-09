@@ -1,225 +1,328 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.10
+from typing import Collection
+
+import attr
 import pytest
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
-from graphsat.cnf import *
-
-
-def test_variable() -> None:
-    assert variable(1) == 1
-    assert variable(11) == 11
-    assert variable(variable(2)) == variable(2)  # Test for idempotence
-    pytest.raises(ValueError, variable, 0)
-
-
-def test_Bool() -> None:
-    assert TRUE == TRUE  # check for consistency
-    assert TRUE not in [1, 2, 3]  # check that eq is working
-    assert TRUE in {1, 2, 3, TRUE}  # check that eq and hash are working
-    assert isinstance(TRUE, Bool)  # check that python recognizes the class correctly
-    assert not isinstance(TRUE, bool)  # check that Bool and bool are district
+from graphsat.cnf import (Assignment, Bool, Clause, Cnf, Lit, Variable,
+                          absolute_value, assign, assign_variable_in_clause,
+                          assign_variable_in_cnf, assign_variable_in_lit,
+                          clause, cnf, int_repr, lit, lits, neg,
+                          tautologically_reduce_clause,
+                          tautologically_reduce_cnf, variable)
 
 
-def test_lit() -> None:
-    assert lit(1) == 1
-    assert lit(-1) == -1
-    assert lit(11) == 11
-    assert lit(TRUE) == TRUE
-    assert lit(FALSE) == FALSE
-    assert lit(lit(2)) == lit(2)  # Test for idempotence.
-    assert lit(lit(TRUE)) == lit(TRUE)  # Test for idempotence.
-    assert lit(lit(FALSE)) == lit(FALSE)  # Test for idempotence.
+@given(st.integers())
+def test_variable(instance: int) -> None:
+    # Check that ValueError is raised on invalid input.
+    assert pytest.raises(ValueError, variable, 0)
+    assert pytest.raises(ValueError, variable, -1)
 
+    # Assume that input is valid.
+    assume(instance > 0)
+
+    # Check for equality comparison between Variable and the underlying int.
+    assert variable(instance) == instance
+    # Check for idempotence.
+    assert variable(variable(instance)) == instance
+
+
+st.register_type_strategy(Variable, st.integers(min_value=1).map(variable))
+
+
+@given(st.sampled_from(Bool))
+def test_Bool(instance: Bool) -> None:
+    assert instance in Bool
+    assert instance == instance  # Check for consistency, and __eq__.
+    assert instance not in (0, 1)  # Bool is not a subtype of int.
+    assert instance not in (True, False)  # Bool != bool
+    assert instance not in ("T", "F")  # Bool is not a subtype of str.
+    assert instance in (Bool.TRUE, Bool.FALSE)  # Bool comparison with itself.
+    assert hasattr(instance, "__hash__")  # Bool is hashable.
+    assert instance < 1  # every Bool member is less than every int.
+    assert Bool.FALSE < Bool.TRUE
+    with pytest.raises(TypeError):
+        assert instance < "T"
+
+
+@given(st.from_type(Bool | int), st.from_type(Bool | int))
+def test_lit_class(instance: Bool | int, other: Bool | int) -> None:
+    assert Lit(instance) == Lit(instance)  # Self-equality.
+    assert not Lit(instance) < Lit(instance)  # Order is defined.
+    if isinstance(instance, int) and isinstance(other, int):
+        assert (instance < other) == (Lit(instance) < Lit(other))  # Lits are ordered by value.
+    assert str(Lit(instance))
+    # Check that Lits are frozen once created.
+    with pytest.raises(attr.exceptions.FrozenInstanceError):
+        lit1: Lit = Lit(value=3)
+        lit1.value += 1  # type: ignore  # Silence mypy for the sake of testing that Lit.value is frozen.
+
+
+@given(st.from_type(Bool | int))  #  type: ignore  # Mypy errors on union type.
+def test_lit_on_int_and_bool_input(instance: Bool | int) -> None:
     pytest.raises(ValueError, lit, 0)
+    pytest.raises(TypeError, lit, "T")
+    assume(instance)
+    assert lit(instance) == Lit(value=instance)
+    assert lit(lit(instance)) == lit(instance)  # Check for idempotence.
 
 
-def test_clause() -> None:
-    assert clause([1, 2, -3]) == {1, 2, -3}  # check for correct type
-    assert clause([1, -1, 2]) == {1, -1, 2}  # +ve and -ve Lits are treated as distinct
-    assert clause([TRUE]) == {TRUE}  # TRUE can be part of a Clause
-    assert clause([FALSE]) == {FALSE}  # FALSE can be part of a Clause
-    assert clause([1, TRUE]) == {1, TRUE}  # TRUE is distinct from 1 in a Clause
-    assert clause([-1, FALSE]) == {-1, FALSE}  # FALSE is distinct from -1 in a Clause
-    assert clause([1, TRUE, FALSE]) == {
-        1,
-        TRUE,
-        FALSE,
-    }  # TRUE and FALSE can both appear
+st.register_type_strategy(Lit,
+                          st.one_of(st.integers().filter(lambda x: x),
+                                    st.sampled_from(Bool))
+                          .map(lit))
 
-    # Tests for idempotence
-    assert clause(clause([1, 2, -3])) == clause([1, 2, -3])
-    assert clause(clause([TRUE])) == clause([TRUE])
-    assert clause(clause([FALSE])) == clause([FALSE])
 
+@given(st.from_type(Lit))
+def test_lit_on_lit_input(instance: Lit) -> None:
+    assert lit(instance) == instance  # Check that lit does not modify Lit instances.
+    assert lit(instance) is instance
+    assert lit(lit(instance)) == lit(instance)  # Check for idempotence.
+
+
+@given(st.lists(st.from_type(Bool | int | Lit),  # type: ignore  # Mypy errors on union type.
+                min_size=1))
+def test_clause(instance: list[Bool | int | Lit]) -> None:
     pytest.raises(ValueError, clause, [])
+    # Invalid input: zero value in collection.
+    assume(all(instance))
+
+    assert clause(instance) == set(map(lit, instance))  # Check type and value of output.
+    assert clause(clause(instance)) == clause(instance)  # Check for idempotence.
 
 
-def test_cnf() -> None:
-    fs = frozenset  # a temporary alias for frozenset
-
-    # Generic example use-case
-    assert cnf([[1, 2, -3], [-4, 5]]) == {fs([1, 2, -3]), fs([-4, 5])}
-
-    # Test for removing repetitions
-    assert cnf([[1, 1, -1], [1, -1]]) == {fs([1, -1])}
-
-    # Cnf with TRUE and FALSE inside a Clause
-    assert cnf([[1, 2, TRUE], [3, FALSE]]) == {fs([1, 2, TRUE]), fs([3, FALSE])}
-
-    # Cnf with a Bool-only Clause
-    assert cnf([[1, 2, 3], [FALSE], [TRUE]]) == {fs([1, 2, 3]), fs([FALSE]), fs([TRUE])}
-    assert cnf([[TRUE], [TRUE, TRUE]]) == {fs([TRUE])}
-
-    # Single-Lit-single-Clause Cnf
-    assert cnf([[1]]) == {fs([1])}
-    assert cnf([[-1]]) == {fs([-1])}
-
-    # Test for idempotence.
-    assert cnf(cnf([[1, 2, 3], [-4, 5]])) == cnf([[1, 2, 3], [-4, 5]])
-
-    pytest.raises(ValueError, cnf, [])
-    pytest.raises(ValueError, cnf, [[]])
+st.register_type_strategy(Clause,
+                          st.frozensets(st.from_type(Lit), min_size=1)
+                          .map(clause))
 
 
-def test_neg() -> None:
-    assert neg(lit(1)) == lit(-1)
-    assert neg(lit(-1)) == lit(1)
-    assert neg(lit(23)) == lit(-23)
-    assert neg(TRUE) == FALSE
-    assert neg(FALSE) == TRUE
-
-    # Test for involution.
-    assert neg(neg(lit(1))) == lit(1)
-    assert neg(neg(lit(-1))) == lit(-1)
-
-    pytest.raises(ValueError, neg, 0)
+@given(st.from_type(Clause))
+def test_clause_on_clause_input(instance: Clause) -> None:
+    assert clause(instance) == set(map(lit, instance))  # Check type and value of output.
+    assert clause(clause(instance)) == clause(instance)  # Check for idempotence.
 
 
-def test_absolute_value() -> None:
-    assert absolute_value(lit(1)) == lit(1)
-    assert absolute_value(lit(-1)) == lit(1)
+@given(st.lists(st.lists(st.from_type(Bool | int | Lit),  #  type: ignore  # Mypy errors on union type.
+                         min_size=1), min_size=1))
+def test_cnf_on_collection_input(instance: Collection[Collection[Bool | int | Lit]]) -> None:
+    # Invalid input: empty collection.
+    assume(instance)
+    # Invalid input: at least one of the sub-collections is empty.
+    assume(all(instance))
+    # Invalid input: at least element in at least one sub-collection is zero.
+    assume(all(map(all, instance)))
 
-    # Test for idempotence.
-    assert absolute_value(absolute_value(lit(1))) == absolute_value(lit(1))
-    assert absolute_value(absolute_value(lit(-1))) == absolute_value(lit(-1))
-
-    # Test for Bools
-    assert absolute_value(TRUE) == TRUE
-    assert absolute_value(FALSE) == FALSE
-
-    pytest.raises(ValueError, absolute_value, 0)
-
-
-def test_lits() -> None:
-    assert lits(cnf([[1, -2], [3, TRUE], [FALSE]])) == frozenset(
-        {1, -2, 3, TRUE, FALSE}
-    )
+    # Check type and value of output.
+    assert cnf(instance) == set(map(clause, instance))
+    # Check for idempotence.
+    assert cnf(cnf(instance)) == cnf(instance)
 
 
-def test_tautologically_reduce_clause() -> None:
-    trc = tautologically_reduce_clause  # local alias for long function name
-    assert trc(clause([lit(1), TRUE])) == clause([TRUE])
-    assert trc(clause([FALSE])) == clause([FALSE])
-    assert trc(clause([lit(1), FALSE])) == clause([lit(1)])
-    assert trc(clause([lit(1), lit(-1)])) == clause([TRUE])
-
-    # Test for idempotence
-    _clause = clause([lit(1), lit(-2), lit(3), lit(3)])
-    assert trc(trc(_clause)) == trc(_clause)
-
-    pytest.raises(ValueError, trc, set())
+st.register_type_strategy(Cnf,
+                          st.frozensets(st.from_type(Clause), min_size=1)
+                          .map(cnf))
 
 
-def test_tautologically_reduce_cnf() -> None:
-    trc = tautologically_reduce_cnf  # local alias for long function name
-    # cases where Clause reductions appear within Cnf reductions
-    assert trc(cnf([[1, TRUE], [1, 2]])) == cnf([[1, 2]])
-    assert trc(cnf([[FALSE], [1, 2]])) == cnf([[FALSE]])
-    assert trc(cnf([[1, FALSE], [1, 2]])) == cnf([[1], [1, 2]])
-    assert trc(cnf([[1, -1], [1, 2]])) == cnf([[1, 2]])
-
-    # cases where we might have two simultaneous clause reductions
-    assert trc(cnf([[1, TRUE], [FALSE]])) == cnf([[FALSE]])
-    assert trc(cnf([[1, TRUE], [1, FALSE]])) == cnf([[1]])
-    assert trc(cnf([[1, TRUE], [1, -1]])) == cnf([[TRUE]])
-    assert trc(cnf([[FALSE], [1, FALSE]])) == cnf([[FALSE]])
-    assert trc(cnf([[FALSE], [1, -1]])) == cnf([[FALSE]])
-    assert trc(cnf([[1, FALSE], [1, -1]])) == cnf([[1]])
-
-    # cases where we might have a cnf-related tautology
-    assert trc(cnf([[1], [FALSE]])) == cnf([[FALSE]])
-    assert trc(cnf([[TRUE]])) == cnf([[TRUE]])
-    assert trc(cnf([[1], [TRUE]])) == cnf([[1]])
-
-    # Test for idempotence.
-    _cnf = cnf([[lit(1), lit(2)], [lit(-2)]])
-    assert trc(trc(_cnf)) == trc(_cnf)
-
-    pytest.raises(ValueError, trc, set())
-    pytest.raises(ValueError, trc, frozenset())
+@given(st.from_type(Cnf))
+def test_cnf_on_cnf_input(instance: Cnf) -> None:
+    # Check type and value of output.
+    assert cnf(instance) == set(map(clause, instance))
+    # Check for idempotence.
+    assert cnf(cnf(instance)) == cnf(instance)
 
 
-def test_assign_variable_in_lit() -> None:
-    avil = assign_variable_in_lit  # local alias for long function name
-
-    assert avil(1, 1, TRUE) == TRUE
-    assert avil(1, 1, FALSE) == FALSE
-    assert avil(-1, 1, TRUE) == FALSE
-    assert avil(-1, 1, FALSE) == TRUE
-    assert avil(1, 2, TRUE) == 1
-    assert avil(TRUE, 1, TRUE) == TRUE
-    assert avil(FALSE, 1, TRUE) == FALSE
-
-    # Test for idempotence
-    assert avil(avil(1, 1, TRUE), 1, TRUE) == avil(1, 1, TRUE)
-    assert avil(avil(-1, 1, TRUE), 1, TRUE) == avil(-1, 1, TRUE)
+def test_cnf_string_on_example() -> None:
+    assert str(cnf([[1, -2], [3, Bool.TRUE]])) in ("Cnf({Clause({Bool.TRUE, 3}), Clause({-2, 1})})",
+                                                   "Cnf({Clause({-2, 1}), Clause({Bool.TRUE, 3})})")
 
 
-def test_assign_variable_in_clause() -> None:
-    avic = assign_variable_in_clause  # local alias for long function name
+@given(st.from_type(Lit))
+def test_neg(instance: Lit) -> None:
+    pytest.raises(TypeError, neg, Bool.TRUE)
+    # Check for involution.
+    assert neg(instance) != instance
+    assert neg(neg(instance)) == instance
 
-    assert avic(clause([1, -2]), 1, TRUE) == {TRUE}
-    assert avic(clause([1, -2]), 1, FALSE) == {-2}
-    assert avic(clause([1, -2, -1]), 1, TRUE) == {TRUE}
-    assert avic(clause([1, -2, -1]), 1, FALSE) == {TRUE}
-    assert avic(clause([1, -2]), 2, TRUE) == {1}
-    assert avic(clause([1, -2]), 2, FALSE) == {TRUE}
-    assert avic(clause([1, -2, -1]), 2, TRUE) == {TRUE}
-    assert avic(clause([1, -2, -1]), 2, FALSE) == {TRUE}
+    # Check result on Bool-valued literals.
+    assert neg(lit(Bool.TRUE)) == lit(Bool.FALSE)
+    assert neg(lit(Bool.FALSE)) == lit(Bool.TRUE)
 
-    # Test for idempotence
-    _clause: Clause = clause([lit(1), lit(-2), lit(-1)])
-    _var: Variable = variable(2)
-    assert avic(avic(_clause, _var, FALSE), _var, FALSE) == avic(_clause, _var, FALSE)
-
-    pytest.raises(ValueError, assign_variable_in_clause, [], 1, TRUE)
+    # Check result on int-valued literals.
+    if isinstance(instance.value, int):
+        assert neg(instance) == lit(-instance.value)
 
 
-def test_assign_variable_in_cnf() -> None:
-    avic = assign_variable_in_cnf  # local alias for long function name
+@given(st.from_type(Lit))
+def test_absolute_value(instance: Lit) -> None:
+    # Check for idempotence.
+    assert absolute_value(absolute_value(instance)) == absolute_value(instance)
 
-    assert avic(cnf([[1, -2], [-1, 3]]), 1, TRUE) == cnf([[3]])
-    assert avic(cnf([[1, -2], [-1, 3]]), 1, FALSE) == cnf([[-2]])
-
-    # Test for idempotence.
-    _cnf = cnf([[1, -2], [-1, 3]])
-    assert avic(avic(_cnf, 1, FALSE), 1, FALSE) == avic(_cnf, 1, FALSE)
-
-    pytest.raises(ValueError, avic, [[]], 1, TRUE)
+    # Check return value.
+    assert absolute_value(lit(Bool.TRUE)) == lit(Bool.TRUE)
+    assert absolute_value(lit(Bool.FALSE)) == lit(Bool.TRUE)
+    if isinstance(instance.value, int):
+        absolute_value(instance) == lit(abs(instance.value))
 
 
-def test_assign() -> None:
-    assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE}) == cnf([[3]])
-    assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE}) == cnf([[3]])
-    assert assign(cnf([[1, -2], [-1, 3]]), {1: TRUE, 2: FALSE, 3: FALSE}) == cnf(
-        [[FALSE]]
-    )
-    assert assign(cnf([[TRUE]]), {1: TRUE}) == cnf([[TRUE]])
-    assert assign(cnf([[TRUE]]), {}) == cnf([[TRUE]])
-    assert assign(cnf([[FALSE]]), {}) == cnf([[FALSE]])
-    assert assign(cnf([[1]]), {}) == cnf([[1]])
+@given(st.from_type(Cnf))
+def test_lits(instance: Cnf) -> None:
+    assert lits(instance) == {lit_collection for clause_collection in instance
+                              for lit_collection in clause_collection}
 
-    # Test for idempotence.
-    _cnf = cnf([[1, -2], [-1, 3]])
-    assert assign(assign(_cnf, {1: TRUE}), {1: TRUE}) == assign(_cnf, {1: TRUE})
 
-    pytest.raises(ValueError, assign, [[]], {1: TRUE})
+@given(st.from_type(Clause))
+def test_tautologically_reduce_clause(instance: Clause) -> None:
+    # Check for idempotence.
+    assert tautologically_reduce_clause(tautologically_reduce_clause(instance)) \
+       == tautologically_reduce_clause(instance)
+
+
+@pytest.mark.parametrize(
+    "lit_collection,output",
+    [
+        ({1, Bool.TRUE}, [Bool.TRUE]),
+        ({Bool.FALSE}, [Bool.FALSE]),
+        ({1, Bool.FALSE}, [1]),
+        ({1, -1}, [Bool.TRUE]),
+    ])
+def test_tautologically_reduce_clause_with_examples(
+        lit_collection: Collection[Bool | int],
+        output: Collection[Bool | int]) -> None:
+    assert tautologically_reduce_clause(clause(lit_collection)) == clause(output)
+
+
+@given(st.from_type(Cnf))
+def test_tautologically_reduce_cnf(instance: Cnf) -> None:
+    # Check for idempotence.
+    assert tautologically_reduce_cnf(tautologically_reduce_cnf(instance)) \
+       == tautologically_reduce_cnf(instance)
+
+
+@pytest.mark.parametrize(
+    "clause_collection,output",
+    [
+        # Cases where Clause reductions appear within Cnf reductions.
+        ([[1, Bool.TRUE], [1, 2]], [[1, 2]]),
+        ([[Bool.FALSE], [1, 2]], [[Bool.FALSE]]),
+        ([[1, Bool.FALSE], [1, 2]], [[1], [1, 2]]),
+        ([[1, -1], [1, 2]], [[1, 2]]),
+
+        # Cases where we might have two simultaneous clause reductions
+        ([[1, Bool.TRUE], [Bool.FALSE]], [[Bool.FALSE]]),
+        ([[1, Bool.TRUE], [1, Bool.FALSE]], [[1]]),
+        ([[1, Bool.TRUE], [1, -1]], [[Bool.TRUE]]),
+        ([[Bool.FALSE], [1, Bool.FALSE]], [[Bool.FALSE]]),
+        ([[Bool.FALSE], [1, -1]], [[Bool.FALSE]]),
+        ([[1, Bool.FALSE], [1, -1]], [[1]]),
+
+        # Cases where we might have a cnf-related tautology
+        ([[1], [Bool.FALSE]], [[Bool.FALSE]]),
+        ([[Bool.TRUE]], [[Bool.TRUE]]),
+        ([[1], [Bool.TRUE]], [[1]]),
+    ])
+def test_tautologically_reduce_cnf_with_examples(
+        clause_collection: Collection[Collection[Bool | int]],
+        output: Collection[Collection[Bool | int]]) -> None:
+    assert tautologically_reduce_cnf(cnf(clause_collection)) == cnf(output)
+
+
+@given(st.integers(min_value=1), st.from_type(Bool))
+def test_assign_variable_in_lit(positive_int: int, boolean: Bool) -> None:
+    assert assign_variable_in_lit(
+        lit(positive_int), variable(positive_int), boolean) == lit(boolean)
+    assert assign_variable_in_lit(
+        lit(- positive_int), variable(positive_int), boolean) == neg(lit(boolean))
+    assert assign_variable_in_lit(
+        lit(positive_int + 1), variable(positive_int), boolean) == lit(positive_int + 1)
+
+
+@given(st.from_type(Lit), st.from_type(Variable), st.from_type(Bool))
+def test_assign_variable_in_lit_idempotence(
+        literal: Lit, variable_instance: Variable, boolean: Bool) -> None:
+    assign_once: Lit = assign_variable_in_lit(literal, variable_instance, boolean)
+    assert assign_variable_in_lit(assign_once, variable_instance, boolean) == assign_once
+
+
+@pytest.mark.parametrize(
+    "lit_collection,positive_integer,boolean,output",
+    [
+        ([1, -2], 1, Bool.TRUE, {Bool.TRUE}),
+        ([1, -2], 1, Bool.FALSE, {-2}),
+        ([1, -2, -1], 1, Bool.TRUE, {Bool.TRUE}),
+        ([1, -2, -1], 1, Bool.FALSE, {Bool.TRUE}),
+        ([1, -2], 2, Bool.TRUE, {1}),
+        ([1, -2], 2, Bool.FALSE, {Bool.TRUE}),
+        ([1, -2, -1], 2, Bool.TRUE, {Bool.TRUE}),
+        ([1, -2, -1], 2, Bool.FALSE, {Bool.TRUE}),
+    ])
+def test_assign_variable_in_clause_with_example_cases(
+        lit_collection: Collection[Bool | int],
+        positive_integer: int,
+        boolean: Bool,
+        output: set[Bool]) -> None:
+    assign_variable_in_clause(clause(lit_collection), variable(positive_integer), boolean) == output
+
+
+@given(st.from_type(Clause), st.from_type(Variable), st.from_type(Bool))
+def test_assign_variable_in_clause(
+        clause_instance: Clause, variable_instance: Variable, boolean: Bool) -> None:
+    assign_once: Clause = assign_variable_in_clause(clause_instance, variable_instance, boolean)
+    assert assign_variable_in_clause(assign_once, variable_instance, boolean) == assign_once
+
+
+@pytest.mark.parametrize(
+    "clause_collection,positive_int,boolean,output",
+    [
+        ([[1, -2], [-1, 3]], 1, Bool.TRUE, [[3]]),
+        ([[1, -2], [-1, 3]], 1, Bool.FALSE, [[-2]]),
+    ])
+def test_assign_variable_in_cnf(
+        clause_collection: Collection[Collection[Bool | int]],
+        positive_int: int,
+        boolean: Bool,
+        output: Collection[Collection[Bool | int]],
+) -> None:
+    assert assign_variable_in_cnf(
+        cnf(clause_collection), variable(positive_int), boolean) == cnf(output)
+
+@given(st.from_type(Cnf), st.from_type(Variable), st.from_type(Bool))
+def test_assign_variable_in_cnf_idempotence(
+        cnf_instance: Cnf,
+        variable_instance: Variable,
+        boolean: Bool) -> None:
+    assign_once: Cnf = assign_variable_in_cnf(cnf_instance, variable_instance, boolean)
+    assert assign_variable_in_cnf(assign_once, variable_instance, boolean) == assign_once
+
+
+@given(st.from_type(Cnf), st.dictionaries(st.from_type(Variable),
+                                          st.from_type(Bool)))
+def test_assign(cnf_instance: Cnf, assignment: Assignment) -> None:
+    assign_once: Cnf = assign(cnf_instance, assignment)
+    assert assign(assign_once, assignment) == assign_once
+    assert assign(cnf_instance, {}) == tautologically_reduce_cnf(cnf_instance)
+
+
+@pytest.mark.parametrize(
+    "clause_collection,assignment_dict,output",
+    [
+        ([[1, -2], [-1, 3]], {1: Bool.TRUE}, [[3]]),
+        ([[1, -2], [-1, 3]], {1: Bool.TRUE, 2: Bool.FALSE}, [[3]]),
+        ([[1, -2], [-1, 3]], {1: Bool.TRUE, 2: Bool.FALSE, 3: Bool.FALSE}, [[Bool.FALSE]]),
+        ([[Bool.TRUE]], {1: Bool.TRUE}, [[Bool.TRUE]]),
+        ([[Bool.TRUE]], {}, [[Bool.TRUE]]),
+        ([[Bool.FALSE]], {}, [[Bool.FALSE]]),
+        ([[1]], {}, [[1]]),
+    ])
+def test_assign_with_examples(
+        clause_collection: Collection[Collection[Bool | int]],
+        assignment_dict: dict[int, Bool],
+        output: Collection[Collection[Bool | int]]) -> None:
+    assert assign(cnf(clause_collection),
+                  {variable(k): v for k, v in assignment_dict.items()}) == cnf(output)
+
+
+def test_int_repr() -> None:
+    assert int_repr(cnf([[1], [Bool.TRUE]])) in [((Bool.TRUE, ), (1, )),
+                                                 ((1, ), (Bool.TRUE, ))]

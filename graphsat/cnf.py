@@ -1,12 +1,17 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.10
 """Constructors and functions for sentences in conjunctive normal form (Cnf)."""
 
 # Imports
 # =======
-import functools as ft
-from collections.abc import Callable, Iterator, Set
-from typing import Set, Collection, final, Final, Mapping, NewType, Union
+from __future__ import annotations
 
+import functools as ft
+from collections.abc import Callable, Iterator
+from enum import Enum
+from typing import (Any, Collection, Final, Generator, Mapping, NewType,
+                    TypeAlias, final)
+
+from attrs import define
 from loguru import logger
 
 # Classes and Types
@@ -51,11 +56,9 @@ class Lit:
 
 class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods
     """`Clause` is a subclass of `frozenset[Lit]`."""
-
-    def __str__(self) -> str:
-        """Pretty print a Clause after sorting its contents."""
-        sorted_clause: list[Lit] = sorted(self, key=absolute_value)
-        return "(" + ",".join(map(str, sorted_clause)) + ")"
+    def __repr__(self) -> str:
+        sorted_lit_values: Generator[str, None, None] = (str(lit.value) for lit in sorted(self))
+        return f"Clause({{{', '.join(sorted_lit_values)}}})"
 
 
 class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
@@ -63,20 +66,16 @@ class Cnf(frozenset[Clause]):  # pylint: disable=too-few-public-methods
 
     def __str__(self) -> str:
         """Pretty print a Cnf after sorting its sorted clause tuples."""
-        sorted_cnf: list[Clause]
-        sorted_cnf = sorted(self, key=lambda clause_: sum(lit < 0 for lit in clause_))
-        sorted_cnf = sorted(sorted_cnf, key=len)
-
-        cnf_tuple: Iterator[str] = map(str, map(clause, sorted_cnf))
-        return "".join(cnf_tuple)
+        sorted_clause_values: Iterator[str] = map(str, sorted(self))
+        return f"Cnf({{{', '.join(sorted_clause_values)}}})"
 
 
-Assignment = Mapping[Variable, Bool]  # defines a type alias
+Assignment: TypeAlias = Mapping[Variable, Bool]  # defines a type alias
 
 
 # Constructor Functions
 # =====================
-def variable(positive_int: int) -> Variable:
+def variable(positive_int: int | Variable) -> Variable:
     """Constructor-function for Variable type.
 
     By definition, a `Variable` is just a positive integer.  This
@@ -97,31 +96,20 @@ def variable(positive_int: int) -> Variable:
     return Variable(positive_int)
 
 
-@ft.singledispatch
-def lit(int_or_bool: int | Bool) -> Lit:
-    r"""Constructor-function for Lit type.
-
-    By definition, a `Lit` is in the set ℤ \\ {0} ∪ {`TRUE`, `FALSE`}.
-    This function is idempotent.
-    """
+def lit(int_or_bool: int | Bool | Lit) -> Lit:
+    match int_or_bool:
+        case 0:
+            raise ValueError("Lit must be a nonzero integer or Bool member.")
+        case _ if isinstance(int_or_bool, Lit):
+            return int_or_bool
+        case _ if isinstance(int_or_bool, (int, Bool)):
+            return Lit(int_or_bool)
+        case _:
+            raise TypeError("Lit must be either Bool or int.")
     raise TypeError("Lit must be either Bool or int.")
 
 
-@lit.register
-def lit_bool(arg: Bool) -> Lit:
-    """Return as is because Bool is already a subtype of Lit."""
-    return arg
-
-
-@lit.register
-def lit_int(arg: int) -> Lit:
-    """Cast to Lit."""
-    if arg != 0:
-        return Lit(arg)
-    raise ValueError("Lit must be a nonzero integer.")
-
-
-def clause(lit_collection: Collection[int]) -> Clause:
+def clause(lit_collection: Collection[int | Bool | Lit]) -> Clause:
     """Constructor-function for Clause type.
 
     By definition, a `Clause` is a nonempty frozenset of Lits. This function is idempotent.
@@ -142,7 +130,7 @@ def clause(lit_collection: Collection[int]) -> Clause:
     return Clause(frozenset(map(lit, lit_collection)))
 
 
-def cnf(clause_collection: Collection[Collection[int]]) -> Cnf:
+def cnf(clause_collection: Collection[Collection[int | Bool | Lit]]) -> Cnf:
     """Constructor-function for Cnf type.
 
     By definition, a `Cnf` is a nonempty frozenset of Clauses. This function is idempotent.
@@ -165,15 +153,15 @@ def cnf(clause_collection: Collection[Collection[int]]) -> Cnf:
 
 # Helpful Constants
 # =================
-_TRUE_CLAUSE: Final[Clause] = clause([TRUE])
-_FALSE_CLAUSE: Final[Clause] = clause([FALSE])
-_TRUE_CNF: Final[Cnf] = cnf([_TRUE_CLAUSE])
-_FALSE_CNF: Final[Cnf] = cnf([_FALSE_CLAUSE])  # not documented, for internal use only
+TRUE_CLAUSE: Final[Clause] = clause([Bool.TRUE])
+FALSE_CLAUSE: Final[Clause] = clause([Bool.FALSE])
+TRUE_CNF: Final[Cnf] = cnf([TRUE_CLAUSE])
+FALSE_CNF: Final[Cnf] = cnf([FALSE_CLAUSE])  # not documented, for internal use only
 
 
 # Basic Functions
 # ===============
-def neg(literal: Lit) -> Lit:
+def neg(literal: Lit) -> Lit:  # type: ignore
     """Negate a Lit.
 
     This function is an involution.
@@ -186,11 +174,15 @@ def neg(literal: Lit) -> Lit:
           Bool, then return ``TRUE`` for ``FALSE``, ``FALSE`` for ``TRUE``.
 
     """
-    if literal == TRUE:
-        return FALSE
-    if literal == FALSE:
-        return TRUE
-    return lit(-literal)
+    match literal.value:
+        case Bool.TRUE:
+            return lit(Bool.FALSE)
+        case Bool.FALSE:
+            return lit(Bool.TRUE)
+        case _ if isinstance(literal.value, int):
+            return lit(- literal.value)
+        case _:
+            raise TypeError(f"Argument to neg should  be of type Lit. Found {literal = }.")
 
 
 def absolute_value(literal: Lit) -> Lit:
@@ -205,9 +197,9 @@ def absolute_value(literal: Lit) -> Lit:
        Check that ``literal`` is not of type Bool and then return the absolute value of
           ``literal``. If it is of type Bool, then return ``literal`` as is.
     """
-    if isinstance(literal, Bool):
-        return literal
-    return lit(abs(literal))
+    if isinstance(literal.value, Bool):
+        return lit(Bool.TRUE)
+    return lit(abs(literal.value))
 
 
 def lits(cnf_instance: Cnf) -> frozenset[Lit]:
@@ -224,7 +216,7 @@ def lits(cnf_instance: Cnf) -> frozenset[Lit]:
 
 # Functions for Simplification
 # ============================
-def tautologically_reduce_clause(lit_set: Set[Lit]) -> Clause:
+def tautologically_reduce_clause(clause_instance: Clause) -> Clause:
     r"""Reduce a Clause using various tautologies.
 
     The order in which these reductions are performed is important. This function is
@@ -236,23 +228,24 @@ def tautologically_reduce_clause(lit_set: Set[Lit]) -> Clause:
           disjunction.
 
     Args:
-       lit_set (:obj:`set[Lit]`): an abstract set (a set or a frozenset) of Lits.
+       clause_instance (:obj:`set[Lit]`): an abstract set (a set or a frozenset) of Lits.
 
     Return:
        The Clause formed by performing all the above-mentioned tautological reductions.
     """
-    if TRUE in lit_set:
-        return _TRUE_CLAUSE
-    if lit_set == {FALSE}:
-        return _FALSE_CLAUSE
-    if FALSE in lit_set:
-        lit_set -= _FALSE_CLAUSE
-    if not set(map(neg, lit_set)).isdisjoint(lit_set):
-        return _TRUE_CLAUSE
-    return clause(lit_set)
+    if lit(Bool.TRUE) in clause_instance:
+        return TRUE_CLAUSE
+    if set(clause_instance) == {lit(Bool.FALSE)}:
+        return FALSE_CLAUSE
+    if lit(Bool.FALSE) in clause_instance:
+        clause_instance = clause(
+            [literal for literal in clause_instance if literal != lit(Bool.FALSE)])
+    if not set(map(neg, clause_instance)).isdisjoint(clause_instance):
+        return TRUE_CLAUSE
+    return clause(clause_instance)
 
 
-def tautologically_reduce_cnf(clause_set: Set[Set[Lit]]) -> Cnf:
+def tautologically_reduce_cnf(cnf_instance: Cnf) -> Cnf:
     r"""Reduce a Cnf using various tautologies.
 
     The order in which these reductions are performed is important. This function is
@@ -264,7 +257,7 @@ def tautologically_reduce_cnf(clause_set: Set[Set[Lit]]) -> Cnf:
        conjunction.
 
     Args:
-       clause_set (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
+       cnf_instance (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
        of Lits.
 
     Return:
@@ -272,14 +265,14 @@ def tautologically_reduce_cnf(clause_set: Set[Set[Lit]]) -> Cnf:
        the above-mentioned tautological reductions on the Cnf itself.
     """
     clause_set_reduced: set[Clause]
-    clause_set_reduced = set(map(tautologically_reduce_clause, clause_set))
+    clause_set_reduced = set(map(tautologically_reduce_clause, cnf_instance))
 
-    if _FALSE_CLAUSE in clause_set_reduced:
-        return _FALSE_CNF
-    if clause_set_reduced == _TRUE_CNF:
-        return _TRUE_CNF
-    if _TRUE_CLAUSE in clause_set_reduced:
-        return tautologically_reduce_cnf(clause_set_reduced - _TRUE_CNF)
+    if FALSE_CLAUSE in clause_set_reduced:
+        return FALSE_CNF
+    if clause_set_reduced == set(TRUE_CNF):
+        return TRUE_CNF
+    if TRUE_CLAUSE in clause_set_reduced:
+        return tautologically_reduce_cnf(cnf(clause_set_reduced - TRUE_CNF))
     return cnf(clause_set_reduced)
 
 
@@ -301,59 +294,59 @@ def assign_variable_in_lit(
     Return:
        Lit formed by assigning ``variable_instance`` to ``boolean`` in ``literal``.
     """
-    if literal == variable_instance:
-        return boolean
-    if neg(literal) == variable_instance:
-        return neg(boolean)
+    if literal.value == variable_instance:
+        return lit(boolean)
+    if literal.value == - variable_instance:
+        return neg(lit(boolean))
     return literal
 
 
 def assign_variable_in_clause(
-    lit_set: set[Lit], variable_instance: Variable, boolean: Bool
+    clause_instance: Clause, variable_instance: Variable, boolean: Bool
 ) -> Clause:
     """Assign Bool value to a Variable if present in Clause.
 
-    Replace all instances of ``variable_instance`` and its negation in ``lit_set`` with
+    Replace all instances of ``variable_instance`` and its negation in ``clause_instance`` with
     ``boolean`` and its negation respectively. Leave all else unchanged. Perform tautological
     reductions on the Clause before returning results. This function is idempotent.
 
     Args:
-       lit_set (:obj:`set[Lit]`): an abstract set (set or frozenset) of Lits.
+       clause_instance (:obj:`set[Lit]`): an abstract set (set or frozenset) of Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
        Tautologically-reduced Clause formed by assigning ``variable_instance`` to ``boolean``
-          in ``lit_set``.
+          in ``clause_instance``.
     """
     assign_variable: Callable[[Lit], Lit]
     assign_variable = ft.partial(
         assign_variable_in_lit, variable_instance=variable_instance, boolean=boolean
     )
     mapped_lits: set[Lit]
-    mapped_lits = set(map(assign_variable, lit_set))
+    mapped_lits = set(map(assign_variable, clause_instance))
 
-    return tautologically_reduce_clause(mapped_lits)
+    return tautologically_reduce_clause(clause(mapped_lits))
 
 
 def assign_variable_in_cnf(
-    clause_set: Set[Set[Lit]], variable_instance: Variable, boolean: Bool
+    cnf_instance: Cnf, variable_instance: Variable, boolean: Bool
 ) -> Cnf:
     """Assign Bool value to a Variable if present in Cnf.
 
-    Replace all instances of ``variable_instance`` and its negation in ``clause_set`` with
+    Replace all instances of ``variable_instance`` and its negation in ``cnf_instance`` with
     ``boolean`` and its negation respectively. Leave all else unchanged. Perform tautological
     reductions on the Cnf before returning results. This function is idempotent.
 
     Args:
-       clause_set (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
+       cnf_instance (:obj:`set[set[Lit]]`): an abstract set (set or frozenset) of abstract sets
           of Lits.
        variable_instance (:obj:`Variable`)
        boolean (:obj:`Bool`): either ``TRUE`` or ``FALSE``.
 
     Return:
        Tautologically-reduced Cnf formed by assigning ``variable_instance`` to ``boolean`` in
-          ``clause_set``.
+          ``cnf_instance``.
     """
     assign_variable: Callable[[Clause], Clause]
     assign_variable = ft.partial(
@@ -361,9 +354,9 @@ def assign_variable_in_cnf(
     )
 
     mapped_clauses: set[Clause]
-    mapped_clauses = set(map(assign_variable, clause_set))
+    mapped_clauses = set(map(assign_variable, cnf_instance))
 
-    return tautologically_reduce_cnf(mapped_clauses)
+    return tautologically_reduce_cnf(cnf(mapped_clauses))
 
 
 def assign(cnf_instance: Cnf, assignment: Assignment) -> Cnf:
@@ -380,20 +373,23 @@ def assign(cnf_instance: Cnf, assignment: Assignment) -> Cnf:
           dict need not be complete and can be partial.
 
     Edge case:
-       An empty assignment dict results in ``cnf_instance`` simply getting topologically
+       An empty assignment dict results in ``cnf_instance`` simply getting tautologically
           reduced.
 
     Return:
        Tautologically-reduced Cnf formed by replacing every key in the ``assignment`` dict (and
           those keys' negations) by corresponding Bool values.
     """
-    cnf_copy: frozenset[Clause] = cnf_instance.copy()
     for variable_instance, boolean in assignment.items():
-        cnf_copy = assign_variable_in_cnf(cnf_copy, variable_instance, boolean)
-    return tautologically_reduce_cnf(cnf_copy)
+        cnf_instance = assign_variable_in_cnf(cnf_instance, variable_instance, boolean)
+    return tautologically_reduce_cnf(cnf_instance)
 
 
-if __name__ == "__main__":
+def int_repr(cnf_instance: Cnf) -> tuple[tuple[int | Bool, ...], ...]:
+    return tuple(tuple(literal.value for literal in clause_instance) for clause_instance in cnf_instance)
+
+if __name__ == "__main__":  # pragma: no cover
+    logger.info("Literals can be constructed using the lit function")
+    logger.info(f"{lit(3) = }")
     logger.info("Cnfs can be constructed using the cnf() function.")
-    logger.info(">>> cnf([[1, -2], [3, 500]])")
-    logger.info(cnf([[1, -2], [3, 500]]))
+    logger.info(f"{cnf([[1, -2], [3, 500]]) = }")

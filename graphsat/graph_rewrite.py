@@ -4,7 +4,6 @@
 # Imports from standard library.
 import functools as ft
 import itertools as it
-import multiprocessing as mp
 from collections import defaultdict
 from typing import Any, Collection, Dict, Iterator, List, Tuple
 
@@ -16,7 +15,6 @@ from tabulate import tabulate
 from tqdm import tqdm  # type: ignore
 
 # Imports from local modules.
-import graphsat.cnf_simplify as csimp
 import graphsat.graph_collapse as gcol
 import graphsat.mhgraph as mhg
 import graphsat.operations as op
@@ -25,6 +23,7 @@ import graphsat.operations as op
 from graphsat import cnf, sat
 from graphsat.mhgraph import MHGraph
 from graphsat.prop import cnf_and_cnf
+from graphsat.graph import vertex
 
 
 def get_head_and_cnfs(list_hedges: Tuple[mhg.HEdge, ...]) \
@@ -94,7 +93,7 @@ def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
 
 
 def local_rewrite(mhg_: MHGraph,
-                  vertex: mhg.Vertex = mhg.vertex(1),
+                  vertex: mhg.Vertex = vertex(1),
                   print_full: bool = False) -> Dict[Any, Any]:
     """Rewrite under the assumption that the graph is only partially known.
 
@@ -264,7 +263,7 @@ def square(a: int, b: int, c: int, d: int, x: int) -> mhg.MHGraph:  # pylint: di
     return mhg.mhgraph([[a, b, x], [b, c, x], [c, d, x], [d, a, x]])
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import sys
     from time import time
     logger.remove()
@@ -273,7 +272,7 @@ if __name__ == "__main__":
     time0 = time()
     # (124 ∧ 134 ∧ 135 ∧ 152)
     G = mhg.mhgraph([[1,2,4], [1,3,4], [1,3,5], [1,2,5]])
-    lrw = local_rewrite(G, mhg.vertex(1), False)
+    lrw = local_rewrite(G, vertex(1), False)
     print()
     print(tabulate(lrw))
     logger.info(f"Total time taken = {round(time() - time0, 2)}s")

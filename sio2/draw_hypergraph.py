@@ -4,9 +4,8 @@
 - documentation :: https://pnnl.github.io/HyperNetX/build/index.html
 """
 import matplotlib.pyplot as plt  # type: ignore
-from hypernetx import Hypergraph, drawing  # type: ignore
-
 from dat_management import read_dat
+from hypernetx import Hypergraph, drawing  # type: ignore
 
 criminals = read_dat('criminals.dat')
 

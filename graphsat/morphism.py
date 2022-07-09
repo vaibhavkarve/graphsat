@@ -7,7 +7,7 @@ brute-force isomorphism search algorithm for MHGraphs.
 
 import itertools as it
 from typing import (AbstractSet, Callable, Dict, Iterable, Iterator, KeysView,
-                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeGuard, TypeVar,
+                    Mapping, NamedTuple, NewType, Optional, Tuple, TypeVar,
                     Union, cast)
 
 import more_itertools as mit
@@ -403,7 +403,7 @@ def unique_upto_isom(mhgraph_iterable: Iterable[MHGraph]) -> Iterator[MHGraph]:
     return unique_upto_equiv(mhgraph_iterable, is_isomorphic)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     logger.info('We can perform an isomophism search as follows:')
     logger.info('>>> isomorphism_search(mhgraph([[1, 2, 3], [1, 2]]), '
                 'mhgraph([[3, 2, 4], [2, 4]]))')

@@ -5,16 +5,14 @@
 """
 from typing import Iterator
 
-from loguru import logger
-from tqdm import tqdm
-
-import mhgraph as mhg
-import operations as op
-
 import dat_management as datm
 import graph_collapse as gcol
 import graph_rewrite as grw
+import mhgraph as mhg
+import operations as op
 import reduce_by_rules as rbr
+from loguru import logger
+from tqdm import tqdm
 
 
 @logger.catch

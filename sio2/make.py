@@ -1,27 +1,24 @@
 #!/usr/bin/env python3.9
 """Run commands that perform the calculations."""
 import os
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 from typing import Optional, Set
 
-from loguru import logger
+import combine_criminals as combine
+import config
+import criminals as crim
+import readable_criminals as readable
+import reduce_by_rules as rbr
 import typer
+from loguru import logger
 
 import graphsat.cnf as cnf
 import graphsat.cnf_simplify as csimp
 import graphsat.graph_collapse as gcollapse
 import graphsat.mhgraph as mhg
 import graphsat.operations as op
-
-import config
-
-import combine_criminals as combine
-import criminals as crim
-import reduce_by_rules as rbr
-import readable_criminals as readable
-
 
 USE_CONDA: bool = False
 app: typer.Typer = typer.Typer(add_completion=False)

@@ -7,10 +7,9 @@ import socket
 import time
 from typing import Any
 
-from loguru import logger
 import tqdm  # type: ignore
 import typer
-
+from loguru import logger
 
 # Constants
 # =========

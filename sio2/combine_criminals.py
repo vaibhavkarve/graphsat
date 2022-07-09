@@ -7,15 +7,13 @@ combined list is subgraph minimal. Will need to add a check for this.
 """
 import os
 
+import config
+import dat_management as datm
 import more_itertools as mit
+import readable_criminals as readable
 import typer
 
 import graphsat.morphism as morph
-
-import config
-import dat_management as datm
-import readable_criminals as readable
-
 
 # pylint: disable=invalid-name
 app = typer.Typer(add_completion=False)

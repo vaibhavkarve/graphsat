@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.10
 """Constructors and functions for simple graphs.
 
 .. _definitionofagraph:
@@ -159,7 +159,7 @@ def vertices(graph_instance: Graph) -> FrozenSet[Vertex]:
     return frozenset.union(*graph_instance)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     logger.info('Simple graphs can be constructed using the graph() function.')
     logger.info('This function gets rid of duplicate edges.')
     logger.info('>>> graph([[1, 2], [1, 2], [2, 3], [3, 1], [3, 2]])')

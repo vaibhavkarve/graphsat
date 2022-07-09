@@ -7,20 +7,18 @@ KNOWN_RULES.
 import functools as ft
 import itertools as it
 import multiprocessing as mp
-from typing import Any, cast, Iterator, NamedTuple, Optional
+from typing import Any, Iterator, NamedTuple, Optional, cast
 
-from loguru import logger
+import config
 import more_itertools as mit  # type: ignore
 import typer
+from loguru import logger
 
-from graphsat.cnf import TRUE
-from graphsat.graph import vertex, Vertex
 import graphsat.mhgraph as mhg
 import graphsat.morphism as morph
 import graphsat.sat
-
-import config
-
+from graphsat.cnf import TRUE
+from graphsat.graph import Vertex, vertex
 
 # pylint: disable=invalid-name
 app = typer.Typer(add_completion=False)

@@ -8,17 +8,15 @@ sign and the remaining to the other sign.
 TODO: Some loops in this file can be parallelized using multiprocessing.Pool.
 
 """
-from collections import Counter as counter
 import multiprocessing as mp
+from collections import Counter as counter
 from typing import Counter, Iterator
-
-from tqdm import tqdm
 
 import cnf
 import graph
 import mhgraph as mhg
 import sat
-
+from tqdm import tqdm
 
 
 def hyperbolic_filter(vertices: frozenset[graph.Vertex], cnf_: cnf.Cnf) -> bool:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.9
 """Unit tests for `hyperbolic_guess.py`"""
 import pytest
-
 from hyperbolic_guess import *
 
 

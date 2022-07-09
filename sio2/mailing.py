@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.9
 """A module for mailing the results after they have been computed."""
-from functools import partial
 import smtplib
 from email.message import EmailMessage
+from functools import partial
 from typing import Any, List
 
 

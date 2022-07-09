@@ -13,9 +13,8 @@ rewrite tree.
 from typing import Optional
 
 import anytree as at  # type: ignore
-
 import mhgraph as mhg
-from graph import vertex, Vertex
+from graph import Vertex, vertex
 
 
 class GraphNode(at.NodeMixin):  # type: ignore

@@ -83,7 +83,7 @@ class SatSxpr(Sxpr[Src, bool]):  # pylint: disable=too-few-public-methods
 AtomicSxpr = SatSxpr[Union[bool, MHGraph]]
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from time import time
 
     # conf.logger.remove()

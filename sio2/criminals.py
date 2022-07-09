@@ -10,20 +10,18 @@ A Criminal is a HGraph G such that:
 import multiprocessing as mp
 from typing import Any, Iterator, NewType, Sequence
 
-# Imports from third-party packages.
-from loguru import logger
+import config
+import dat_management as datm
+import graph_rewrite as grw
 import more_itertools as mit  # type: ignore
 import tqdm  # type: ignore
 import typer
+# Imports from third-party packages.
+from loguru import logger
 
 # Local imports.
 import graphsat.mhgraph as mhg
 import graphsat.morphism as morph
-
-import config
-import dat_management as datm
-import graph_rewrite as grw
-
 
 # Initializing
 # ------------

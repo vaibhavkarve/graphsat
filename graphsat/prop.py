@@ -76,7 +76,7 @@ def neg_cnf(cnf1: Cnf) -> Cnf:
     return ft.reduce(cnf_or_cnf, [neg_clause(clause) for clause in cnf1])
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     logger.info('Conjunction between two Cnfs:')
     logger.info('>>> cnf_and_cnf(cnf([[1, 2], [3, 4]]), cnf([[-1, 5], [6]]))')
     logger.info(cnf_and_cnf(cnf([[1, 2], [3, 4]]), cnf([[-1, 5], [6]])))

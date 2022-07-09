@@ -1,20 +1,18 @@
 #!/usr/bin/env python3.9
 """Rewriting calculus for Criminal MHGraphs to make them human-readable."""
 
-from typing import (AbstractSet, cast, Counter, Iterable, Iterator,
-                    NamedTuple, Optional, TextIO, Tuple)
+from typing import (AbstractSet, Counter, Iterable, Iterator, NamedTuple,
+                    Optional, TextIO, Tuple, cast)
 
-from colorama import Fore, init, Style  # type: ignore
-from loguru import logger  # type: ignore
+import config
+import dat_management as datm
 import typer
+from colorama import Fore, Style, init  # type: ignore
+from loguru import logger  # type: ignore
 
 import graphsat.graph as graph
 import graphsat.mhgraph as mhg
 import graphsat.morphism as morph
-
-import config
-import dat_management as datm
-
 
 # pylint: disable=invalid-name
 app: typer.Typer = typer.Typer(add_completion=False)

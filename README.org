@@ -1,3 +1,6 @@
+#+title: graphsat -- a python package for graph satisfiability
+
+
 * graphsat
 
 [[https://zenodo.org/record/4662169][https://zenodo.org/badge/doi/10.5281/zenodo.4662169.svg]]
@@ -7,49 +10,55 @@ Department of Mathematics, University of Illinois at Urbana-Champaign.
 
 We introduce a Python package that recognizes clauses, Cnfs, graphs,
 hypergraphs, and multi-hypergraphs. The package implements local
-graph-rewriting, graph-satchecking, calculation of graph disjunctions, as
-well as checking of new reduction rules.
+graph-rewriting, graph-satchecking, calculation of graph disjunctions,
+as well as checking of new reduction rules.
 
-This package is written in Python v3.9, and is publicly available under an
-the [[file:LICENSE][GNU-GPL-v3.0 license]]. It is set to be released on the [[https://pypi.org/][Python Packaging
-Index]] as an open-source scientific package written in the literate
-programming style. We specifically chose to write this package as a
-literate program, despite the verbosity of this style, with the goal to
-create reproducible computational research and ensure that all the
-computations are repeatable and the code is reusable.
+This package is written in Python v3.10, and is publicly available
+under an the [[file:LICENSE][GNU-GPL-v3.0 license]]. It is set to be released on the
+[[https://pypi.org/][Python Packaging Index]] as an open-source scientific package written in
+the literate programming style. We specifically chose to write this
+package as a literate program, despite the verbosity of this style,
+with the goal to create reproducible computational research.
 
+** Installation and usage
+To get started running the code in this package, you will need 3 things --
+1. A copy of this repository downloaded from GitHub.
+2. Python 3.10 or higher.
+3. An installation of ~just~ from [[https://github.com/casey/just][GitHub:casey/just]].
 ** Algorithms
 Currently, graphsat implements the following algorithms --
 
-- For formulae in conjunctive normal forms (CNFs), it implements variables,
-  literals, clauses, Boolean formulae, and truth-assignments. It includes
-  an API for reading, parsing and defining new instances.
+- For formulae in conjunctive normal forms (CNFs), it implements
+  variables, literals, clauses, Boolean formulae, and
+  truth-assignments. It includes an API for reading, parsing and
+  defining new instances.
 
 - For graph theory, the package includes graphs with self-loops,
-  edge-multiplicities, hyperedges, and multi-hyperedges. It includes an API
-  for reading, parsing and defining new instances.
+  edge-multiplicities, hyperedges, and multi-hyperedges. It includes
+  an API for reading, parsing and defining new instances.
 
 - For satisfiability of CNFs and graphs, it contains a bruteforce
-  algorithm, an implementation that uses the open-source sat-solver [[https://pysathq.github.io/][PySAT]],
-  and an implementation using the [[http://minisat.se/][MiniSAT]] solver.
+  algorithm, an implementation that uses the open-source sat-solver
+  [[https://pysathq.github.io/][PySAT]], and an implementation using the [[http://minisat.se/][MiniSAT]] solver.
 
-- Additionally, for graph theory, the library also implements vertex maps,
-  vertex degree, homeomorphisms, homomorphisms, subgraphs, and
-  isomorphisms. This allows us to encode local rewriting rules as well as
-  parallelized grid-based searching for forbidden structures.
+- Additionally, for graph theory, the library also implements vertex
+  maps, vertex degree, homeomorphisms, homomorphisms, subgraphs, and
+  isomorphisms. This allows us to encode local rewriting rules as well
+  as parallelized grid-based searching for forbidden structures.
 
 - Finally, =graphsat= has a tree-based recursive reduction algorithm that
   uses known local-rewrite rules as well as algorithms for checking
   satisfiability invariance of proposed reduction rules.
 
 ** Principles
-=graphsat= has been written in the functional-programming style with the
-following principles in mind --
+=graphsat= has been written in the functional-programming style with
+the following principles in mind --
 
-- Avoid classes as much as possible. Prefer defining functions instead.
+- Avoid classes as much as possible. Prefer defining functions
+  instead.
 
-- Write small functions and then compose/map/filter them to create more
-  complex functions (using the [[https://docs.python.org/3/library/functools.html][functools]] library).
+- Write small functions and then compose/map/filter them to create
+  more complex functions (using the [[https://docs.python.org/3/library/functools.html][functools]] library).
 
 - Use lazy evaluation strategy whenever possible (using the [[https://docs.python.org/3/library/itertools.html][itertools]]
   library).
@@ -57,7 +66,9 @@ following principles in mind --
 - Add type hints wherever possible (checked using the [[https://mypy.readthedocs.io/en/stable/][mypy]] static
   type-checker).
 
-- Add unit-tests for each function (checked using the [[https://docs.pytest.org/en/latest/][pytest]] framework).
+- Add unit-tests for each function (checked using the [[https://docs.pytest.org/en/latest/][pytest]]
+  framework). Firther, add property-based testing wherever possible
+  (using the [[https://hypothesis.readthedocs.io][hypothesis]] framework.
 
 ** Overview of the package
 The package consists of several different modules.

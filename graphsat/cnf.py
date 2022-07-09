@@ -15,41 +15,38 @@ Variable = NewType("Variable", int)
 Variable.__doc__ = """`Variable` is a subtype of `int`."""
 
 
-class Lit(int):
-    """`Lit` is a subclass of `int`. It has no other special methods."""
-
-
 @final
-class Bool(Lit):
-    """`Bool` is a subclass of `Lit`.
+@ft.total_ordering
+class Bool(Enum):
+    FALSE = "F"
+    TRUE = "T"
 
-    It overrides the ``__str__``, ``__repr__``, ``__hash__`` and ``__eq__``
-    methods inherited from :obj:`int` (and from Lit).
-    """
+    def __lt__(self, other: Any) -> bool:
+        if isinstance(other, int):
+            return True
+        if isinstance(other, Bool):
+            return self.value < other.value
+        return NotImplemented
 
-    def __str__(self) -> str:
-        """Bool(0) and Bool(1) are treated as constant values labeled FALSE and TRUE."""
-        if self.__int__() == 0:
-            return "<Bool: FALSE>"
-        if self.__int__() == 1:
-            return "<Bool: TRUE>"
-        raise ValueError("In-valid Bool value encountered.")
-
-    __repr__ = __str__
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, int):
+            return False
+        if isinstance(other, Bool):
+            return self is other
+        return NotImplemented
 
     def __hash__(self) -> int:
-        """Ensure that ``hash(Bool(n))`` doesn't clash with ``hash(n)``."""
-        return hash(str(self))
-
-    def __eq__(self, other: object) -> bool:
-        """Make ``Bool(n)`` unequal to ``n``."""
-        return hash(self) == hash(other)
+        return hash(self.value)
 
 
-#: ``TRUE = Bool(1)``, a final instance of Bool.
-TRUE: Final = Bool(1)
-#: ``FALSE = Bool(0)``, a final instance of Bool.
-FALSE: Final = Bool(0)  # Instances of Bool, needed to define Clause and Cnf
+
+@define(eq=True, order=True, frozen=True)
+class Lit:
+    value: int | Bool
+
+    def __repr__(self) -> str:
+        return f"Lit({self.value})"
+
 
 
 class Clause(frozenset[Lit]):  # pylint: disable=too-few-public-methods

@@ -2,6 +2,7 @@
 """Functions for working with graph-satisfiability and various graph parts."""
 
 # Imports from standard library.
+import builtins
 import functools as ft
 import itertools as it
 from typing import Iterator, List, Optional, Set, Union, cast
@@ -14,34 +15,23 @@ import graphsat.cnf as cnf
 import graphsat.morphism as morph
 import graphsat.prop as prop
 import graphsat.sat as sat
-from graphsat.mhgraph import (GraphNode, MHGraph, Vertex, degree, graph_union,
-                              mhgraph, vertex)
+from graphsat.graph import vertex, Vertex
+from graphsat.mhgraph import (GraphNode, MHGraph, degree, graph_union,
+                              mhgraph)
 from graphsat.sxpr import AtomicSxpr, SatSxpr
 
 
-@ft.singledispatch
-def satg(arg: Union[bool, MHGraph, SatSxpr]) -> bool:  # type: ignore
+def satg(arg:  bool | MHGraph | SatSxpr) -> bool:
     """Sat-solve if it is a graph. Else just return the bool."""
-    print(type(arg))
-    raise TypeError
-
-
-@satg.register
-def satg_bool(boolean: bool) -> bool:
-    """Return the boolean."""
-    return boolean
-
-
-@satg.register
-def satg_graph(graph: MHGraph) -> bool:
-    """Sat-solve."""
-    return sat.mhgraph_pysat_satcheck(graph)
-
-
-@satg.register
-def satg_sxpr(sat_sxpr: SatSxpr) -> bool:  # type: ignore
-    """Reduce and then sat-solve."""
-    return satg(sat_sxpr.reduce())
+    match arg:
+        case _ if isinstance(arg, bool):
+            return arg
+        case _ if isinstance(arg, MHGraph):
+            return sat.mhgraph_pysat_satcheck(arg)
+        case _ if isinstance(arg, SatSxpr):
+            return satg(arg.reduce())
+        case _:
+            raise TypeError("satg supports arg of type bool | MHGraph | SatSxpr, found {type(arg) = }.")
 
 
 def sat_and(graph1: Union[bool, MHGraph, AtomicSxpr],
@@ -249,7 +239,7 @@ def make_tree(mhgraph: MHGraph, parent: Optional[GraphNode] = None) -> GraphNode
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from time import time
     with logger.catch(message="Something unexpected happened ..."):
         time0 = time()

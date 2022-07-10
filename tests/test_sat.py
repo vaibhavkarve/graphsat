@@ -4,8 +4,9 @@ from collections import Counter as counter
 
 import pytest
 
-from graphsat.cnf import FALSE, TRUE, clause, cnf
-from graphsat.mhgraph import HEdge, MHGraph, vertex, mhgraph, hedge
+from graphsat.cnf import Bool, clause, cnf, lit
+from graphsat.graph import vertex
+from graphsat.mhgraph import HEdge, MHGraph, hedge, mhgraph
 from graphsat.sat import (clauses_from_hedge, cnf_bruteforce_satcheck,
                           cnf_minisat_satcheck, cnf_pysat_satcheck,
                           cnfs_from_hedge, cnfs_from_mhgraph,
@@ -18,16 +19,16 @@ mm = mhgraph
 cc = cnf
 
 def test_generate_assignments() -> None:
-    assert {1: TRUE} in list(generate_assignments(cc([[1]])))
-    assert {1: FALSE} in list(generate_assignments(cc([[1]])))
-    assert {1: TRUE} in list(generate_assignments(cc([[-1]])))
-    assert {1: FALSE} in list(generate_assignments(cc([[-1]])))
-    assert list(generate_assignments(cc([[TRUE]]))) == [{}]
-    assert list(generate_assignments(cc([[FALSE]]))) == [{}]
-    assert {1: TRUE, 2: TRUE} in list(generate_assignments(cc([[1, -2]])))
-    assert {1: TRUE, 2: FALSE} in list(generate_assignments(cc([[1, -2]])))
-    assert {1: FALSE, 2: TRUE} in list(generate_assignments(cc([[1, -2]])))
-    assert {1: FALSE, 2: FALSE} in list(generate_assignments(cc([[1, -2]])))
+    assert {1: Bool.TRUE} in list(generate_assignments(cc([[1]])))
+    assert {1: Bool.FALSE} in list(generate_assignments(cc([[1]])))
+    assert {1: Bool.TRUE} in list(generate_assignments(cc([[-1]])))
+    assert {1: Bool.FALSE} in list(generate_assignments(cc([[-1]])))
+    assert list(generate_assignments(cc([[Bool.TRUE]]))) == [{}]
+    assert list(generate_assignments(cc([[Bool.FALSE]]))) == [{}]
+    assert {1: Bool.TRUE, 2: Bool.TRUE} in list(generate_assignments(cc([[1, -2]])))
+    assert {1: Bool.TRUE, 2: Bool.FALSE} in list(generate_assignments(cc([[1, -2]])))
+    assert {1: Bool.FALSE, 2: Bool.TRUE} in list(generate_assignments(cc([[1, -2]])))
+    assert {1: Bool.FALSE, 2: Bool.FALSE} in list(generate_assignments(cc([[1, -2]])))
     assert list(generate_assignments(cc([[1, -1]]))) == [{}]
     assert list(generate_assignments(cc([[1, -1]]))) == [{}]
     with pytest.raises(ValueError):
@@ -36,13 +37,13 @@ def test_generate_assignments() -> None:
 
 def test_cnf_bruteforce_satcheck() -> None:
     satchecker = cnf_bruteforce_satcheck
-    assert satchecker(cc([[TRUE]]))
-    assert not satchecker(cc([[FALSE]]))
+    assert satchecker(cc([[Bool.TRUE]]))
+    assert not satchecker(cc([[Bool.FALSE]]))
     assert satchecker(cc([[1]]))
     assert satchecker(cc([[-1]]))
-    assert satchecker(cc([[1], [TRUE]]))
-    assert not satchecker(cc([[1], [FALSE]]))
-    assert satchecker(cc([[1, FALSE]]))
+    assert satchecker(cc([[1], [Bool.TRUE]]))
+    assert not satchecker(cc([[1], [Bool.FALSE]]))
+    assert satchecker(cc([[1, Bool.FALSE]]))
     assert not satchecker(cc([[1], [-1]]))
     assert not satchecker(cc([[1, 2], [1, -2], [-1, 2], [-1, -2]]))
     assert not satchecker(cc([[1, 2], [-1, 2], [-2, 3], [-2, -3]]))
@@ -51,13 +52,13 @@ def test_cnf_bruteforce_satcheck() -> None:
 
 def test_cnf_pysat_satcheck() -> None:
     satchecker = cnf_pysat_satcheck
-    assert satchecker(cc([[TRUE]]))
-    assert not satchecker(cc([[FALSE]]))
+    assert satchecker(cc([[Bool.TRUE]]))
+    assert not satchecker(cc([[Bool.FALSE]]))
     assert satchecker(cc([[1]]))
     assert satchecker(cc([[-1]]))
-    assert satchecker(cc([[1], [TRUE]]))
-    assert not satchecker(cc([[1], [FALSE]]))
-    assert satchecker(cc([[1, FALSE]]))
+    assert satchecker(cc([[1], [Bool.TRUE]]))
+    assert not satchecker(cc([[1], [Bool.FALSE]]))
+    assert satchecker(cc([[1, Bool.FALSE]]))
     assert not satchecker(cc([[1], [-1]]))
     assert not satchecker(cc([[1, 2], [1, -2], [-1, 2], [-1, -2]]))
     assert not satchecker(cc([[1, 2], [-1, 2], [-2, 3], [-2, -3]]))
@@ -66,13 +67,13 @@ def test_cnf_pysat_satcheck() -> None:
 
 def test_cnf_minisat_satcheck() -> None:
     satchecker = cnf_minisat_satcheck
-    assert satchecker(cc([[TRUE]]))
-    assert not satchecker(cc([[FALSE]]))
+    assert satchecker(cc([[Bool.TRUE]]))
+    assert not satchecker(cc([[Bool.FALSE]]))
     assert satchecker(cc([[1]]))
     assert satchecker(cc([[-1]]))
-    assert satchecker(cc([[1], [TRUE]]))
-    assert not satchecker(cc([[1], [FALSE]]))
-    assert satchecker(cc([[1, FALSE]]))
+    assert satchecker(cc([[1], [Bool.TRUE]]))
+    assert not satchecker(cc([[1], [Bool.FALSE]]))
+    assert satchecker(cc([[1, Bool.FALSE]]))
     assert not satchecker(cc([[1], [-1]]))
     assert not satchecker(cc([[1, 2], [1, -2], [-1, 2], [-1, -2]]))
     assert not satchecker(cc([[1, 2], [-1, 2], [-2, 3], [-2, -3]]))
@@ -81,7 +82,7 @@ def test_cnf_minisat_satcheck() -> None:
 
 def test_literals_from_vertex() -> None:
     # Typical example
-    assert lits_from_vertex(vertex(1)) == (1, -1)
+    assert lits_from_vertex(vertex(1)) == (lit(1), lit(-1))
 
 
 def test_clauses_from_hedge() -> None:
@@ -211,6 +212,7 @@ def test_mhgraph_pysat_satcheck() -> None:
     assert satchecker(mm([[1, 2, 3]]))
     assert not satchecker(mm(counter({frozenset({1, 2, 3}): 8})))
 
+
 @pytest.mark.xfail(reason='This spawns subprocesses which eat up memory.')
 def test_mhgraph_minisat_satcheck() -> None:
     satchecker = mhgraph_minisat_satcheck
@@ -245,19 +247,19 @@ def test_mhgraph_minisat_satcheck() -> None:
 
 def test_mhgraph_from_cnf() -> None:
     with pytest.raises(ValueError):
-        mhgraph_from_cnf(cc([[TRUE]]))
+        mhgraph_from_cnf(cc([[Bool.TRUE]]))
     with pytest.raises(ValueError):
-        mhgraph_from_cnf(cc([[FALSE]]))
+        mhgraph_from_cnf(cc([[Bool.FALSE]]))
     with pytest.raises(ValueError):
         mhgraph_from_cnf(cc([[1, -1]]))
     with pytest.raises(ValueError):
-        mhgraph_from_cnf(cc([[1, TRUE]]))
+        mhgraph_from_cnf(cc([[1, Bool.TRUE]]))
     with pytest.raises(ValueError):
-        mhgraph_from_cnf(cc([[1], [FALSE]]))
+        mhgraph_from_cnf(cc([[1], [Bool.FALSE]]))
 
     assert mhgraph_from_cnf(cc([[1]])) == mm([[1]])
-    assert mhgraph_from_cnf(cc([[1, FALSE ]])) == mm([[1]])
-    assert mhgraph_from_cnf(cc([[1], [TRUE]])) == mm([[1]])
+    assert mhgraph_from_cnf(cc([[1, Bool.FALSE ]])) == mm([[1]])
+    assert mhgraph_from_cnf(cc([[1], [Bool.TRUE]])) == mm([[1]])
     assert mhgraph_from_cnf(cc([[1, 2]])) == mm([[1, 2]])
     assert mhgraph_from_cnf(cc([[-1, 2]])) == mm([[1, 2]])
     assert mhgraph_from_cnf(cc([[-1, -2]])) == mm([[1, 2]])

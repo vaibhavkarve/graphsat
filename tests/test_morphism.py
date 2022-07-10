@@ -1,11 +1,12 @@
 #! /usr/bin/env python3.8
 
-from typing import cast
+from typing import Callable, Mapping, cast, Iterator
+
 import pytest
-from graphsat.graph import vertex
 
 import graphsat.morphism as morphism
-from graphsat.mhgraph import hgraph, mhgraph
+from graphsat.graph import Vertex, vertex
+from graphsat.mhgraph import HGraph, MHGraph, hgraph, mhgraph
 
 vm = morphism.vertexmap
 mhg = mhgraph
@@ -38,43 +39,50 @@ def test_injective_vertexmap() -> None:
 
 
 def test_graph_image() -> None:
+    ivmap: Callable[[Mapping[Vertex, Vertex], HGraph, HGraph], morphism.InjectiveVertexMap | None]
     ivmap = lambda vmap, g1, g2: ivm(cast(morphism.VertexMap,
-                                          vm(vmap, g1, g2)))  # noqa
+                                          vm(vmap, g1, g2)))
     assert gi(cast(morphism.InjectiveVertexMap,
-                   ivmap({11: 1, 12: 2}, mhg([[11], [11, 12]]), mhg([[1, 2]]))),
+                   ivmap({vv(11): vv(1), vv(12): vv(2)},
+                         hg([[11], [11, 12]]), hg([[1, 2]]))),
               mhg([[11], [11, 12]])) == mhg([[1], [1, 2]])
 
     assert gi(cast(morphism.InjectiveVertexMap,
-                   ivmap({11: 1, 12: 2, 13: 3},
-                         mhg([[13, 11, 12], [11, 13], [12]]),
-                         mhg([[1, 2, 3]]))),
+                   ivmap({vv(11): vv(1), vv(12): vv(2), vv(13): vv(3)},
+                         hg([[13, 11, 12], [11, 13], [12]]),
+                         hg([[1, 2, 3]]))),
               mhg([[13, 11, 12], [11, 13], [12]])) == mhg([[2], [1, 3], [1, 2, 3]])
 
     assert gi(cast(morphism.InjectiveVertexMap,
-                   ivmap({11: 1, 12: 2}, mhg([[11, 12], [11, 12]]),
-                         mhg([[1, 2]]))),
+                   ivmap({vv(11): vv(1), vv(12): vv(2)}, hg([[11, 12], [11, 12]]),
+                         hg([[1, 2]]))),
               mhg([[11, 12], [11, 12]])) == mhg([[1, 2], [1, 2]])
 
 
 def test_morphism() -> None:
-    morph = lambda vmap, g1, g2: mm(ivm(vm(vmap, g1, g2))) # noqa
-    assert morph({11: 1, 12: 2}, mhg([[11, 12]]), mhg([[1, 2]]))
-    assert morph({11: 1, 12: 2}, mhg([[11, 12], [11, 12]]), mhg([[1, 2]]))
-    assert morph({11: 1, 12: 2, 13: 3}, mhg([[11, 12], [12, 13]]), mhg([[1, 2], [2, 3]]))
-    assert not morph({11: 1, 12: 3, 13: 2}, mhg([[11, 12], [12, 13]]),
-                     mhg([[1, 2], [2, 3]]))
+    morph: Callable[[Mapping[Vertex, Vertex], HGraph, HGraph], morphism.Morphism | None]
+    morph = lambda vmap, g1, g2: mm(cast(morphism.InjectiveVertexMap,
+                                         ivm(cast(morphism.VertexMap,
+                                                  vm(vmap, g1, g2)))))
+    assert morph({vv(11): vv(1), vv(12): vv(2)}, hg([[11, 12]]), hg([[1, 2]]))
+    assert morph({vv(11): vv(1), vv(12): vv(2)}, hg([[11, 12], [11, 12]]), hg([[1, 2]]))
+    assert morph({vv(11): vv(1), vv(12): vv(2), vv(13): vv(3)}, hg([[11, 12], [12, 13]]), hg([[1, 2], [2, 3]]))
+    assert not morph({vv(11): vv(1), vv(12): vv(3), vv(13): vv(2)}, hg([[11, 12], [12, 13]]),
+                     hg([[1, 2], [2, 3]]))
 
 
 def test_generate_vertexmaps() -> None:
-    inj = lambda vmap, g1, g2: ivm(vm(vmap, g1, g2))  # noqa
-    assert inj({1: 11, 2: 12}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
-        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
-    assert inj({1: 12, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
-        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
-    assert vm({1: 11, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
-        not in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True)
-    assert vm({1: 11, 2: 11}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
-        in gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), False)
+    inj: Callable[[Mapping[Vertex, Vertex], HGraph, HGraph], None | morphism.InjectiveVertexMap]
+    inj = lambda vmap, g1, g2: ivm(cast(morphism.VertexMap,
+                                        vm(vmap, g1, g2)))
+    assert inj({vv(1): vv(11), vv(2): vv(12)}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in list(gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True))
+    assert inj({vv(1): vv(12), vv(2): vv(11)}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in list(gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True))
+    assert vm({vv(1): vv(11), vv(2): vv(11)}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        not in list(gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), True))
+    assert vm({vv(1): vv(11), vv(2): vv(11)}, hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]])) \
+        in list(gvm(hg([[1, 2], [1, 2]]), hg([[11, 12], [11, 12]]), False))
 
 
 @pytest.mark.parametrize(
@@ -87,24 +95,25 @@ def test_generate_vertexmaps() -> None:
      ([[1, 2], [1, 2]], [[11, 12], [11, 12]], [{1: 11, 2: 12}, {1: 12, 2: 11}]),
      ([[1, 2]], [[11, 12], [13, 14]],
       [{1: 11, 2: 12}, {1: 12, 2: 11}, {1: 13, 2:14}, {1: 14, 2: 13}])])
-def test_subgraph_search(mhg1, mhg2, translation) -> None:
-    assert ss(mhg(mhg1), mhg(mhg2), return_all=False)[1].translation in translation
+def test_subgraph_search(mhg1: MHGraph, mhg2: MHGraph, translation: Mapping[Vertex, Vertex]) -> None:
+    assert cast(morphism.Morphism,
+                     ss(mhg(mhg1), mhg(mhg2), return_all=False)[1]).translation in translation
 
 @pytest.mark.parametrize('return_all', [(True,), (False,)])
-def test_subgraph_search2(return_all) -> None:
+def test_subgraph_search2(return_all: bool) -> None:
     assert ss(mhg([[1]]), mhg([[11, 12]]), return_all) == (False, None)
     assert ss(mhg([[1, 2]]), mhg([[1, 2, 3]]), return_all) == (False, None)
 
 
 def test_isomorphism_search() -> None:
-    assert iss(mhg([[1]]), mhg([[11]]))[1].translation == {1: 11}
-    assert iss(mhg([[1], [2]]), mhg([[11], [12]]))[1].translation \
+    assert cast(morphism.Morphism, iss(mhg([[1]]), mhg([[11]]))[1]).translation == {1: 11}
+    assert cast(morphism.Morphism, iss(mhg([[1], [2]]), mhg([[11], [12]]))[1]).translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert iss(mhg([[1, 2]]), mhg([[11, 12]]))[1].translation \
+    assert cast(morphism.Morphism, iss(mhg([[1, 2]]), mhg([[11, 12]]))[1]).translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
-    assert iss(mhg([[1, 2], [1]]), mhg([[11], [11, 12]]))[1].translation \
+    assert cast(morphism.Morphism, iss(mhg([[1, 2], [1]]), mhg([[11], [11, 12]]))[1]).translation \
         == {1: 11, 2: 12}
-    assert iss(mhg([[1, 2], [1, 2]]), mhg([[11, 12], [11, 12]]))[1].translation \
+    assert cast(morphism.Morphism, iss(mhg([[1, 2], [1, 2]]), mhg([[11, 12], [11, 12]]))[1]).translation \
         in [{1: 11, 2: 12}, {1: 12, 2: 11}]
     assert iss(mhg([[1, 2]]), mhg([[11, 12], [13, 14]])) == (False, None)
     assert iss(mhg([[1, 2]]), mhg([[11, 12], [11, 12]])) == (False, None)

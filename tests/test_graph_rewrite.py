@@ -1,6 +1,5 @@
 #!/usr/bin/env python3.8
 
-import pytest
 
 from graphsat import mhgraph
 from graphsat.graph_rewrite import decompose

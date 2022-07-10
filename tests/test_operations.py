@@ -6,6 +6,7 @@ from graphsat.mhgraph import mhgraph
 from graphsat.operations import sat_and, satg
 from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
 
+from loguru import logger
 
 def test_satg() -> None:
     assert satg(True)

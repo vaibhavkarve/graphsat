@@ -2,8 +2,9 @@
 
 import pytest
 
-from graphsat.prop import *
-from graphsat.cnf import lit, cnf
+from graphsat.cnf import cnf, lit, clause
+from graphsat.prop import (clause_and_literal, clause_or_literal,
+                           literal_and_literal, literal_or_literal)
 
 pytestmark = pytest.mark.skip('\n  All tests still WIP')
 
@@ -26,7 +27,7 @@ def test_cnf_and_cnf() -> None:
     raise NotImplementedError
 
 def test_literal_or_literal() -> None:
-    assert literal_or_literal(lit(1), lit(-2)) == cnf([[1], [-2]])
+    assert literal_or_literal(lit(1), lit(-2)) == clause([1, -2])
 
 def test_clause_or_literal() -> None:
     assert clause_or_literal(clause([1, 2]), lit(3)) == cnf([[1, 2], [3]])

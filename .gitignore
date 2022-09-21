@@ -1,3 +1,4 @@
+archive/*
 **/_minted-*/
 **/reveal.js/
 **/auto/
@@ -5,8 +6,8 @@
 **/*.egg-info/
 **/.direnv/
 **/.ipynb_checkpoints/
-
-**/*.*~
+.hypothesis/
+**/*~
 
 **/*.aux
 **/*.bbl
@@ -22,8 +23,9 @@
 **/*.toc
 **/*.vrb
 **/*.run.xml
+**/*.lprof
 
 local_rewriting.tex
-.coverage
+.coverage*
 .coveragerc
 TAGS

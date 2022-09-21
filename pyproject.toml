@@ -53,6 +53,9 @@ types-tqdm = "^4.64.4"
 nbqa = "^1.4.0"
 libcst = "^0.4.7"
 
+[tool.poetry.group.dev.dependencies]
+interrogate = {extras = ["png"], version = "^1.5.0"}
+
 [build-system]
 requires = ["poetry-core>=1.2.0"]
 build-backend = "poetry.core.masonry.api"

@@ -1,13 +1,10 @@
-[project]
+[tool.poetry]
 name = "graphsat"
 version = "0.1"
 description = "A python package for working with Graphs and Satisfiability"
-authors = [
-    {name="Vaibhav Karve", email="vkarve@pm.me"},
-    {name="Anil N. Hirari", email="hirani@illinois.edu"}
-]
-requires-python = ">=3.10"
-license = {text = "GNU GPLv3"}
+authors = ["Vaibhav Karve <vkarve@pm.me>",
+    	   "Anil N. Hirari <hirani@illinois.edu>"]
+license = "GPL-3.0-or-later"
 keywords = ["graph", "hypergraph", "multigraph", "typed"]
 classifiers=[
 	'Development Status :: 4 - Beta',
@@ -20,44 +17,45 @@ classifiers=[
         'Typing :: Typed'
         ]
 
-# Requirements
-dependencies = [
-    "anytree",
-    "attrs",
-    "colorama",
-    "jupyterlab",
-    "loguru",
-    "more-itertools",
-    "mypy",
-    "python-sat[pblib,aiger]",
-    "tabulate",
-    "tqdm",
-    "typer",
-]
-[tool.setuptools.packages.find]
-where = ["."]
 
-[project.optional-dependencies]
-dev = [
-    "autoflake",
-    "coverage",
-    "hypothesis",
-    "isort",
-    "pdbpp",
-    "pytest",
-    "pytest-cov",
-    "pytest-parallel",
-    "pycodestyle",
-    "pydocstyle",
-    "pylint",
-    "safety",
-]
+[tool.poetry.dependencies]
+python = "^3.10"
+anytree = "^2.8.0"
+attrs = "<22"
+jupyterlab = "^3.4.4"
+loguru = "^0.6.0"
+more-itertools = "^8.14.0"
+tqdm = "^4.64.0"
+multipledispatch = "^0.6.0"
+mypy = "^0.971"
+normal-form = "^0.1.2"
+python-sat = {extras = ["pblib", "aiger"], version = "^0.1.7.dev19"}
+tabulate = "^0.8.10"
+typer = "^0.6.1"
+safety = "^2.1.1"
+colorama = "^0.4.5"
+pylint = "^2.14.5"
+
+[tool.poetry.dev-dependencies]
+autoflake = "^1.4"
+coverage = "^6.4.3"
+hypothesis = {extras = ["cli"], version = "^6.54.4"}
+isort = "^5.10.1"
+line-profiler = "^3.5.1"
+nbmake = "^1.3.3"
+nbstripout = "^0.6.0"
+pdbpp = "^0.10.3"
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+pytest-parallel = "^0.1.1"
+types-colorama = "^0.4.15"
+types-tqdm = "^4.64.4"
+nbqa = "^1.4.0"
+libcst = "^0.4.7"
 
 [build-system]
-requires = [
-    "setuptools",
-    "wheel",
-]
+requires = ["poetry-core>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -66,14 +64,41 @@ norecursedirs = [
     "sio2"
 ]
 
+
 [tool.mypy]
 python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
+warn_unreachable = true
 strict = true
 disallow_untyped_defs = true
+disallow_any_unimported = true
+show_error_codes = true
 files = [
-    "stubs/",
     "graphsat/",
     "tests/",
+]
+
+
+[tool.pyright]
+include = ["graphsat", "tests", "benchmarking", "stubs"]
+exclude = [
+  "sio2",
+  "**/__pycache__",
+  "sphinx_docs",
+  "literate_docs",
+]
+ignore = []
+defineConstant = { DEBUG = true }
+stubPath = "stubs"
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.10"
+venvPath="~/.cache/pypoetry/virtualenvs/"
+
+[tool.pylint]
+py-version = "3.10"
+disable = [
+  "unsubscriptable-object",
+  "invalid-name",
 ]

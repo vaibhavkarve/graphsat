@@ -23,42 +23,37 @@ with the following properties:
 
 An *HGraph* is a MHGraph without HEdge-multiplicities.
 """
-# Imports from standard library.
-from collections import Counter as counter
-from typing import (AbstractSet, Collection, Counter, FrozenSet, List, NewType,
-                    Optional, Tuple, TypeVar, Sequence, Union, Mapping)
-from typing_extensions import reveal_type
+from __future__ import annotations
 
-# Imports from third-party modules.
+from collections import Counter as counter
+from typing import Collection, Counter, Iterable, NoReturn, Sequence
+
 import anytree as at
-from attr import define
 from loguru import logger
 
-# Imports from local modules.
-from graphsat.graph import Graph, GraphType, Vertex, graph, vertex
-
+from graphsat.graph import Graph, Vertex, graph, vertex
 
 # Classes and Types
 # =================
 
-class HEdge(FrozenSet[Vertex]):  # pylint: disable=too-few-public-methods
-    """`HEdge` is a subclass of `FrozenSet[Vertex]`."""
+class HEdge(frozenset[Vertex]):  # pylint: disable=too-few-public-methods
+    """`HEdge` is a subclass of `frozenset[Vertex]`."""
     def __repr__(self) -> str:
         """Pretty-print the HEdge in a compact way."""
         return '(' + ', '.join(map(str, sorted(self))) + ')'
 
 
-HGraph = NewType('HGraph', GraphType[Vertex])
-HGraph.__doc__ = """`HGraph` is a subtype of `PreGraph[Vertex]`."""
+class HGraph(frozenset[HEdge]):
+    ...
 
 
-class MHGraph(Counter[HEdge]):
+class MHGraph(counter[HEdge]):
     def __hash__(self) -> int:  # type: ignore
         """Hash function that depends only on the keys of the Counter, ignoring values."""
         return hash(frozenset(self))
 
     def __repr__(self) -> str:
-        """Print the MHGraphType in a compact way."""
+        """Print the MHGraph in a compact way."""
         unicode_superscripts: dict[int, str]
         unicode_superscripts = {1: '\u00b9', 2: '\u00b2', 3: '\u00b3', 4: '\u2074',
                                 5: '\u2075', 6: '\u2076', 7: '\u2077', 8: '\u2078',
@@ -75,6 +70,9 @@ class MHGraph(Counter[HEdge]):
 
         return ','.join(hedge_strings)
 
+    @staticmethod
+    def fromkeys(iterable: Iterable, _: None | int = ...) -> NoReturn:  # type: ignore
+        raise NotImplementedError
 
 class GraphNode(at.NodeMixin):
     """This is a MHGraph that can also act as the node in a tree.
@@ -91,12 +89,12 @@ class GraphNode(at.NodeMixin):
 
     """
     def __init__(self,
-                 graph: MHGraph,
+                 graph_instance: MHGraph,
                  free: Vertex = vertex(1),
-                 parent: Optional[MHGraph] = None,
-                 children: Optional[List[MHGraph]] = None):
+                 parent: None | MHGraph | GraphNode = None,
+                 children: None | list[MHGraph] = None):
         "Make MHGraph into a node with relevant args."
-        self.graph = graph
+        self.graph = graph_instance
         self.parent = parent
         self.free = free
         if children:  # set children only if given
@@ -163,7 +161,7 @@ def hgraph(hedge_collection: Collection[Collection[int]] | HGraph) -> HGraph:
     """
     if not hedge_collection:
         raise ValueError(f'Encountered empty input {hedge_collection}')
-    return HGraph(GraphType(set(map(hedge, hedge_collection))))
+    return HGraph(set(map(hedge, hedge_collection)))
 
 
 def mhgraph(edge_collection: Collection[Collection[int | Vertex]]) -> MHGraph:
@@ -179,7 +177,7 @@ def mhgraph(edge_collection: Collection[Collection[int | Vertex]]) -> MHGraph:
     Return:
        If ``edge_collection`` is a Counter, then this function takes HEdge-multiplicities
        into account (values of the Counter). If each element of the collection satisfies
-       the axioms for being an HEdge, then the input is cast as a MHGraphType and then a
+       the axioms for being an HEdge, then the input is cast as a MHGraph and then a
        MHGraph.
 
     Raises:
@@ -201,18 +199,18 @@ def mhgraph(edge_collection: Collection[Collection[int | Vertex]]) -> MHGraph:
 # ===============
 
 
-def vertices(mhg: HGraph | MHGraph) -> FrozenSet[Vertex]:
+def vertices(mhg: HGraph | MHGraph) -> frozenset[Vertex]:
     """Return a `frozenset` of all vertices of a MHGraph."""
     return frozenset.union(*mhg)
 
 
-def degree(vertex: Vertex, mhg: MHGraph) -> int:
-    """Return the degree of a ``vertex`` in a MHGraph.
+def degree(vertex_instance: Vertex, mhg: MHGraph) -> int:
+    """Return the degree of a ``vertex_instance`` in a MHGraph.
 
     This counts multiplicities.
     """
     return sum(multiplicity for hedge, multiplicity in mhg.items()
-                if vertex in hedge)
+                if vertex_instance in hedge)
 
 
 def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:
@@ -224,37 +222,43 @@ def pick_max_degree_vertex(mhg: MHGraph) -> Vertex:
 
 
 def pick_min_degree_vertex(mhg: MHGraph) -> Vertex:
-    """Pick vertex of lowest degree."""
-    degree_sequence: dict[Vertex, int]
-    degree_sequence = {v: degree(v, mhg) for v in vertices(mhg)}
-    return min(degree_sequence, key=lambda v: degree_sequence[v])
+    """Pick (any one) vertex of lowest degree."""
+    vertex_degree_counter: Counter[Vertex]
+    vertex_degree_counter = counter(v for hedge in mhg.elements()
+                                    for v in hedge)
+    return min(vertex_degree_counter, key=vertex_degree_counter.get)  # type: ignore
 
 
-def star(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
-    """Return the tuple of all HEdges in ``mhg`` incident at ``vertex``."""
-    assert vertex in vertices(mhg), f'{vertex} not of vertex of {mhg}'
-    return tuple(hedge(h) for h in mhg.elements() if vertex in h)
+def star(mhg: MHGraph, vertex_instance: Vertex) -> tuple[HEdge, ...]:
+    """Return the tuple of all HEdges in ``mhg`` incident at ``vertex_instance``."""
+    assert vertex_instance in vertices(mhg), f'{vertex_instance} not of vertex_instance of {mhg}'
+    return tuple(hedge(h) for h in mhg.elements() if vertex_instance in h)
 
 
-def link(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
-    """Return the link of ``mhg`` at ``vertex``.
+def link(mhg: MHGraph, vertex_instance: Vertex) -> tuple[HEdge, ...]:
+    """Return the link of ``mhg`` at ``vertex_instance``.
 
-    This is the star projected away from ``vertex``.
+    This is the star projected away from ``vertex_instance``.
 
     """
-    return tuple(hedge(set(h) - {vertex}) for h in star(mhg, vertex)
-                 if set(h) != {vertex})
+    return tuple(hedge(set(h) - {vertex_instance}) for h in star(mhg, vertex_instance)
+                 if set(h) != {vertex_instance})
 
 
-def sphr(mhg: MHGraph, vertex: Vertex) -> Tuple[HEdge, ...]:
-    """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex``."""
-    return tuple(hedge(h) for h in mhg.elements() if vertex not in h)
+def sphr(mhg: MHGraph, vertex_instance: Vertex) -> tuple[HEdge, ...]:
+    """Return the list of all HEdges in ``mhg`` *not* incident at ``vertex_instance``."""
+    return tuple(hedge(h) for h in mhg.elements() if vertex_instance not in h)
 
 
-def graph_union(mhg1: Sequence[HEdge] | MHGraph, mhg2: Collection[HEdge] | MHGraph) -> MHGraph:
+def graph_union(mhg1: Sequence[HEdge] | MHGraph, mhg2: Sequence[HEdge] | MHGraph) -> MHGraph:
     """Union of the two graphs."""
     assert mhg1 or mhg2, f'Encountered empty input {mhg1 = } or {mhg2 = }'
-    return mhgraph(mhg1 + mhg2)
+    if hasattr(mhg1, "__add__"):
+        return mhgraph(mhg1 + mhg2)  # type: ignore
+    if hasattr(mhg1, "__or__"):
+        return mhgraph(mhg1 | mhg2)  # type: ignore
+    raise TypeError
+
 
 
 # Conversion Functions

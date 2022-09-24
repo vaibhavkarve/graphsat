@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.10
 """Constructors and functions for Graph and MHGraph morphisms.
 
 This includes an implementation of the brute-force subgraph search algorithm and a

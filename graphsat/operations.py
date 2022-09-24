@@ -1,37 +1,32 @@
 #!/usr/bin/env python3.8
 """Functions for working with graph-satisfiability and various graph parts."""
 
-# Imports from standard library.
-import builtins
-import functools as ft
 import itertools as it
-from typing import Iterator, List, Optional, Set, Union, cast
+from typing import Callable, Iterator, List, Set, Union, cast
 
-# Imports from third-party modules.
 from loguru import logger
+from multipledispatch import dispatch
+from typing_extensions import assert_never
 
-# Imports from local modules.
-import graphsat.cnf as cnf
+from normal_form import cnf, sat, prop
+from graphsat import translation
 import graphsat.morphism as morph
-import graphsat.prop as prop
-import graphsat.sat as sat
-from graphsat.graph import vertex, Vertex
-from graphsat.mhgraph import (GraphNode, MHGraph, degree, graph_union,
-                              mhgraph)
-from graphsat.sxpr import AtomicSxpr, SatSxpr
+from graphsat.graph import Vertex, vertex
+from graphsat.mhgraph import GraphNode, MHGraph, degree, graph_union, mhgraph
+from normal_form.sxpr import AtomicSxpr, SatSxpr
 
 
-def satg(arg:  bool | MHGraph | SatSxpr) -> bool:
+def satg(arg:  bool | MHGraph | SatSxpr[bool | MHGraph]) -> bool:
     """Sat-solve if it is a graph. Else just return the bool."""
     match arg:
-        case _ if isinstance(arg, bool):
+        case bool():
             return arg
-        case _ if isinstance(arg, MHGraph):
-            return sat.mhgraph_pysat_satcheck(arg)
-        case _ if isinstance(arg, SatSxpr):
+        case MHGraph():
+            return translation.mhgraph_pysat_satcheck(arg)
+        case SatSxpr():
             return satg(arg.reduce())
-        case _:
-            raise TypeError("satg supports arg of type bool | MHGraph | SatSxpr, found {type(arg) = }.")
+        case _ as unreachable:
+            assert_never(unreachable)
 
 
 def sat_and(graph1: Union[bool, MHGraph, AtomicSxpr],
@@ -56,28 +51,34 @@ def graph_or(graph1: Union[MHGraph, Set[cnf.Cnf]],
 
     product = it.product(graph1, graph2)
     disjunction = it.starmap(prop.cnf_or_cnf, product)
-    disjunction_reduced = map(cnf.tautologically_reduce_cnf, disjunction)
+    disjunction_reduced = map(cnf.tauto_reduce, disjunction)
     return set(disjunction_reduced)
 
 
-def graph_and(graph1: Union[MHGraph, Set[cnf.Cnf]],
-              graph2: Union[MHGraph, Set[cnf.Cnf]]) -> Union[MHGraph, Set[cnf.Cnf]]:
-    """Conjunct the corresponding Cnfs.
+@dispatch(MHGraph, MHGraph)
+def graph_and(graph1: MHGraph, graph2: MHGraph) -> MHGraph:
+    return graph_union(graph1, graph2)
 
-    If both arguments are of type MHGraph, then simply compute the
-    `graph_union` of the graphs.
-    """
-    if isinstance(graph1, MHGraph) and isinstance(graph2, MHGraph):
-        return graph_union(graph1, graph2)
-    if not isinstance(graph1, set):
-        graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
-    if not isinstance(graph2, set):
-        graph2 = set(sat.cnfs_from_mhgraph(mhgraph(graph2)))
+@dispatch(MHGraph, set)  # type: ignore
+def graph_and(graph1: MHGraph, set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
+    set1: set[cnf.Cnf] = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
+    return graph_and(set1, set2)
 
-    product = it.product(graph1, graph2)
-    conjunction = it.starmap(prop.cnf_and_cnf, product)
-    conjunction_reduced = map(cnf.tautologically_reduce_cnf, conjunction)
+@dispatch(set, MHGraph)  # type: ignore
+def graph_and(set1: set[cnf.Cnf], mhgraph2: MHGraph) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
+    return graph_and(mhgraph2, set1)
+
+@dispatch(set, set)  # type: ignore
+def graph_and(set1: set[cnf.Cnf], set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
+    product: it.product[tuple[cnf.Cnf, cnf.Cnf]] = it.product(set1, set2)
+    conjunction: it.starmap[cnf.Cnf] = it.starmap(prop.cnf_and_cnf, product)
+    conjunction_reduced: map[cnf.Cnf] = map(cnf.tauto_reduce, conjunction)
     return set(conjunction_reduced)
+
+# Override graph_and's type signature.
+graph_and: Union[  # type: ignore
+    Callable[[MHGraph, MHGraph], MHGraph],
+    Callable[[MHGraph | set[cnf.Cnf], MHGraph | set[cnf.Cnf]], set[cnf.Cnf]]]
 
 
 def graphs_equisat_a_bot(graph1: Set[cnf.Cnf], graph2: Set[cnf.Cnf]) -> bool:
@@ -85,15 +86,15 @@ def graphs_equisat_a_bot(graph1: Set[cnf.Cnf], graph2: Set[cnf.Cnf]) -> bool:
     particular_x1: cnf.Cnf = graph1.pop()
     graph1.add(particular_x1)  # add it back in.
 
-    assignments: list[sat.Assignment]
+    assignments: list[cnf.Assignment]
     assignments = list(sat.generate_assignments(particular_x1))
 
-    def cnf1_falsified(cnf1: cnf.Cnf, assignment: sat.Assignment) -> bool:
+    def cnf1_falsified(cnf1: cnf.Cnf, assignment: cnf.Assignment) -> bool:
         cnf1_assigned: cnf.Cnf = cnf.assign(cnf1, assignment)
         assert all(map(lambda l: isinstance(l, cnf.Bool), cnf.lits(cnf1_assigned)))
         return not sat.cnf_pysat_satcheck(cnf1_assigned)
 
-    def cnf2_falsified(cnf2: cnf.Cnf, assignment: sat.Assignment) -> bool:
+    def cnf2_falsified(cnf2: cnf.Cnf, assignment: cnf.Assignment) -> bool:
         return not sat.cnf_pysat_satcheck(cnf.assign(cnf2, assignment))
 
     return all(any(all(cnf2_falsified(cnf2, a)
@@ -220,18 +221,17 @@ def apply_rule(graph: MHGraph, rule: GraphNode) -> List[MHGraph]:
         mapped_children = (morph.graph_image(sub_morph, child.graph)
                            for child in rule.children)
 
-        return [mhgraph(graph - mapped_parent + child) for child in mapped_children]
+        return [mhgraph(graph - mapped_parent + child) for child in mapped_children]  # type: ignore
     return [graph]
 
 
-@logger.catch
-def make_tree(mhgraph: MHGraph, parent: Optional[GraphNode] = None) -> GraphNode:
-    """Make a tree starting at mhgraph as root."""
-    node = GraphNode(mhgraph, parent=parent or GraphNode(mhgraph))
+def make_tree(mhgraph_instance: MHGraph, parent: None | GraphNode = None) -> GraphNode:
+    """Make a tree starting at mhgraph_instance as root."""
+    node = GraphNode(mhgraph_instance, parent=parent or GraphNode(mhgraph_instance))
 
     for rule in KNOWN_RULES:
-        reduction: list[MHGraph] = apply_rule(mhgraph, rule)
-        if reduction[0] != mhgraph:
+        reduction: list[MHGraph] = apply_rule(mhgraph_instance, rule)
+        if reduction[0] != mhgraph_instance:
             for child in reduction:
                 make_tree(child, parent=node)
             return node

@@ -17,6 +17,6 @@ def test_satg() -> None:
 
     assert satg(AtomicSxpr(sat_and, (True,)))
     assert not satg(AtomicSxpr(sat_and, (True, False)))
-    assert satg(AtomicSxpr(sat_and, (mhgraph([[1]]),)))
-    assert not satg(AtomicSxpr(sat_and, (mhgraph([[1]]), mhgraph([[1]]*2))))
+    assert satg(SatSxpr(sat_and, (mhgraph([[1]]),)))
+    assert not satg(SatSxpr(sat_and, (mhgraph([[1]]), mhgraph([[1]]*2))))
     assert satg(SatSxpr(sat_and, (True,)))

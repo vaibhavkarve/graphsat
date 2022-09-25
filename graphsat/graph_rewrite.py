@@ -57,7 +57,7 @@ def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
     Return True iff ∀xₛ ∈ cnfs_sphr, ∀xₕ₁ ∈ cnfs_hyp1 and ∀xₕ₂ ∈
     cnfs_hyp2 we have (xₛ ∧ xₕ₁) ∼ ⊤ *or* (xₛ ∧ xₕ₂) ∼ ⊤.
     """
-    cnf_satcheck = translation.cnf_pysat_satcheck
+    cnf_satcheck = sat.cnf_pysat_satcheck
 
     for x_sph, x_hyp1 in it.product(cnfs_sphr, cnfs_hyp1):
         x_sph_hyp1: cnf.Cnf = prop.cnf_and_cnf(x_sph, x_hyp1)

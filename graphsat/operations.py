@@ -45,9 +45,9 @@ def graph_or(graph1: Union[MHGraph, Set[cnf.Cnf]],
              graph2: Union[MHGraph, Set[cnf.Cnf]]) -> Set[cnf.Cnf]:
     """Disjunction of the Cartesian product of Cnfs."""
     if not isinstance(graph1, set):
-        graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
+        graph1 = set(translation.cnfs_from_mhgraph(mhgraph(graph1)))
     if not isinstance(graph2, set):
-        graph2 = set(sat.cnfs_from_mhgraph(mhgraph(graph2)))
+        graph2 = set(translation.cnfs_from_mhgraph(mhgraph(graph2)))
 
     product = it.product(graph1, graph2)
     disjunction = it.starmap(prop.cnf_or_cnf, product)
@@ -61,7 +61,7 @@ def graph_and(graph1: MHGraph, graph2: MHGraph) -> MHGraph:
 
 @dispatch(MHGraph, set)  # type: ignore
 def graph_and(graph1: MHGraph, set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
-    set1: set[cnf.Cnf] = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
+    set1: set[cnf.Cnf] = set(translation.cnfs_from_mhgraph(mhgraph(graph1)))
     return graph_and(set1, set2)
 
 @dispatch(set, MHGraph)  # type: ignore
@@ -110,9 +110,9 @@ def graph_equisat_mod_sphr(graph1: Union[MHGraph, Set[cnf.Cnf]],
     criterion.
     """
     if not isinstance(graph1, set):
-        graph1 = set(sat.cnfs_from_mhgraph(mhgraph(graph1)))
+        graph1 = set(translation.cnfs_from_mhgraph(mhgraph(graph1)))
     if not isinstance(graph2, set):
-        graph2 = set(sat.cnfs_from_mhgraph(mhgraph(graph2)))
+        graph2 = set(translation.cnfs_from_mhgraph(mhgraph(graph2)))
 
     assert graph1 and graph2
     return graphs_equisat_a_bot(graph1, graph2) \

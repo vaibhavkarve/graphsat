@@ -70,6 +70,7 @@ norecursedirs = [
 
 [tool.mypy]
 python_version = "3.10"
+mypy_path = ["stubs"]
 warn_return_any = true
 warn_unused_configs = true
 warn_unreachable = true

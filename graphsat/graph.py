@@ -18,34 +18,21 @@ with the following properties:
    - Edges do not have a multiplicity.
 """
 # Imports from standard library.
-from typing import Any, Collection, FrozenSet, NewType, Protocol, Set, TypeVar
+from typing import Collection, FrozenSet, NewType, Set
 
 # Importing third-party modules.
 from loguru import logger
 
-# GraphType for Storing Graphs
-# ============================
-# (for internal use only, partially documented)
 
-# This was taken from: github.com/python/mypy/issues/9582#issuecomment-710363793
-# TODO: Can be removed once this is resolved: github.com/python/typing/issues/760
-#: ``T = TypeVar('T')``, i.e. ``T`` is a type variable
-class _SupportsLessThan(Protocol):  # pylint: disable=too-few-public-methods
-    def __lt__(self, __other: Any) -> bool: ...
-
-
-T = TypeVar("T", bound=_SupportsLessThan)  # pylint: disable=invalid-name
-
-
-class GraphType(Set[Collection[T]]):  # pylint: disable=too-few-public-methods
-    """`GraphType[_T]` is a subclass of `Set[Collection[_T]]`.
+class Graph(Set[Collection[int]]):  # pylint: disable=too-few-public-methods
+    """`Graph` is a subclass of `Set[Collection[int]]`.
 
     It overrides the ``__repr__`` method.
     """
 
     def __repr__(self) -> str:
-        """Print the GraphType in a compact way."""
-        def edge_string(edge_instance: Collection[T]) -> str:
+        """Print the Graph in a compact way."""
+        def edge_string(edge_instance: Collection[int]) -> str:
             return '(' + ','.join(map(str, sorted(edge_instance))) + ')'
 
         return ','.join(sorted(sorted(map(edge_string, self)), key=len))
@@ -59,9 +46,6 @@ Vertex.__doc__ = """`Vertex` is a subtype of `int`."""
 
 Edge = NewType('Edge', FrozenSet[Vertex])
 Edge.__doc__ = """`Edge` is a subtype of `FrozenSet[Vertex]`."""
-
-Graph = NewType('Graph', GraphType[Vertex])
-Graph.__doc__ = """`Graph` is a subtype of `GraphType[Vertex]`."""
 
 
 # Constructor Functions
@@ -129,7 +113,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
 
     Return:
        If each element of the collection satisfies the axioms for being an Edge, then the
-       input is cast as a GraphType and then a Graph.
+       input is cast as a Graph.
 
     Raises:
        ValueError: If ``edge_collection`` is an empty collection.
@@ -139,7 +123,7 @@ def graph(edge_collection: Collection[Collection[int]]) -> Graph:
         raise ValueError(f'Encountered empty input {list(edge_collection)}')
 
     edges: set[Edge] = set(map(edge, edge_collection))
-    return Graph(GraphType(edges))
+    return Graph(edges)
 
 
 # Basic Functions

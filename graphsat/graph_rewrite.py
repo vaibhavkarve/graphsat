@@ -5,14 +5,13 @@
 import functools as ft
 import itertools as it
 from collections import defaultdict
-from typing import Any, Collection, Dict, Iterator, List, Tuple
+from typing import Any, Iterator, Sequence, cast
 
 # Imports from third-paty modules.
 import more_itertools as mit
-from colorama import init  # type: ignore
+from colorama import init
 from loguru import logger
 from tabulate import tabulate
-from tqdm import tqdm  # type: ignore
 
 # Imports from local modules.
 import graphsat.graph_collapse as gcol
@@ -20,21 +19,21 @@ import graphsat.mhgraph as mhg
 import graphsat.operations as op
 # Importing because single-dispatch does not do well with imported
 # types.
-from graphsat import cnf, sat
-from graphsat.mhgraph import MHGraph
-from graphsat.prop import cnf_and_cnf
-from graphsat.graph import vertex
+from normal_form import cnf, sat, prop
+from graphsat import graph, translation
+from graphsat.mhgraph import HEdge, MHGraph, mhgraph
 
 
-def get_head_and_cnfs(list_hedges: Tuple[mhg.HEdge, ...]) \
-        -> Tuple[cnf.Cnf, Iterator[cnf.Cnf]]:
+
+def get_head_and_cnfs(list_hedges: tuple[mhg.HEdge, ...]) \
+        -> tuple[list[cnf.Cnf], Iterator[cnf.Cnf]]:
     """Return first and all Cnfs supported on a list of HEdges."""
     cnfs: Iterator[cnf.Cnf]
-    cnfs = sat.cnfs_from_mhgraph(mhg.mhgraph(list_hedges))
-    return mit.spy(cnfs)  # type: ignore
+    cnfs = translation.cnfs_from_mhgraph(mhg.mhgraph(list_hedges))
+    return mit.spy(cnfs)
 
 
-def decompose_pair(hyp1_hyp2: Tuple[List[mhg.HEdge], List[mhg.HEdge]]) \
+def decompose_pair(hyp1_hyp2: tuple[list[mhg.HEdge], list[mhg.HEdge]]) \
         -> bool:
     """Return True iff either part is satisfiable."""
     return any(map(decompose, map(mhg.mhgraph, hyp1_hyp2)))
@@ -52,7 +51,7 @@ def satcheck_independent(sphr_hyp1: MHGraph, sphr_hyp2: MHGraph) -> bool:
 
 def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
                        cnfs_hyp1: Iterator[cnf.Cnf],
-                       cnfs_hyp2: List[cnf.Cnf]) -> bool:
+                       cnfs_hyp2: list[cnf.Cnf]) -> bool:
     """Satcheck entangled decomposition terms.
 
     Return True iff ∀xₛ ∈ cnfs_sphr, ∀xₕ₁ ∈ cnfs_hyp1 and ∀xₕ₂ ∈
@@ -61,21 +60,21 @@ def satcheck_entangled(cnfs_sphr: Iterator[cnf.Cnf],
     cnf_satcheck = sat.cnf_pysat_satcheck
 
     for x_sph, x_hyp1 in it.product(cnfs_sphr, cnfs_hyp1):
-        x_sph_hyp1: cnf.Cnf = cnf_and_cnf(x_sph, x_hyp1)
+        x_sph_hyp1: cnf.Cnf = prop.cnf_and_cnf(x_sph, x_hyp1)
 
         if not cnf_satcheck(x_sph_hyp1):
             for x_hyp2 in cnfs_hyp2:
-                x_sph_hyp2: cnf.Cnf = cnf_and_cnf(x_sph, x_hyp2)
+                x_sph_hyp2: cnf.Cnf = prop.cnf_and_cnf(x_sph, x_hyp2)
                 if not cnf_satcheck(x_sph_hyp2):
                     return False
     return True
 
 
-def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
+def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: graph.Vertex,
                                        guarantee_nonempty: bool = True) \
         -> Iterator[tuple[list[mhg.HEdge], list[mhg.HEdge]]]:
     """Compute the link and then all nonempty 2-paritions of the link."""
-    link: Tuple[mhg.HEdge, ...] = mhg.link(mhg_, vertex)
+    link: tuple[mhg.HEdge, ...] = mhg.link(mhg_, vertex)
     logger.trace(f'{link = }')
 
     # because link = [] iff mhg_ only has loops incident at vertex.
@@ -83,18 +82,20 @@ def compute_all_two_partitions_of_link(mhg_: MHGraph, vertex: mhg.Vertex,
 
     if guarantee_nonempty:
         # because user is ecpected to simplify at all degree 1 vertices.`
-        assert len(link) > 1, ('Simplify graph using the'
-                               ' "simplify_at_leaves_and_loops" function or'
+        assert len(link) > 1, ('Simplify graph using '
+                               ' `translation.simplify_at_leaves_and_loops` or'
                                ' set the guarantee_nonempty flag to False.')
+
 
     # All 2-partitions of the link. Guaranteed to be a nonempty iter if
     # guarantee_nonempty is set to True (default).
-    return mit.set_partitions(link, 2)
+    return cast(Iterator[tuple[list[mhg.HEdge], list[mhg.HEdge]]],
+                mit.set_partitions(link, 2))
 
 
 def local_rewrite(mhg_: MHGraph,
-                  vertex: mhg.Vertex = vertex(1),
-                  print_full: bool = False) -> Dict[Any, Any]:
+                  vertex: graph.Vertex = graph.vertex(1),
+                  print_full: bool = False) -> dict[Any, Any]:
     """Rewrite under the assumption that the graph is only partially known.
 
     This function will perform a local rewrite at vertex while only affecting
@@ -116,13 +117,12 @@ def local_rewrite(mhg_: MHGraph,
     logger.trace(f'            sphr = {sphr - {extra_hedge}}')
     sphr_mhg_: mhg.MHGraph = mhg.mhgraph(sphr)
 
-
-    two_partitions: Iterator[Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]]
+    two_partitions: Iterator[tuple[list[mhg.HEdge], list[mhg.HEdge]]]
     two_partitions = compute_all_two_partitions_of_link(mhg_, vertex)
 
     rewritten_cnfs: set[cnf.Cnf] = set()
     for hyp1, hyp2 in two_partitions:
-        hyp1_hyp2: set[cnf.Cnf] = op.graph_or(hyp1, hyp2)
+        hyp1_hyp2: set[cnf.Cnf] = op.graph_or(mhgraph(hyp1), mhgraph(hyp2))
         sphr_hyp: set[cnf.Cnf] = op.graph_and(sphr_mhg_, hyp1_hyp2)
 
         rewritten_cnfs |= sphr_hyp
@@ -148,13 +148,15 @@ def local_rewrite(mhg_: MHGraph,
 
 
 def satcheck_partition(mhg_: mhg.MHGraph,
-                       sphr: Collection[mhg.HEdge],
-                       hyp1_hyp2: Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]):
+                       sphr: Sequence[mhg.HEdge],
+                       hyp1_hyp2: tuple[list[HEdge], list[HEdge]]) -> bool:
     """Return true if the partition term is satisfiable."""
+    hyp1: list[HEdge]
+    hyp2: list[HEdge]
     hyp1, hyp2 = hyp1_hyp2
 
-    hyp1_oversaturated: bool = sat.is_oversaturated(mhg.mhgraph(hyp1))
-    hyp2_oversaturated: bool = sat.is_oversaturated(mhg.mhgraph(hyp2))
+    hyp1_oversaturated: bool = translation.is_oversaturated(mhg.mhgraph(hyp1))
+    hyp2_oversaturated: bool = translation.is_oversaturated(mhg.mhgraph(hyp2))
 
     if hyp1_oversaturated and hyp2_oversaturated:
         logger.trace(f'{hyp1 = } and {hyp2 = } are both over-saturated.')
@@ -181,9 +183,9 @@ def satcheck_partition(mhg_: mhg.MHGraph,
                      'determined by heuristic check.')
         return True
 
-    cnfs_hyp1: Iterator[cnf.Cnf] = sat.cnfs_from_mhgraph(mhg.mhgraph(hyp1))
-    cnfs_hyp2: Iterator[cnf.Cnf] = sat.cnfs_from_mhgraph(mhg.mhgraph(hyp2))
-    cnfs_sphr: Iterator[cnf.Cnf] = sat.cnfs_from_mhgraph(mhg.mhgraph(sphr))
+    cnfs_hyp1: Iterator[cnf.Cnf] = translation.cnfs_from_mhgraph(mhg.mhgraph(hyp1))
+    cnfs_hyp2: Iterator[cnf.Cnf] = translation.cnfs_from_mhgraph(mhg.mhgraph(hyp2))
+    cnfs_sphr: Iterator[cnf.Cnf] = translation.cnfs_from_mhgraph(mhg.mhgraph(sphr))
 
     if not satcheck_entangled(cnfs_sphr, cnfs_hyp1, list(cnfs_hyp2)):
         logger.trace(f'{mhg_} is UNSAT, determined by reduce_entangled()')
@@ -192,13 +194,14 @@ def satcheck_partition(mhg_: mhg.MHGraph,
     return True
 
 
-def decompose_at_vertex(mhg_: MHGraph, vertex: mhg.Vertex, hyperbolic_only=False) -> bool:
+def decompose_at_vertex(mhg_: MHGraph, vertex: graph.Vertex,
+                        hyperbolic_only: bool = False) -> bool:
     """Decompose mhg at a specified vertex."""
     # sphr is empty iff every HEdge of mhg is incident on vertex.
-    sphr: Tuple[mhg.HEdge, ...] = mhg.sphr(mhg_, vertex)
+    sphr: tuple[mhg.HEdge, ...] = mhg.sphr(mhg_, vertex)
     logger.trace(f'       {sphr = }')
 
-    two_partitions: Iterator[Tuple[List[mhg.MHGraph], List[mhg.MHGraph]]]
+    two_partitions: Iterator[tuple[list[HEdge], list[HEdge]]]
     two_partitions = compute_all_two_partitions_of_link(mhg_, vertex)
 
     if hyperbolic_only:
@@ -211,7 +214,7 @@ def decompose_at_vertex(mhg_: MHGraph, vertex: mhg.Vertex, hyperbolic_only=False
         # i.e. if mhg is a star-graph around the vertex.
         return all(decompose_pair(hyp1_hyp2) for hyp1_hyp2 in two_partitions)
 
-    if sat.is_oversaturated(mhg.mhgraph(sphr)):
+    if translation.is_oversaturated(mhg.mhgraph(sphr)):
         logger.trace(f'{sphr =} is over-saturated.')
         return False
 
@@ -227,14 +230,14 @@ def decompose_at_vertex(mhg_: MHGraph, vertex: mhg.Vertex, hyperbolic_only=False
     return True
 
 
-@ft.lru_cache(1024)
-def decompose(mhg_: MHGraph, hyperbolic_only=False) -> bool:
+@ft.lru_cache(maxsize=1024)
+def decompose(mhg_: MHGraph, hyperbolic_only: bool = False) -> bool:
     """Decompose using entangled graph-rewrite terms at max-degree vertex.
 
     We decompose and then reduce using `reduce_entangled()` before returning
     the result.
     """
-    mhg_simp = sat.simplify_at_leaves_and_loops(mhg_)
+    mhg_simp = translation.simplify_at_leaves_and_loops(mhg_)
     if isinstance(mhg_simp, bool):
         # mhg either a) has two or more loops at a vertex, or b) is
         # isomorphic to a single-loop graph or c) has only leaf edges.
@@ -250,7 +253,7 @@ def decompose(mhg_: MHGraph, hyperbolic_only=False) -> bool:
     assert all(mhg.degree(v, mhg_) > 1 for v in mhg.vertices(mhg_)), \
         'simplify_at_leaves_and_liips() failed to simplify all leaves.'
 
-    vert: mhg.Vertex = mhg.pick_max_degree_vertex(mhg_)
+    vert: graph.Vertex = mhg.pick_max_degree_vertex(mhg_)
     logger.trace('')
     logger.trace(f'                {mhg_ = }')
     logger.trace(f'                {vert = }')
@@ -272,7 +275,7 @@ if __name__ == "__main__":  # pragma: no cover
     time0 = time()
     # (124 ∧ 134 ∧ 135 ∧ 152)
     G = mhg.mhgraph([[1,2,4], [1,3,4], [1,3,5], [1,2,5]])
-    lrw = local_rewrite(G, vertex(1), False)
+    lrw = local_rewrite(G, graph.vertex(1), False)
     print()
     print(tabulate(lrw))
     logger.info(f"Total time taken = {round(time() - time0, 2)}s")

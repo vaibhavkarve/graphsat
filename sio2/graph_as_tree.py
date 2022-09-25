@@ -12,12 +12,12 @@ rewrite tree.
 """
 from typing import Optional
 
-import anytree as at  # type: ignore
+import anytree as at
 import mhgraph as mhg
 from graph import Vertex, vertex
 
 
-class GraphNode(at.NodeMixin):  # type: ignore
+class GraphNode(at.NodeMixin):
     """This is a MHGraph that can also act as the node in a tree."""
     def __init__(self,
                  graph: mhg.MHGraph,

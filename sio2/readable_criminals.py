@@ -7,8 +7,8 @@ from typing import (AbstractSet, Counter, Iterable, Iterator, NamedTuple,
 import config
 import dat_management as datm
 import typer
-from colorama import Fore, Style, init  # type: ignore
-from loguru import logger  # type: ignore
+from colorama import Fore, Style, init
+from loguru import logger
 
 import graphsat.graph as graph
 import graphsat.mhgraph as mhg

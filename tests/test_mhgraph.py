@@ -1,12 +1,15 @@
 #! /usr/bin/env python3.8
 
-import pytest
-
 from collections import Counter as counter
-from hypothesis import given, strategies as st, assume
-from graphsat.graph import vertex, Vertex
-from graphsat.mhgraph import (HEdge, HGraph, MHGraph, degree, graph_union, hedge,
-                              hgraph, mhgraph, vertices)
+
+import pytest
+from hypothesis import Verbosity, assume, given, settings
+from hypothesis import strategies as st
+
+from graphsat.graph import Graph, Vertex, vertex
+from graphsat.mhgraph import (GraphNode, HEdge, HGraph, MHGraph, degree,
+                              graph_from_mhgraph, graph_union, hedge, hgraph,
+                              mhgraph, mhgraph_from_graph, vertices)
 
 
 def test__repr() -> None:
@@ -22,7 +25,7 @@ def test_hedge_on_list_of_integers_input(instance: list[int]) -> None:
 
 
 st.register_type_strategy(HEdge, st.frozensets(st.from_type(Vertex),
-                                               min_size=1).map(hedge))
+                                               min_size=1, max_size=5).map(hedge))
 
 @given(st.from_type(HEdge))
 def test_hedge_on_hedge_input(instance: HEdge) -> None:
@@ -37,7 +40,7 @@ def test_hgraph_on_list_of_hedge_input(instance: list[HEdge]) -> None:
 
 
 st.register_type_strategy(HGraph, st.frozensets(st.from_type(HEdge),
-                                                min_size=1).map(hgraph))
+                                                min_size=1, max_size=10).map(hgraph))
 
 
 @given(st.from_type(HGraph))
@@ -55,7 +58,8 @@ def test_mhgraph_on_list_of_hedge_input(instance: list[HEdge]) -> None:
 
 
 st.register_type_strategy(MHGraph, st.dictionaries(st.from_type(HEdge),
-                                                   st.integers(), min_size=1).map(mhgraph))
+                                                   st.integers(min_value=0, max_value=10),
+                                                   min_size=1, max_size=20).map(mhgraph))
 
 @given(st.from_type(MHGraph))
 def test_mhgraph_on_mhgraph_input(instance: MHGraph) -> None:
@@ -81,4 +85,29 @@ def test_degree(vertex_instance: int, degree_output: int) -> None:
 
 @given(st.from_type(MHGraph), st.from_type(MHGraph))
 def test_graph_union(instance1: MHGraph, instance2: MHGraph) -> None:
-    assert graph_union(instance1, instance2) == mhgraph(instance1 + instance2)
+    # Mypy is not able to figure out that MHGraphs can be added to each other.
+    assert hasattr(instance1, "__add__")
+    assert graph_union(instance1, instance2) \
+        == mhgraph(instance1 + instance2)  # type: ignore[operator]
+
+
+@given(st.from_type(MHGraph), st.from_type(Graph))
+@settings(verbosity=Verbosity.verbose, max_examples=20)
+def test_graph_from_mhgraph(mhgraph_instance: MHGraph, graph_instance: Graph) -> None:
+    # `graph_from_mhgraph ∘ mhgraph = id` on type Graph.
+    assert graph_from_mhgraph(mhgraph(graph_instance)) == graph_instance
+    # MHGraphs of restricted edge sizes can be converted to Graphs.
+    assume(all(len(hedge) <= 2 for hedge in mhgraph_instance))
+    assert isinstance(graph_from_mhgraph(mhgraph_instance), Graph)
+
+
+@given(st.from_type(Graph))
+def test_mhgraph_from_graph(graph_instance: Graph) -> None:
+    assert isinstance(mhgraph_from_graph(graph_instance), MHGraph)
+
+
+@given(st.from_type(MHGraph), st.from_type(Vertex))
+def test_graphnode(mhgraph_instance: MHGraph, vertex_instance: Vertex) -> None:
+    gn: GraphNode = GraphNode(graph_instance=mhgraph_instance,
+                              free=vertex_instance)
+    assert str(gn)

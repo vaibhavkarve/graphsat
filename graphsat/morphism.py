@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3.10
 """Constructors and functions for Graph and MHGraph morphisms.
 
 This includes an implementation of the brute-force subgraph search algorithm and a
@@ -221,7 +221,8 @@ def generate_vertexmaps(hgraph1: HGraph,
     def vertexmaps_should_be_non_none() -> Iterator[VertexMap]:
         vertexmaps: Iterator[VertexMap]
         vertexmaps_none: Iterator[None]
-        vertexmaps_none, vertexmaps = mit.partition(  # type: ignore
+        # Ignore mypy error because it does not understand how more-itertools.
+        vertexmaps_none, vertexmaps = mit.partition(  # type: ignore[assignment]
             lambda vm: vm is not None, vertexmaps_optional)
         assert not list(vertexmaps_none), 'All generated vertexmaps should have been non-None.'
         return vertexmaps
@@ -236,7 +237,8 @@ def generate_vertexmaps(hgraph1: HGraph,
     def inj_vertexmaps_should_be_non_none() -> Iterator[InjectiveVertexMap]:
         inj_vertexmaps: Iterator[InjectiveVertexMap]
         inj_vertexmaps_none: Iterator[None]
-        inj_vertexmaps_none, inj_vertexmaps = mit.partition(  # type: ignore
+        # Ignore mypy error because it does not understand how more-itertools.
+        inj_vertexmaps_none, inj_vertexmaps = mit.partition(  # type: ignore[assignment]
             lambda vm: vm is not None, inj_vertexmaps_optional)
         assert not list(inj_vertexmaps_none), \
             'All generated inj-vertexmaps should have been non-None.'

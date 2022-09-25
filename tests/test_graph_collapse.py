@@ -1,11 +1,10 @@
 #!/usr/bin/env python3.8
 
 
-from graphsat.cnf import cnf, Cnf, TRUE_CNF, FALSE_CNF
-from graphsat.mhgraph import mhgraph, MHGraph
+from normal_form.cnf import FALSE_CNF, TRUE_CNF, Cnf, cnf
 from graphsat.graph_collapse import (group_set_cnf_by_mhgraph,
                                      group_trivial_cnf, is_complete_cnf_set)
-
+from graphsat.mhgraph import MHGraph, mhgraph
 
 
 def test_is_complete_cnf_set() -> None:

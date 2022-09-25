@@ -11,7 +11,7 @@ Look at the following link for nauty's documentation:
 import itertools as it
 import multiprocessing as mp
 from typing import Iterator, List, Tuple
-from sage.graphs.hypergraph_generators import HypergraphGenerators as HG  # type: ignore
+from sage.graphs.hypergraph_generators import HypergraphGenerators as HG
 
 from loguru import logger
 import typer

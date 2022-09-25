@@ -1,12 +1,10 @@
 #! /usr/bin/env python3.8
 
-import pytest
 
 from graphsat.mhgraph import mhgraph
 from graphsat.operations import sat_and, satg
-from graphsat.sxpr import AtomicSxpr, SatSxpr, Sxpr
+from normal_form.sxpr import AtomicSxpr, SatSxpr
 
-from loguru import logger
 
 def test_satg() -> None:
     assert satg(True)
@@ -19,9 +17,6 @@ def test_satg() -> None:
 
     assert satg(AtomicSxpr(sat_and, (True,)))
     assert not satg(AtomicSxpr(sat_and, (True, False)))
-    assert satg(AtomicSxpr(sat_and, (mhgraph([[1]]),)))
-    assert not satg(AtomicSxpr(sat_and, (mhgraph([[1]]), mhgraph([[1]]*2))))
+    assert satg(SatSxpr(sat_and, (mhgraph([[1]]),)))
+    assert not satg(SatSxpr(sat_and, (mhgraph([[1]]), mhgraph([[1]]*2))))
     assert satg(SatSxpr(sat_and, (True,)))
-
-    with pytest.raises(TypeError):
-        assert satg(Sxpr(sat_and, (True,), True))

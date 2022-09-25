@@ -13,8 +13,8 @@ from typing import Any, Iterator, NewType, Sequence
 import config
 import dat_management as datm
 import graph_rewrite as grw
-import more_itertools as mit  # type: ignore
-import tqdm  # type: ignore
+import more_itertools as mit
+import tqdm
 import typer
 # Imports from third-party packages.
 from loguru import logger

@@ -55,6 +55,7 @@ libcst = "^0.4.7"
 
 [tool.poetry.group.dev.dependencies]
 interrogate = {extras = ["png"], version = "^1.5.0"}
+types-tabulate = "^0.8.11"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]

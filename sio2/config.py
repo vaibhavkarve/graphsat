@@ -7,7 +7,7 @@ import socket
 import time
 from typing import Any
 
-import tqdm  # type: ignore
+import tqdm
 import typer
 from loguru import logger
 

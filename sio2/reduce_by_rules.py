@@ -10,7 +10,7 @@ import multiprocessing as mp
 from typing import Any, Iterator, NamedTuple, Optional, cast
 
 import config
-import more_itertools as mit  # type: ignore
+import more_itertools as mit
 import typer
 from loguru import logger
 

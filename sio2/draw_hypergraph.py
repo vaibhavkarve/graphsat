@@ -3,9 +3,9 @@
 
 - documentation :: https://pnnl.github.io/HyperNetX/build/index.html
 """
-import matplotlib.pyplot as plt  # type: ignore
+import matplotlib.pyplot as plt
 from dat_management import read_dat
-from hypernetx import Hypergraph, drawing  # type: ignore
+from hypernetx import Hypergraph, drawing
 
 criminals = read_dat('criminals.dat')
 
@@ -31,5 +31,3 @@ for index, c in enumerate(criminals):
     ax = fig.add_subplot(5, 11, index+1, frame_on=False)
     drawing.rubber_band.draw(H, ax=ax, with_edge_labels=False)
 plt.show()
-
-

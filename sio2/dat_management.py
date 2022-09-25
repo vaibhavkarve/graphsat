@@ -51,7 +51,7 @@ def read_dat(filename: str) -> Iterator[mhg.MHGraph]:
 def write_dat(filename: str, mhg_iter: Iterator[mhg.MHGraph]) -> None:
     """Write to database file."""
     mhg_str: Iterator[str]
-    mhg_str = map(lambda mhgraph: str(list(map(tuple, mhgraph.elements()))),  # type: ignore
+    mhg_str = map(lambda mhgraph: str(list(map(tuple, mhgraph.elements()))),
                   mhg_iter)
 
     with open(filename, 'w') as writefile:

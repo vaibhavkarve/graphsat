@@ -26,11 +26,11 @@ from graphsat.mhgraph import HEdge, MHGraph, mhgraph
 
 
 def get_head_and_cnfs(list_hedges: tuple[mhg.HEdge, ...]) \
-        -> tuple[cnf.Cnf, Iterator[cnf.Cnf]]:
+        -> tuple[list[cnf.Cnf], Iterator[cnf.Cnf]]:
     """Return first and all Cnfs supported on a list of HEdges."""
     cnfs: Iterator[cnf.Cnf]
     cnfs = translation.cnfs_from_mhgraph(mhg.mhgraph(list_hedges))
-    return mit.spy(cnfs)  # type: ignore
+    return mit.spy(cnfs)
 
 
 def decompose_pair(hyp1_hyp2: tuple[list[mhg.HEdge], list[mhg.HEdge]]) \

@@ -59,16 +59,18 @@ def graph_or(graph1: Union[MHGraph, Set[cnf.Cnf]],
 def graph_and(graph1: MHGraph, graph2: MHGraph) -> MHGraph:
     return graph_union(graph1, graph2)
 
-@dispatch(MHGraph, set)  # type: ignore
+
+# Ignore mypy error because mypy doesn't work well with multipledispatch.
+@dispatch(MHGraph, set)  # type: ignore[no-redef]
 def graph_and(graph1: MHGraph, set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
     set1: set[cnf.Cnf] = set(translation.cnfs_from_mhgraph(mhgraph(graph1)))
     return graph_and(set1, set2)
 
-@dispatch(set, MHGraph)  # type: ignore
+@dispatch(set, MHGraph)  # type: ignore[no-redef]
 def graph_and(set1: set[cnf.Cnf], mhgraph2: MHGraph) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
     return graph_and(mhgraph2, set1)
 
-@dispatch(set, set)  # type: ignore
+@dispatch(set, set)  # type: ignore[no-redef]
 def graph_and(set1: set[cnf.Cnf], set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint: disable=function-redefined
     product: it.product[tuple[cnf.Cnf, cnf.Cnf]] = it.product(set1, set2)
     conjunction: it.starmap[cnf.Cnf] = it.starmap(prop.cnf_and_cnf, product)
@@ -76,7 +78,7 @@ def graph_and(set1: set[cnf.Cnf], set2: set[cnf.Cnf]) -> set[cnf.Cnf]:  # pylint
     return set(conjunction_reduced)
 
 # Override graph_and's type signature.
-graph_and: Union[  # type: ignore
+graph_and: Union[  # type: ignore[no-redef]
     Callable[[MHGraph, MHGraph], MHGraph],
     Callable[[MHGraph | set[cnf.Cnf], MHGraph | set[cnf.Cnf]], set[cnf.Cnf]]]
 
@@ -221,7 +223,10 @@ def apply_rule(graph: MHGraph, rule: GraphNode) -> List[MHGraph]:
         mapped_children = (morph.graph_image(sub_morph, child.graph)
                            for child in rule.children)
 
-        return [mhgraph(graph - mapped_parent + child) for child in mapped_children]  # type: ignore
+        # Mypy does not realize that Counter[HEdge] - MHGraph is an
+        # allowed operation.
+        return [mhgraph(graph - mapped_parent + child)  # type: ignore[operator]
+                for child in mapped_children]
     return [graph]
 
 

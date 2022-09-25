@@ -69,7 +69,9 @@ def create_grouping(cnf_set: set[cnf.Cnf]) \
         else:
             group_combined[key] = value
 
-    group_combined = group_combined | group_trivial  # type: ignore
+    # Mypy is not able to handle a dict type where both keys and
+    # values are unions themselves.
+    group_combined |= group_trivial  # type: ignore[arg-type]
     return group_combined
 
 

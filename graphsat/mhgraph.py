@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from collections import Counter as counter
 from typing import Collection, Counter, Iterable, NoReturn, Sequence
+from typing_extensions import reveal_type
 
 import anytree as at
 from loguru import logger
@@ -48,7 +49,7 @@ class HGraph(frozenset[HEdge]):
 
 
 class MHGraph(counter[HEdge]):
-    def __hash__(self) -> int:  # type: ignore
+    def __hash__(self) -> int:  # type: ignore[override]  # Type of dict.__hash__ is None.
         """Hash function that depends only on the keys of the Counter, ignoring values."""
         return hash(frozenset(self))
 
@@ -70,8 +71,14 @@ class MHGraph(counter[HEdge]):
 
         return ','.join(hedge_strings)
 
-    @staticmethod
-    def fromkeys(iterable: Iterable, _: None | int = ...) -> NoReturn:  # type: ignore
+    @classmethod
+    def fromkeys(  # type: ignore[override]
+            cls, _: Iterable[HEdge], __: None | int = ...) -> NoReturn:
+
+        # Mypy needs to be silenced here because `dict` and `counter`
+        # have incompatible signatures for `fromkeys`. So no matter
+        # how we define this function's signature, it is going to
+        # violate one or the other.
         raise NotImplementedError
 
 class GraphNode(at.NodeMixin):
@@ -189,7 +196,11 @@ def mhgraph(edge_collection: Collection[Collection[int | Vertex]]) -> MHGraph:
 
     try:
         # edge_collection is a Counter.
-        return MHGraph(map(hedge, edge_collection.elements()))  # type: ignore
+
+        # Mypy can ignore the fact that elements might not be a
+        # defined attribute because we are catcing the AttributeError
+        # in the except block.
+        return MHGraph(map(hedge, edge_collection.elements()))  # type: ignore[attr-defined]
     except AttributeError:
         # edge_collection is not a Counter.
         return MHGraph(map(hedge, edge_collection))
@@ -226,7 +237,11 @@ def pick_min_degree_vertex(mhg: MHGraph) -> Vertex:
     vertex_degree_counter: Counter[Vertex]
     vertex_degree_counter = counter(v for hedge in mhg.elements()
                                     for v in hedge)
-    return min(vertex_degree_counter, key=vertex_degree_counter.get)  # type: ignore
+    # Mypy complains because `min(dict_A, key=dict_B.get)` is
+    # mis-typed. However, in the case when `dict_A == dict_B`, it is
+    # guaranteed that the `.get` method will not return None. Hence,
+    # we silence the mypy error.
+    return min(vertex_degree_counter, key=vertex_degree_counter.get)  # type: ignore[arg-type]
 
 
 def star(mhg: MHGraph, vertex_instance: Vertex) -> tuple[HEdge, ...]:
@@ -253,10 +268,12 @@ def sphr(mhg: MHGraph, vertex_instance: Vertex) -> tuple[HEdge, ...]:
 def graph_union(mhg1: Sequence[HEdge] | MHGraph, mhg2: Sequence[HEdge] | MHGraph) -> MHGraph:
     """Union of the two graphs."""
     assert mhg1 or mhg2, f'Encountered empty input {mhg1 = } or {mhg2 = }'
+    # Ignore mypy errors because we are checking for attributes before
+    # using them.
     if hasattr(mhg1, "__add__"):
-        return mhgraph(mhg1 + mhg2)  # type: ignore
+        return mhgraph(mhg1 + mhg2)  # type: ignore[operator]
     if hasattr(mhg1, "__or__"):
-        return mhgraph(mhg1 | mhg2)  # type: ignore
+        return mhgraph(mhg1 | mhg2)  # type: ignore[operator]
     raise TypeError
 
 

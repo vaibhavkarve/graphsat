@@ -46,7 +46,7 @@ lint:
 	poetry run interrogate -v --fail-under 82 graphsat/
 
 # Typecheck the code using mypy.
-typecheck files = "./stubs/ graphsat/ tests/":
+typecheck files = "":
 	poetry run mypy {{files}}
 	# poetry run nbqa mypy benchmarking/
 	# Consider running "just lint" for linting the code.

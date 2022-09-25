@@ -85,7 +85,10 @@ def test_degree(vertex_instance: int, degree_output: int) -> None:
 
 @given(st.from_type(MHGraph), st.from_type(MHGraph))
 def test_graph_union(instance1: MHGraph, instance2: MHGraph) -> None:
-    assert graph_union(instance1, instance2) == mhgraph(instance1 + instance2)  # type: ignore
+    # Mypy is not able to figure out that MHGraphs can be added to each other.
+    assert hasattr(instance1, "__add__")
+    assert graph_union(instance1, instance2) \
+        == mhgraph(instance1 + instance2)  # type: ignore[operator]
 
 
 @given(st.from_type(MHGraph), st.from_type(Graph))

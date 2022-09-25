@@ -47,7 +47,8 @@ def test_edge_on_edge_input(instance: Edge) -> None:
 def test_graph_on_collection_of_collection_of_integers_input(
         instance: Collection[Collection[int]]) -> None:
     pytest.raises(ValueError, graph, [])
-    assert graph(instance) == set(map(frozenset, instance))  # type: ignore  # Mypy is not able to infer that frozenset is a Callable.
+    # Mypy is not able to infer that frozenset is a Callable.
+    assert graph(instance) == set(map(frozenset, instance))  # type: ignore[arg-type]
     # Test for idempotence.
     assert graph(graph(instance)) == graph(instance)
 
@@ -59,7 +60,8 @@ st.register_type_strategy(
 
 @given(st.from_type(Graph))
 def test_graph_on_graph_input(instance: Graph) -> None:
-    assert graph(instance) == set(map(frozenset, instance))  # type: ignore  # Mypy is not able to infer that frozenset is a Callable.
+    # Mypy is not able to infer that frozenset is a Callable.
+    assert graph(instance) == set(map(frozenset, instance))  # type: ignore[arg-type]
     # Test for idempotence.
     assert graph(graph(instance)) == graph(instance)
 
